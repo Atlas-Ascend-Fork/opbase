@@ -11,7 +11,7 @@ English | [简体中文](./README.md)
 
 opbase is a basic framework library that the Compute Architecture for Neural Networks ([CANN](https://hiascend.com/software/cann)) operator library depends on. It provides basic scheduling capabilities and common dependencies, including common header files, structures, and scheduling frameworks. For details about the CANN operator library, visit [ops-math](https://gitcode.com/cann/ops-math), [ops-nn](https://gitcode.com/cann/ops-nn), [ops-cv](https://gitcode.com/cann/ops-cv), and [ops-transformer](https://gitcode.com/cann/ops-transformer) to obtain the operator source code.
 
-<img src="docs/zh/figures/architecture.png" alt="Architecture " width="700px" height="320px">
+<img src="docs/en/figures/docs_en_figures_architecture.png" alt="Architecture" width="700px" height="320px">
 
 ## 📌 Version Mapping
 
