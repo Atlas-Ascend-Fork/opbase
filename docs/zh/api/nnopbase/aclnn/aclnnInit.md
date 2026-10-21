@@ -32,7 +32,7 @@ acl.json的配置示例如下：
 配置项“enable_debug_kernel”支持的取值如下：
 
 - on：开启aclnn接口的debug调试能力，即算子在执行过程中会检测Global Memory是否内存越界，内部流水线是否同步等操作。
-- off：不开启aclnn接口的debug调试能力。 默认值为off。
+- off：不开启aclnn接口的debug调试能力。默认值为off。
 
 ## 返回值说明
 
