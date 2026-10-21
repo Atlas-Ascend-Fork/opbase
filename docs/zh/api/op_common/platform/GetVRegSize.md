@@ -8,7 +8,7 @@
 
 ```cpp
 template <typename T>
-uint32_t GetVRegSize([[maybe_unused]] const T *context)
+uint32_t GetVRegSize(const T *context)
 ```
 
 ## 参数说明
@@ -19,7 +19,7 @@ uint32_t GetVRegSize([[maybe_unused]] const T *context)
 
 ## 返回值说明
 
-uint32\_t：返回平台向量寄存器大小（当前为256bytes）。
+uint32\_t：返回当前平台的向量寄存器大小，单位bytes。取值随平台而异，平台信息获取失败时返回0。
 
 ## 约束说明
 

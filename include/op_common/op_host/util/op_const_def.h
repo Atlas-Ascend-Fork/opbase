@@ -46,6 +46,7 @@ constexpr ::NpuArch DAV_3801 = static_cast<::NpuArch>(3801);
 constexpr ::NpuArch DAV_5101 = static_cast<::NpuArch>(5101);
 constexpr ::NpuArch DAV_5102 = static_cast<::NpuArch>(5102);
 constexpr ::NpuArch DAV_5161 = static_cast<::NpuArch>(5161);
+constexpr ::NpuArch DAV_5162 = static_cast<::NpuArch>(5162);
 constexpr ::NpuArch DAV_9201 = static_cast<::NpuArch>(9201);
 constexpr ::NpuArch DAV_9202 = static_cast<::NpuArch>(9202);
 constexpr ::NpuArch DAV_9301 = static_cast<::NpuArch>(9301);

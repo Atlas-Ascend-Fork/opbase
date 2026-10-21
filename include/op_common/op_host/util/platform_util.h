@@ -81,9 +81,18 @@ uint32_t GetUbBlockSize([[maybe_unused]] const T* context)
  * Get the size of vector registers in bytes
  */
 template <typename T>
-uint32_t GetVRegSize([[maybe_unused]] const T* context)
+uint32_t GetVRegSize(const T* context)
 {
-    return 256U;
+    static_assert(std::is_same<typename std::remove_const<T>::type, gert::TilingParseContext>::value ||
+                      std::is_same<typename std::remove_const<T>::type, gert::TilingContext>::value,
+                  "context should be gert::TilingParseContext or gert::TilingContext");
+
+    OP_CHECK_IF(context == nullptr, OP_LOGE("GetVRegSize", "context is nullptr"), return 0);
+    auto platformInfoPtr = context->GetPlatformInfo();
+    OP_CHECK_IF(platformInfoPtr == nullptr, OP_LOGE("GetVRegSize", "platformInfoPtr is nullptr"), return 0);
+
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
+    return ascendcPlatform.GetVecRegLen();
 }
 
 template <typename T>
