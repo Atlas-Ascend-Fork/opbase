@@ -76,4 +76,12 @@
 
 - [EZ0038 Invalid\_Argument](EZ0038-Invalid_Argument.md)
 
+- [EZ3002 Unsupported\_Operator（已废弃）](EZ3002-Unsupported_Operator-deprecated.md)
+
+- [EZ3003 Unsupported\_Operator（已废弃）](EZ3003-Unsupported_Operator-deprecated.md)
+
+- [EZ3004 Not\_Supported\_Operator](EZ3004-Not_Supported_Operator.md)
+
+- [EZ3005 Not\_Supported\_Operator](EZ3005-Not_Supported_Operator.md)
+
 - [EZ2001 Execution\_Error](https://gitcode.com/cann/runtime/blob/master/docs/zh/error_code_ref/EZ2001-Execution_Error.md)
