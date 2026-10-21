@@ -137,11 +137,11 @@ bool OpsJsonFile::CheckAndGetUserDefine(const json& buff, const string& opType, 
 }
 
 template <typename T>
-inline void Assignment(T& varible, const string& key, const json& jsonRead)
+inline void Assignment(T& variable, const string& key, const json& jsonRead)
 {
     auto iter = jsonRead.find(key);
     if (iter != jsonRead.end()) {
-        varible = iter.value().get<T>();
+        variable = iter.value().get<T>();
     }
 }
 
