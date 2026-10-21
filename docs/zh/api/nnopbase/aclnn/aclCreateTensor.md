@@ -62,7 +62,7 @@ aclTensor的定义与[torch.Tensor](https://pytorch.org/docs/stable/tensors.html
 
 **图 1**  tensor逻辑结构
 
-![](../../../figures/aclTensor.png "tensor逻辑结构")
+![tensor逻辑结构](../../../figures/aclTensor.png "tensor逻辑结构")
 
 - 以上图为例，x tensor创建过程如下：
 

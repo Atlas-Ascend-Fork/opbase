@@ -62,7 +62,7 @@ The definition of aclTensor is similar to that of [torch.Tensor](https://pytorch
 
 **Figure 1** Logical structure of a tensor
 
-![](../../../figures/docs_en_figures_aclTensor.png "Logical structure of a tensor")
+![Logical structure of a tensor](../../../figures/docs_en_figures_aclTensor.png "Logical structure of a tensor")
 
 - The following uses the above figure as an example to describe how to create an x tensor:
 
