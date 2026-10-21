@@ -1,8 +1,8 @@
 # aicpu APIs
 
-- **[AicpuTask Class](AicpuTask_class.md)** 
+- **[AicpuTask Class](AicpuTaskClass.md)** 
 
-- **[AicpuTaskSpace Class](AicpuTaskSpace_class.md)** 
+- **[AicpuTaskSpace Class](AicpuTaskSpaceClass.md)** 
 
 - **[aicpu\_args\_handler](aicpu_args_handler.md)**  
 
