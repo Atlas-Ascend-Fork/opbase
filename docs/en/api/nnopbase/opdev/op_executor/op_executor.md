@@ -22,7 +22,7 @@
 
 - **[ReleaseTo](ReleaseTo.md)**  
 
-- **[Getworkspacesize](Getworkspacesize.md)**  
+- **[GetWorkspaceSize](GetWorkspaceSize.md)**  
 
 - **[AbandonCache](AbandonCache.md)**  
 

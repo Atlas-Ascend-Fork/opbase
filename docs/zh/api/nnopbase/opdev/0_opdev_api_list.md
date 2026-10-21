@@ -113,7 +113,7 @@
     - [ConvertToTensor](op_executor/ConvertToTensor.md)
     - [CommonOpExecutorRun](op_executor/CommonOpExecutorRun.md)
     - [ReleaseTo](op_executor/ReleaseTo.md)
-    - [Getworkspacesize](op_executor/Getworkspacesize.md)
+    - [GetWorkspaceSize](op_executor/GetWorkspaceSize.md)
     - [AbandonCache](op_executor/AbandonCache.md)
     - [预留接口](op_executor/reserved_interface_op_executor.md)
 
