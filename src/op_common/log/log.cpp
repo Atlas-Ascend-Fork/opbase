@@ -82,7 +82,7 @@ const static std::string g_msg = R"(
       "Arglist": "optype",
       "suggestion": {
         "Possible Cause": "No parser is registered for the optype in ONNX model conversion.",
-        "Solution": "Submit an issue to request for support at https://gitee.com/ascend, or remove this type of operators from your model."
+        "Solution": "Submit an issue to request for support at https://gitcode.com/cann/opbase/issues, or remove this type of operators from your model."
       }
     },
     {
@@ -208,7 +208,7 @@ const static std::string g_msg = R"(
       "Arglist": "opname,optype",
       "suggestion": {
         "Possible Cause": "IR for the operator type is not registered.",
-        "Solution": "Submit an issue to request for support at https://gitee.com/ascend, or remove this type of operators from your model."
+        "Solution": "Submit an issue to request for support at https://gitcode.com/cann/opbase/issues, or remove this type of operators from your model."
       }
     },
     {
@@ -219,7 +219,7 @@ const static std::string g_msg = R"(
       "Arglist": "optype,opskernel,reason",
       "suggestion": {
         "Possible Cause": "The operator type is unsupported in the operator information library due to specification mismatch.",
-        "Solution": "Submit an issue to request for support at https://gitee.com/ascend, or remove this type of operators from your model."
+        "Solution": "Submit an issue to request for support at https://gitcode.com/cann/opbase/issues, or remove this type of operators from your model."
       }
     },
     {
@@ -241,7 +241,7 @@ const static std::string g_msg = R"(
       "Arglist": "opname,optype",
       "suggestion": {
         "Possible Cause": "No parser is registered for the operator type.",
-        "Solution": "Submit an issue to request for support at https://gitee.com/ascend."
+        "Solution": "Submit an issue to request for support at https://gitcode.com/cann/opbase/issues."
       }
     },
     {
