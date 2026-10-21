@@ -120,6 +120,7 @@
 - make
 - patch
 - googletest（仅执行UT时依赖，建议版本 [release-1.11.0](https://github.com/google/googletest/releases/tag/release-1.11.0)）
+- lcov（可选，仅执行UT并查看代码覆盖率时依赖，即 `bash build.sh -u --cov` 场景；lcov软件包会同时提供genhtml工具）
 
 上述依赖可通过项目脚本一键安装，操作步骤如下：
 

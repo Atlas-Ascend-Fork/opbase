@@ -395,6 +395,42 @@ install_git() {
     fi
 }
 
+install_lcov() {
+    # lcov is optional, required only when generating UT coverage ('bash build.sh -u --cov')
+    echo -e "\n==== Checking lcov ===="
+
+    if command -v lcov &> /dev/null; then
+        echo "lcov has been installed"
+        return
+    fi
+
+    echo "Installing lcov..."
+    case "$OS" in
+        debian)
+            run_command sudo $PKG_MANAGER update
+            run_command sudo $PKG_MANAGER install -y lcov
+            ;;
+        rhel)
+            if grep -q "release 7" /etc/redhat-release; then
+                run_command sudo $PKG_MANAGER install -y epel-release
+            fi
+            run_command sudo $PKG_MANAGER install -y lcov
+            ;;
+        euler)
+            run_command sudo $PKG_MANAGER install -y lcov
+            ;;
+        macos)
+            run_command brew install lcov
+            ;;
+    esac
+
+    if command -v lcov &> /dev/null; then
+        echo "lcov installed successfully"
+    else
+        echo "lcov installation failed, can be ignored (only required by 'bash build.sh -u --cov')"
+    fi
+}
+
 
 main() {
     echo "===================================================="
@@ -409,6 +445,7 @@ main() {
     install_patch
     install_dos2unix
     install_git
+    install_lcov
 
     echo -e "===================================================="
     echo "All dependencies installed successfully!"

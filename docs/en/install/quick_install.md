@@ -119,6 +119,7 @@ The basic dependencies of this project are listed below. Ensure that the version
 - make
 - patch
 - GoogleTest (It is required only when UT is executed. The recommended version is [release-1.11.0](https://github.com/google/googletest/releases/tag/release-1.11.0).)
+- lcov (It is optional. It is required only when UT code coverage is viewed, that is, the `bash build.sh -u --cov` scenario. The lcov package also provides the genhtml tool.)
 
 You can use a project script to automate the installation of these dependencies. The procedure is as follows:
 

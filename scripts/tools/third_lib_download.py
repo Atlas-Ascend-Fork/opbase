@@ -27,8 +27,12 @@ def down_files_native(url_list):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     failed_urls = []
 
-    for url in url_list:
-        file_name = url.split("/")[-1]
+    for item in url_list:
+        if isinstance(item, tuple):
+            url, file_name = item
+        else:
+            url = item
+            file_name = url.split("/")[-1]
 
         if not file_name:
             file_name = "downloaded_file"
@@ -64,7 +68,10 @@ if __name__ == "__main__":
             "https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/abseil-cpp/"
             "abseil-cpp-20230802.1.tar.gz"
         ),
-        "https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/cmake/cmake-master-053.tar.gz",
+        (
+            "https://raw.gitcode.com/cann/cmake/archive/refs/heads/master-057.tar.gz",
+            "cmake-master-057.tar.gz",
+        ),
     ]
 
     failed_downloads = down_files_native(my_urls)
