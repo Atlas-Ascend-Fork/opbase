@@ -140,7 +140,7 @@
     - [预留接口](tensor_view_utils/reserved_interface_tensor_view_utils.md)
 
   - [op\_common相关接口（废弃）](op_common_related_interface/op_common_related_interface.md)
-    - [data\_type\_utils（废弃）](op_common_related_interface/data_type_utils-6.md)
+    - [data\_type\_utils（废弃）](op_common_related_interface/data_type_utils.md)
       - [IsComplexType](op_common_related_interface/IsComplexType.md)
       - [IsFloatingType](op_common_related_interface/IsFloatingType.md)
       - [IsIntegralType](op_common_related_interface/IsIntegralType.md)
