@@ -92,7 +92,10 @@ uint32_t GetVRegSize(const T* context)
     OP_CHECK_IF(platformInfoPtr == nullptr, OP_LOGE("GetVRegSize", "platformInfoPtr is nullptr"), return 0);
 
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-    return ascendcPlatform.GetVecRegLen();
+    uint32_t vRegSize = ascendcPlatform.GetVecRegLen();
+    OP_CHECK_IF(vRegSize == 0U, OP_LOGD("GetVRegSize", "get vRegSize from platform failed, use default 256U"),
+                return 256U);
+    return vRegSize;
 }
 
 template <typename T>
