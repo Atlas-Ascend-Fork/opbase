@@ -93,6 +93,11 @@ namespace fallback {
                 break;                                                                                           \
             }                                                                                                    \
             auto* op_api_params = new (std::nothrow) OpApiParams();                                              \
+            if (op_api_params == nullptr) {                                                                      \
+                OP_LOGE("aclnnfallback", "call %s allocate OpApiParams failed", #aclnn_api);                    \
+                ret = GRAPH_FAILED;                                                                              \
+                break;                                                                                           \
+            }                                                                                                    \
             auto ResetCacheThreadLocalFunc = reinterpret_cast<ResetCacheThreadLocal>(ResetCacheThreadLocalAddr); \
             ResetCacheThreadLocalFunc();                                                                         \
             op_api_params->op_api_func = reinterpret_cast<OpApiFunc2Stage>(opApiFuncAddr);                       \
