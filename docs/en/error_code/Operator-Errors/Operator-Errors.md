@@ -84,4 +84,6 @@
 
 - [EZ3005 Not\_Supported\_Operator](EZ3005-Not_Supported_Operator.md)
 
+- [EZ9010 Unsupported\_Operator](EZ9010-Unsupported_Operator.md)
+
 - [EZ2001 Execution\_Error](https://gitcode.com/cann/runtime/blob/master/docs/en/error_code_ref/EZ2001-Execution_Error.md)
