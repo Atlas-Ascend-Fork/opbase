@@ -84,7 +84,7 @@ public:
     // 调用端必须保证不多线程调用
     aclnnStatus IndvMc2ClientWrapperInit(const char* loadSoPath);
     HcclAllocComResourceResult HcclAllocComResourceByTiling(HcclComm comm, void* stream, void* TilingData,
-                                                           void** commContext);
+                                                            void** commContext);
     aclnnStatus CcuKernelLaunch(HcclComm comm, void* opResCtx);
 
 private:
@@ -121,7 +121,7 @@ public:
     aclnnStatus HcclGetRankSize(HcclComm comm, uint32_t* rankSize);
     aclnnStatus HcclGetCommName(HcclComm comm, char* commName);
     aclnnStatus HcclGetUnfoldThread(HcclComm comm, uint64_t* threadHandle);
-    aclnnStatus HcclAcquireUnfoldThread(HcclComm comm, uint64_t* threadHandle);
+    aclnnStatus HcclAcquireUnfoldThread(HcclComm comm, uint32_t notifyNum, uint64_t* threadHandle);
     aclnnStatus HcclSaveUnfoldThread(HcclComm comm, const char* unfoldCtxTag, uint64_t threadHandle);
     aclnnStatus HcclStreamAcquireWithThread(HcclComm comm, uint64_t threadHandle, aclrtStream* stream);
     aclnnStatus HcclThreadAcquireWithStream(HcclComm comm, aclrtStream stream, uint32_t notifyNum, uint64_t* thread);
@@ -147,26 +147,11 @@ private:
     using HcclThreadAcquireWithStreamFunc = HcclResult (*)(HcclComm, int32_t, aclrtStream, uint32_t, uint64_t*);
     using HcommThreadNotifyRecordOnThreadFunc = int32_t (*)(uint64_t, uint64_t, uint32_t);
     using HcommThreadNotifyWaitOnThreadFunc = int32_t (*)(uint64_t, uint32_t, uint32_t);
-    // 与hcomm侧hcomm_res_defs.h的ThreadType::THREAD_TYPE_TS保持一致
-    static constexpr int32_t NNOPBASE_THREAD_TYPE_TS = 0;
-    // 与hcomm侧hcomm_res_defs.h的CommAbiHeader/ThreadConfig二进制布局保持一致
-    // ThreadConfig带magicWord校验，申请线程前必须经NnopbaseThreadConfigInit初始化，否则hccl侧会报magicWord mismatch
-    static constexpr uint32_t NNOPBASE_THREAD_CONFIG_MAGIC_WORD = 0x0f0f0f2f;
-    static constexpr uint32_t NNOPBASE_THREAD_CONFIG_VERSION = 1U;
-    struct NnopbaseCommAbiHeader {
-        uint32_t version;
-        uint32_t magicWord;
-        uint32_t size;
-        uint32_t reserved;
-    };
-    struct NnopbaseThreadConfig {
-        NnopbaseCommAbiHeader header;
-        uint16_t notifyNumPerThread;
-        uint8_t reserved[14];
-    };
-    static bool NnopbaseThreadConfigInit(NnopbaseThreadConfig* config, uint32_t num);
-    using HcclThreadAcquireWithConfigFunc = HcclResult (*)(HcclComm, int32_t, uint32_t, int32_t,
-                                                           const NnopbaseThreadConfig*, uint64_t*);
+    // 与hccl侧hccl_res.h的HcclDedicatedThreadType::HCCL_DED_THREAD_TYPE_AICPU_LAUNCH保持一致
+    static constexpr int32_t NNOPBASE_DED_THREAD_TYPE_AICPU_LAUNCH = 0;
+    // A5融合下发场景，展开流线程所需的notify数量
+    static constexpr uint32_t UNFOLD_THREAD_NOTIFY_NUM = 3U;
+    using HcclDedicatedThreadAcquireFunc = HcclResult (*)(HcclComm, int32_t, uint32_t, uint64_t*);
     using HcclEngineCtxCreateFunc = HcclResult (*)(HcclComm, const char*, int32_t, uint64_t, void**);
     using HcclGetNotifyNumInThreadFunc = HcclResult (*)(HcclComm, uint64_t, int32_t, uint32_t*);
 
@@ -194,7 +179,7 @@ private:
     HcclThreadAcquireWithStreamFunc hcclThreadAcquireWithStreamHandle = nullptr;
     HcommThreadNotifyRecordOnThreadFunc hcommThreadNotifyRecordOnThreadHandle = nullptr;
     HcommThreadNotifyWaitOnThreadFunc hcommThreadNotifyWaitOnThreadHandle = nullptr;
-    HcclThreadAcquireWithConfigFunc hcclThreadAcquireWithConfigHandle = nullptr;
+    HcclDedicatedThreadAcquireFunc hcclDedicatedThreadAcquireHandle = nullptr;
     HcclEngineCtxCreateFunc hcclEngineCtxCreateHandle = nullptr;
     HcclGetNotifyNumInThreadFunc hcclGetNotifyNumInThreadHandle = nullptr;
 };

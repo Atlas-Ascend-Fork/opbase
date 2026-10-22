@@ -97,8 +97,7 @@ protected:
 
     int64_t data[1024 * 1024] = {0};
     void TestHcclServerType(std::function<void(void*)> setHcclServerTypeFunc, const char* socVersion,
-                            aclnnStatus expectRunStatus = OK,
-                            std::function<void(void*)> verifyExecutorFunc = nullptr);
+                            aclnnStatus expectRunStatus = OK, std::function<void(void*)> verifyExecutorFunc = nullptr);
 };
 
 TEST_F(NnopbaseExtUnitTest, TestDynamicLaunchUtForAscend310P)
@@ -2687,8 +2686,7 @@ TEST_F(NnopbaseExtUnitTest, NnopBaseMC2RunSuccessForDavidWithDynamicInput)
 }
 
 void NnopbaseExtUnitTest::TestHcclServerType(std::function<void(void*)> setHcclServerTypeFunc, const char* socVersion,
-                                             aclnnStatus expectRunStatus,
-                                             std::function<void(void*)> verifyExecutorFunc)
+                                             aclnnStatus expectRunStatus, std::function<void(void*)> verifyExecutorFunc)
 {
     MmpaNormalStubGuard mmpaGuard;
     // RAII guard to ensure SOC version is always restored, even if test fails
@@ -3318,8 +3316,8 @@ int32_t HcommThreadNotifyRecordOnThreadException(uint64_t thread, uint64_t dstTh
 
 int32_t HcommThreadNotifyWaitOnThreadException(uint64_t thread, uint32_t notifyIdx, uint32_t timeOut) { return -1; }
 
-HcclResult HcclThreadAcquireWithConfigException(HcclComm comm, int32_t engine, uint32_t threadNum, int32_t type,
-                                                const void* config, uint64_t* threads)
+HcclResult HcclDedicatedThreadAcquireException(HcclComm comm, int32_t useType, uint32_t notifyNumPerThread,
+                                               uint64_t* thread)
 {
     return HCCL_E_PARA;
 }
@@ -3415,8 +3413,8 @@ int32_t HcommThreadNotifyRecordOnThreadNormal(uint64_t thread, uint64_t dstThrea
 
 int32_t HcommThreadNotifyWaitOnThreadNormal(uint64_t thread, uint32_t notifyIdx, uint32_t timeOut) { return 0; }
 
-HcclResult HcclThreadAcquireWithConfigNormal(HcclComm comm, int32_t engine, uint32_t threadNum, int32_t type,
-                                             const void* config, uint64_t* threads)
+HcclResult HcclDedicatedThreadAcquireNormal(HcclComm comm, int32_t useType, uint32_t notifyNumPerThread,
+                                            uint64_t* thread)
 {
     return HCCL_SUCCESS;
 }
@@ -3467,8 +3465,8 @@ public:
             return (void*)HcclThreadResGetInfoException;
         } else if (strncmp(funcName, "HcclThreadAcquireWithStream", strlen("HcclThreadAcquireWithStream")) == 0) {
             return (void*)HcclThreadAcquireWithStreamException;
-        } else if (strncmp(funcName, "HcclThreadAcquireWithConfig", strlen("HcclThreadAcquireWithConfig")) == 0) {
-            return (void*)HcclThreadAcquireWithConfigException;
+        } else if (strncmp(funcName, "HcclDedicatedThreadAcquire", strlen("HcclDedicatedThreadAcquire")) == 0) {
+            return (void*)HcclDedicatedThreadAcquireException;
         } else if (strncmp(funcName, "HcommThreadNotifyRecordOnThread", strlen("HcommThreadNotifyRecordOnThread")) ==
                    0) {
             return (void*)HcommThreadNotifyRecordOnThreadException;
@@ -3523,8 +3521,8 @@ public:
             return (void*)HcclThreadResGetInfoNormal;
         } else if (strncmp(funcName, "HcclThreadAcquireWithStream", strlen("HcclThreadAcquireWithStream")) == 0) {
             return (void*)HcclThreadAcquireWithStreamNormal;
-        } else if (strncmp(funcName, "HcclThreadAcquireWithConfig", strlen("HcclThreadAcquireWithConfig")) == 0) {
-            return (void*)HcclThreadAcquireWithConfigNormal;
+        } else if (strncmp(funcName, "HcclDedicatedThreadAcquire", strlen("HcclDedicatedThreadAcquire")) == 0) {
+            return (void*)HcclDedicatedThreadAcquireNormal;
         } else if (strncmp(funcName, "HcommThreadNotifyRecordOnThread", strlen("HcommThreadNotifyRecordOnThread")) ==
                    0) {
             return (void*)HcommThreadNotifyRecordOnThreadNormal;

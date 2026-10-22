@@ -191,7 +191,7 @@ aclnnStatus IndvHcclWrapper::IndvHcclWrapperInit(const char* loadSoPath, const b
     hcclThreadAcquireWithStreamHandle = nullptr;
     hcommThreadNotifyRecordOnThreadHandle = nullptr;
     hcommThreadNotifyWaitOnThreadHandle = nullptr;
-    hcclThreadAcquireWithConfigHandle = nullptr;
+    hcclDedicatedThreadAcquireHandle = nullptr;
     hcclEngineCtxCreateHandle = nullptr;
     hcclGetNotifyNumInThreadHandle = nullptr;
     closeSo();
@@ -413,18 +413,14 @@ aclnnStatus IndvHcclWrapper::HcclGetUnfoldThread(HcclComm comm, uint64_t* thread
         OP_LOGI("HcclGetUnfoldThread success, comm = %p, unfoldCtxTag = %s, threadHandle = %lu, notifyNum = %u, "
                 "notifyRet = %d.",
                 comm, unfoldCtxTag, *threadHandle, notifyNum, notifyRet);
-        // notify数查询成功且不为0，说明展开流线程已带有A5同步所需的notify槽位，直接复用
-        if (notifyRet == HCCL_SUCCESS && notifyNum == 2U) {
+        // notify数查询成功且大于等于A5同步所需的notify槽位数，说明展开流线程可直接复用
+        if (notifyRet == HCCL_SUCCESS && notifyNum >= UNFOLD_THREAD_NOTIFY_NUM) {
             return OK;
         }
-        // 否则(查询失败，或notifyNum为0，即展开流线程由hccl侧以notifyNumPerThread=0创建)，缺少A5同步所需的notify槽位。
-        // V2通信域下，以相同的(engine=COMM_ENGINE_CPU, type=THREAD_TYPE_TS)再次调用HcclThreadAcquireWithConfig，
-        // hccl侧会命中该原线程并原地补齐notify(SupplementNotify)，返回的仍是同一个threadHandle，不会新建线程。
-        // 因此这里只需按notifyNumPerThread=2补notify，并把(不变的)handle等值回写已存在的ctx即可，无需重新落盘。
         OP_LOGI("Unfold thread has no usable notify (notifyNum = %u, notifyRet = %d), supplement notify on the "
                 "original thread, comm = %p, unfoldCtxTag = %s, threadHandle = %lu.",
                 notifyNum, notifyRet, comm, unfoldCtxTag, *threadHandle);
-        NNOPBASE_ASSERT_OK_RETVAL(HcclAcquireUnfoldThread(comm, threadHandle));
+        NNOPBASE_ASSERT_OK_RETVAL(HcclAcquireUnfoldThread(comm, UNFOLD_THREAD_NOTIFY_NUM, threadHandle));
         *(static_cast<uint64_t*>(ctx)) = *threadHandle;
         OP_LOGI("HcclGetUnfoldThread supplement notify success, comm = %p, unfoldCtxTag = %s, threadHandle = %lu.",
                 comm, unfoldCtxTag, *threadHandle);
@@ -434,51 +430,23 @@ aclnnStatus IndvHcclWrapper::HcclGetUnfoldThread(HcclComm comm, uint64_t* thread
     // 当前上下文中尚无展开流线程，参考hccl侧HcclGetAicpuThread申请一个并落盘到通信引擎上下文
     OP_LOGI("Unfold thread not found in ctx, acquire a new one, comm = %p, unfoldCtxTag = %s, ret = %u, ctx = %p.",
             comm, unfoldCtxTag, ret, ctx);
-    NNOPBASE_ASSERT_OK_RETVAL(HcclAcquireUnfoldThread(comm, threadHandle));
+    NNOPBASE_ASSERT_OK_RETVAL(HcclAcquireUnfoldThread(comm, UNFOLD_THREAD_NOTIFY_NUM, threadHandle));
     NNOPBASE_ASSERT_OK_RETVAL(HcclSaveUnfoldThread(comm, unfoldCtxTag, *threadHandle));
     OP_LOGI("HcclGetUnfoldThread acquire success, comm = %p, unfoldCtxTag = %s, threadHandle = %lu.", comm,
             unfoldCtxTag, *threadHandle);
     return OK;
 }
 
-bool IndvHcclWrapper::NnopbaseThreadConfigInit(NnopbaseThreadConfig* config, uint32_t num)
-{
-    if (config == nullptr) {
-        return false;
-    }
-    for (uint32_t i = 0U; i < num; i++) {
-        if (memset_s(&config[i], sizeof(NnopbaseThreadConfig), 0, sizeof(NnopbaseThreadConfig)) != EOK) {
-            return false;
-        }
-        config[i].header.version = NNOPBASE_THREAD_CONFIG_VERSION;
-        config[i].header.magicWord = NNOPBASE_THREAD_CONFIG_MAGIC_WORD;
-        config[i].header.size = static_cast<uint32_t>(sizeof(NnopbaseThreadConfig));
-        config[i].header.reserved = 0U;
-        config[i].notifyNumPerThread = 0U;
-    }
-    return true;
-}
-
-aclnnStatus IndvHcclWrapper::HcclAcquireUnfoldThread(HcclComm comm, uint64_t* threadHandle)
+aclnnStatus IndvHcclWrapper::HcclAcquireUnfoldThread(HcclComm comm, uint32_t notifyNum, uint64_t* threadHandle)
 {
     NNOPBASE_ASSERT_NOTNULL_RETVAL(threadHandle);
-    NNOPBASE_ASSERT_NOTNULL_RETVAL(hcclThreadAcquireWithConfigHandle);
+    NNOPBASE_ASSERT_NOTNULL_RETVAL(hcclDedicatedThreadAcquireHandle);
 
-    // 与hccl侧CommEngine::COMM_ENGINE_CPU保持一致
-    constexpr int32_t COMM_ENGINE_CPU = 0;
-    constexpr uint32_t UNFOLD_THREAD_NUM = 1;
-
-    NnopbaseThreadConfig unfoldThreadConfig;
-    if (!NnopbaseThreadConfigInit(&unfoldThreadConfig, UNFOLD_THREAD_NUM)) {
-        OP_LOGE(ACLNN_ERR_INNER, "Failed to init ThreadConfig, comm = %p.", comm);
-        return ACLNN_ERR_INNER;
-    }
-    unfoldThreadConfig.notifyNumPerThread = 2U;
-    HcclResult ret = hcclThreadAcquireWithConfigHandle(comm, COMM_ENGINE_CPU, UNFOLD_THREAD_NUM,
-                                                       NNOPBASE_THREAD_TYPE_TS, &unfoldThreadConfig, threadHandle);
+    HcclResult ret = hcclDedicatedThreadAcquireHandle(comm, NNOPBASE_DED_THREAD_TYPE_AICPU_LAUNCH, notifyNum,
+                                                      threadHandle);
     if (ret != HCCL_SUCCESS) {
         OP_LOGE(ACLNN_ERR_INNER,
-                "Failed to invoke the HcclThreadAcquireWithConfig "
+                "Failed to invoke the HcclDedicatedThreadAcquire "
                 "function of the hccl module, ret = %d, comm = %p.",
                 ret, comm);
         return ACLNN_ERR_INNER;
@@ -605,7 +573,7 @@ IndvHcclWrapper::~IndvHcclWrapper()
     hcclThreadAcquireWithStreamHandle = nullptr;
     hcommThreadNotifyRecordOnThreadHandle = nullptr;
     hcommThreadNotifyWaitOnThreadHandle = nullptr;
-    hcclThreadAcquireWithConfigHandle = nullptr;
+    hcclDedicatedThreadAcquireHandle = nullptr;
     hcclEngineCtxCreateHandle = nullptr;
     hcclGetNotifyNumInThreadHandle = nullptr;
     closeSo();
@@ -659,9 +627,9 @@ aclnnStatus IndvHcclWrapper::LoadDavidHcclFunctions()
     hcommThreadNotifyWaitOnThreadHandle = LoadFunction<HcommThreadNotifyWaitOnThreadFunc>(
         "HcommThreadNotifyWaitOnThread");
     NNOPBASE_ASSERT_NOTNULL_RETVAL(hcommThreadNotifyWaitOnThreadHandle);
-    // A5融合下发场景，当前无展开流线程时用于申请CPU_TS线程并保存到通信引擎上下文
-    hcclThreadAcquireWithConfigHandle = LoadFunction<HcclThreadAcquireWithConfigFunc>("HcclThreadAcquireWithConfig");
-    NNOPBASE_ASSERT_NOTNULL_RETVAL(hcclThreadAcquireWithConfigHandle);
+    // A5融合下发场景，当前无展开流线程时用于申请AICPU_LAUNCH专用线程并保存到通信引擎上下文
+    hcclDedicatedThreadAcquireHandle = LoadFunction<HcclDedicatedThreadAcquireFunc>("HcclDedicatedThreadAcquire");
+    NNOPBASE_ASSERT_NOTNULL_RETVAL(hcclDedicatedThreadAcquireHandle);
     hcclEngineCtxCreateHandle = LoadFunction<HcclEngineCtxCreateFunc>("HcclEngineCtxCreate");
     NNOPBASE_ASSERT_NOTNULL_RETVAL(hcclEngineCtxCreateHandle);
     hcclGetNotifyNumInThreadHandle = LoadFunction<HcclGetNotifyNumInThreadFunc>("HcclGetNotifyNumInThread");
