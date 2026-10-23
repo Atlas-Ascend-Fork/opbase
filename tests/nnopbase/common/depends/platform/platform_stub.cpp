@@ -115,6 +115,8 @@ bool fe::PlatFormInfos::GetPlatformResWithLock(const std::string& label, std::ma
     if (label == "DtypeMKN") {
         res = {{"DT_UINT8", "16,32,16"}, {"DT_INT8", "16,32,16"},   {"DT_INT4", "16,64,16"},
                {"DT_INT2", "16,128,16"}, {"DT_UINT2", "16,128,16"}, {"DT_UINT1", "16,256,16"}};
+    } else if (label == "SoCInfo") {
+        res = {{"vector_core_cnt", "48"}, {"cube_core_cnt", "24"}};
     }
     return true;
 }

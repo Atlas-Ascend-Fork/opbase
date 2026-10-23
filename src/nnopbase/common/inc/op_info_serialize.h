@@ -38,13 +38,21 @@ struct OpKernelInfo {
     bool isMc2;
 };
 
+// 运行时信息，由调用方填充
+struct RuntimeInfo {
+    std::string kernelName;       // ELF符号名；为空时不写入
+    int64_t tilingArgsIndex = -1; // tiling data在kernel args中的槽位；无tiling为-1
+};
+
 /*
  * @brief: Extract Op Info from TilingContext and complete serialization.
  * @param [in] ctx: TilingContext
+ * @param [in] runtimeInfo: 运行时信息
  * @return int32_t: 0 == SUCCESS, others is FAILED
  */
 int32_t OpInfoSerialize(const gert::TilingContext* ctx, const aclnnOpInfoRecord::OpCompilerOption& opt,
-                        const aclnnOpInfoRecord::OpKernelInfo* kernelInfo = nullptr);
+                        const aclnnOpInfoRecord::OpKernelInfo* kernelInfo = nullptr,
+                        const aclnnOpInfoRecord::RuntimeInfo* runtimeInfo = nullptr);
 
 int32_t OpInfoDump(void);
 

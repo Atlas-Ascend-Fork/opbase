@@ -145,6 +145,7 @@ void UpdateStaticKernelTilingInfo(NnopbaseExecutor* executor)
     tilingInfo.tilingKey = staticKernelRunInfo->tilingKey;
     tilingInfo.numBlocks = staticKernelRunInfo->numBlocks;
     tilingInfo.scheMode = static_cast<uint8_t>(staticKernelRunInfo->scheduleMode);
+    tilingInfo.tilingCond = static_cast<int32_t>(staticKernelRunInfo->tilingCond);
     tilingInfo.aicpuNumBlocks = staticKernelRunInfo->aicpuNumBlocks;
     tilingInfo.needAtomic = staticKernelRunInfo->clearAtomic;
     tilingInfo.dynUbufSize = staticKernelRunInfo->dynUBufSize;
@@ -843,6 +844,29 @@ static void NnopbaseExecutorGetWorkspaceSizes(NnopbaseExecutor* executor, uint64
             executor->workspaces.num, executor->workspaces.length, executor->args->binInfo->binPath.c_str());
 }
 
+static aclnnStatus NnopbaseExecutorSaveTilingOutput(NnopbaseExecutor* executor)
+{
+    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.tilingKey);
+    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.numBlocks);
+    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.scheMode);
+    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.needAtomic);
+    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.tilingCond);
+    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.dynUbufSize);
+    NnopbaseTilingInfo& tilingInfo = executor->args->tilingInfo;
+    tilingInfo.tilingKey = *(executor->tiling.tilingKey);
+    tilingInfo.numBlocks = *(executor->tiling.numBlocks);
+    tilingInfo.scheMode = *(executor->tiling.scheMode);
+    tilingInfo.needAtomic = *(executor->tiling.needAtomic);
+    tilingInfo.tilingCond = *(executor->tiling.tilingCond);
+    tilingInfo.aicpuNumBlocks = *(executor->tiling.aicpuNumBlocks);
+    tilingInfo.dynUbufSize = *(executor->tiling.dynUbufSize);
+    OP_LOGI("Tiling outputs of %s are [tilingKey: %llu, numBlocks: %u, scheMode: %u, needAtomic: %u, tilingCond: %d, "
+            "aicpuNumBlocks: %u, dynBufSize: %u].",
+            executor->opType, tilingInfo.tilingKey, tilingInfo.numBlocks, tilingInfo.scheMode, tilingInfo.needAtomic,
+            tilingInfo.tilingCond, tilingInfo.aicpuNumBlocks, tilingInfo.dynUbufSize);
+    return OK;
+}
+
 static aclnnStatus NnopbaseExecutorDoTiling(NnopbaseExecutor* executor)
 {
     if (NnopbaseSkipKernelLaunch(executor)) {
@@ -884,22 +908,7 @@ static aclnnStatus NnopbaseExecutorDoTiling(NnopbaseExecutor* executor)
     RecordNnopbaseTime(executor, NnopbaseTimeIdx::kTilingEnd);
 
     // get tiling output
-    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.tilingKey);
-    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.numBlocks);
-    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.scheMode);
-    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.needAtomic);
-    NNOPBASE_ASSERT_NOTNULL_RETVAL(executor->tiling.dynUbufSize);
-    tilingInfo.tilingKey = *(executor->tiling.tilingKey);
-    tilingInfo.numBlocks = *(executor->tiling.numBlocks);
-    tilingInfo.scheMode = *(executor->tiling.scheMode);
-    tilingInfo.needAtomic = *(executor->tiling.needAtomic);
-    tilingInfo.aicpuNumBlocks = *(executor->tiling.aicpuNumBlocks);
-    tilingInfo.dynUbufSize = *(executor->tiling.dynUbufSize);
-    OP_LOGI(
-        "Tiling outputs of %s are [tilingKey: %llu, numBlocks: %u, scheMode: %u, needAtomic: %u, aicpuNumBlocks: %u, "
-        "dynBufSize: %u].",
-        executor->opType, tilingInfo.tilingKey, tilingInfo.numBlocks, tilingInfo.scheMode, tilingInfo.needAtomic,
-        tilingInfo.aicpuNumBlocks, tilingInfo.dynUbufSize);
+    NNOPBASE_ASSERT_OK_RETVAL(NnopbaseExecutorSaveTilingOutput(executor));
     return OK;
 }
 
@@ -1139,20 +1148,29 @@ static inline aclnnStatus NnopbaseDumpNodeInfo(NnopbaseExecutor* executor)
                            (executor->mc2.enabled &&
                             (executor->mc2.serverType == NnopbaseHcclServerType::NNOPBASE_HCCL_SERVER_TYPE_MTE));
     if (op::internal::opProfilingSwitch.recordOpArgFlag && isOpSupportDump) {
-        int8_t binType = 1; // 1表示dynamic
         if (executor->args->binInfo->isStaticShape) {
-            NNOPBASE_ASSERT_OK_RETVAL(NnopbaseTilingContextBuild(executor));
-            binType = 0; // 0表示static
+            OP_LOGD("Static op %s does not need to dump node info.", executor->opType);
+            return OK;
         }
+        constexpr int8_t binType = 1;
         OP_LOGD("Dump node info, op type[%s] bin path %s, bin type %d.", executor->opType,
                 executor->args->binInfo->binPath.c_str(), binType);
         executor->dfx.opKernelInfo = aclnnOpInfoRecord::OpKernelInfo(executor->args->binInfo->binPath, binType);
         executor->dfx.opKernelInfo.isMc2 = executor->mc2.enabled;
+        aclnnOpInfoRecord::RuntimeInfo runtimeInfo;
+        if (!executor->args->binInfo->kernelName.empty()) {
+            // ELF入口符号名 = kernelName + '_' + tilingKey
+            runtimeInfo.kernelName = executor->args->binInfo->kernelName + "_" +
+                                     std::to_string(executor->args->tilingInfo.tilingKey);
+        }
+        runtimeInfo.tilingArgsIndex = executor->hasTiling ?
+                                          static_cast<int64_t>(executor->argsExt.tilingAddrOffset / sizeof(void*)) :
+                                          -1;
         aclnnOpInfoRecord::OpInfoSerialize(
             op::internal::PtrCastTo<const gert::TilingContext>(executor->tiling.contextExt.context),
             aclnnOpInfoRecord::OpCompilerOption(g_nnopbaseSysCfgParams.implMode, executor->deterministicLevel,
                                                 executor->isEnablePcie),
-            &executor->dfx.opKernelInfo);
+            &executor->dfx.opKernelInfo, &runtimeInfo);
         OP_LOGI("Dump node info for operator %s finished.", executor->opType);
     }
     return OK;

@@ -27,6 +27,10 @@
 #include "utils/indv_lib_wrapper.h"
 #include "depends/runtime/runtime_stub.h"
 #include "depends/acl/aclrt_stub.h"
+#include "op_info_serialize.h"
+#include "lib_path.h"
+#include <fstream>
+#include <cstdio>
 #define private public
 #include "register/op_binary_resource_manager.h"
 #undef private
@@ -596,6 +600,57 @@ public:
         return;
     }
 };
+
+// 场景：动态bin端到端拼接kernelName和tilingKey
+TEST_F(NnopbaseExtUnitTest, TestDumpKernelNameConcat)
+{
+    setenv("ASCEND_C", ASCEND_DC_SOC_VERSION, 1);
+    NnopbaseSetStubFiles(OP_API_COMMON_UT_SRC_DIR);
+    aclnnOpInfoRecord::Path confDir = aclnnOpInfoRecord::LibPath::Instance().GetInstallParentPath().Append("conf");
+    ASSERT_TRUE(confDir.CreateDirectory(true));
+    std::ifstream src(NNOPBASE_UT_DEPENDS_DIR "/conf/dump_tool_config.ini", std::ios::binary);
+    ASSERT_TRUE(src.is_open());
+    aclnnOpInfoRecord::Path confFile = confDir.Concat("dump_tool_config.ini");
+    std::ofstream dst(confFile.GetString(), std::ios::binary);
+    ASSERT_TRUE(dst.is_open());
+    dst << src.rdbuf();
+
+    void* executorSpace = nullptr;
+    ASSERT_EQ(NnopbaseCreateExecutorSpace(&executorSpace), OK);
+
+    const char* opType = "bninference_d_kernel";
+    char inputDesc[] = {1, 1, 1};
+    char outputDesc[] = {1};
+    char attrDesc[] = {};
+    void* executor = NnopbaseGetExecutor(executorSpace, opType, inputDesc, sizeof(inputDesc) / sizeof(char), outputDesc,
+                                         sizeof(outputDesc) / sizeof(char), attrDesc, sizeof(attrDesc) / sizeof(char));
+    ASSERT_NE(executor, nullptr);
+
+    std::vector<int64_t> shape = {1, 1, 1, 1, 1};
+    aclTensor* tensor = aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT, nullptr, 0,
+                                        aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
+    (void)NnopbaseAddInput(executor, tensor, 0);
+    (void)NnopbaseAddInput(executor, tensor, 1);
+    (void)NnopbaseAddInput(executor, tensor, 2);
+    (void)NnopbaseAddOutput(executor, tensor, 0);
+    size_t workspaceLen = 0U;
+    ASSERT_EQ(NnopbaseRunForWorkspace(executor, &workspaceLen), OK);
+    void* workspace = nullptr;
+    if (workspaceLen > 0U) {
+        workspace = (void*)malloc(workspaceLen);
+    }
+
+    ASSERT_EQ(NnopbaseRunWithWorkspace(executor, nullptr, workspace, workspaceLen), OK);
+    ASSERT_EQ(aclnnOpInfoRecord::OpInfoDump(), 0);
+
+    if (workspaceLen > 0U) {
+        free(workspace);
+    }
+    (void)std::remove(confFile.GetCString());
+    NnopbaseExecutorGcSpace(executorSpace);
+    aclDestroyTensor(tensor);
+    NnopbaseUnsetEnvAndClearFolder();
+}
 
 // test for 1971
 TEST_F(NnopbaseExtUnitTest, Test1971MixJsonInfo1)

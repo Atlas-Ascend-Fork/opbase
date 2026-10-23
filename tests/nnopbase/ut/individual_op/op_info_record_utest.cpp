@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #include <cstdio>
+#include <cstring>
 #include "acl/acl_op.h"
 #include "register/op_impl_kernel_registry.h"
 #include "graph/types.h"
@@ -25,7 +26,6 @@
 #include "ini_parse.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 #include "lib_path.h"
-#include "nlohmann/json.hpp"
 
 class OpInfoRecordUtest : public testing::Test {
 protected:
@@ -89,6 +89,132 @@ TEST_F(OpInfoRecordUtest, Utest_OpInfoSerialize)
     op::DestroyOpArgContext(ctx);
 }
 
+// 场景：四参调用写入tiling与runtime键
+TEST_F(OpInfoRecordUtest, Utest_OpInfoSerializeWithRuntimeInfo)
+{
+    aclnnOpInfoRecord::OpCompilerOption opt("", 0);
+    aclnnOpInfoRecord::OpKernelInfo kernelInfo(OP_API_COMMON_UT_SRC_DIR
+                                               "/built-in/op_impl/ai_core/tbe/kernel/ascend910/axpy/"
+                                               "Axpy_233851a3505389e43928a8bba133a74d_high_performance.json",
+                                               0);
+    op::Shape shape{33, 15, 1, 48};
+    auto self = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    auto other = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    auto out = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    float alpha = 13.37;
+    auto input = OP_INPUT(self.get(), other.get());
+    auto output = OP_OUTPUT(out.get());
+    auto attr = OP_ATTR(alpha);
+    auto ctx = op::MakeOpArgContext(input, output, attr);
+    auto spaceRegistry = std::make_shared<gert::OpImplSpaceRegistryV2>();
+    gert::DefaultOpImplSpaceRegistryV2::GetInstance().SetSpaceRegistry(spaceRegistry);
+    uint32_t opType = op::GenOpTypeId("Axpy");
+    gert::TilingContext* tilingCtx = op::internal::OpRunContextMgr::opRunCtx_.UpdateTilingCtx(
+        opType, *ctx->GetOpArg(op::OpArgDef::OP_INPUT_ARG), *ctx->GetOpArg(op::OpArgDef::OP_OUTPUT_ARG),
+        *ctx->GetOpArg(op::OpArgDef::OP_ATTR_ARG));
+    ASSERT_NE(tilingCtx, nullptr);
+
+    // 写入已知tiling结果
+    ASSERT_EQ(tilingCtx->SetTilingKey(123456UL), ge::GRAPH_SUCCESS);
+    ASSERT_EQ(tilingCtx->SetSimdNumBlocks(8U), ge::GRAPH_SUCCESS);
+    ASSERT_EQ(tilingCtx->SetNeedAtomic(true), ge::GRAPH_SUCCESS);
+    ASSERT_EQ(tilingCtx->SetScheduleMode(2U), ge::GRAPH_SUCCESS);
+    ASSERT_EQ(tilingCtx->SetDynUBufSize(4096U), ge::GRAPH_SUCCESS);
+    // 负值验证int32有符号序列化
+    constexpr int32_t tilingCondValue = -7;
+    ASSERT_EQ(tilingCtx->SetTilingCond(tilingCondValue), ge::GRAPH_SUCCESS);
+    auto* rawTilingData = tilingCtx->GetRawTilingData();
+    ASSERT_NE(rawTilingData, nullptr);
+    ASSERT_NE(rawTilingData->GetData(), nullptr);
+    rawTilingData->SetDataSize(8U);
+    const uint8_t tilingBytes[8] = {0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00};
+    ASSERT_EQ(memcpy_s(rawTilingData->GetData(), rawTilingData->GetCapacity(), tilingBytes, sizeof(tilingBytes)), EOK);
+    auto* wsSizes = tilingCtx->GetWorkspaceSizes(2U);
+    ASSERT_NE(wsSizes, nullptr);
+    wsSizes[0] = 1024U;
+    wsSizes[1] = 4096U;
+
+    aclnnOpInfoRecord::RuntimeInfo runtimeInfo;
+    runtimeInfo.kernelName = "Axpy_233851a3505389e43928a8bba133a74d_high_performance";
+    constexpr int64_t tilingArgsIndexValue = 3; // 已知args槽位
+    runtimeInfo.tilingArgsIndex = tilingArgsIndexValue;
+
+    // 四参调用写入tiling与runtime键
+    EXPECT_EQ(aclnnOpInfoRecord::OpInfoSerialize(tilingCtx, opt, &kernelInfo, &runtimeInfo), 0);
+    EXPECT_EQ(aclnnOpInfoRecord::OpInfoDump(), 0);
+    op::DestroyOpArgContext(ctx);
+}
+
+// 场景：三参调用保持原json行为
+TEST_F(OpInfoRecordUtest, Utest_OpInfoSerializeLegacyWithoutRuntimeInfo)
+{
+    aclnnOpInfoRecord::OpCompilerOption opt("", 0);
+    aclnnOpInfoRecord::OpKernelInfo kernelInfo(OP_API_COMMON_UT_SRC_DIR
+                                               "/built-in/op_impl/ai_core/tbe/kernel/ascend910/axpy/"
+                                               "Axpy_233851a3505389e43928a8bba133a74d_high_performance.json",
+                                               0);
+    op::Shape shape{33, 15, 1, 48};
+    auto self = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    auto other = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    auto out = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    float alpha = 13.37;
+    auto input = OP_INPUT(self.get(), other.get());
+    auto output = OP_OUTPUT(out.get());
+    auto attr = OP_ATTR(alpha);
+    auto ctx = op::MakeOpArgContext(input, output, attr);
+    auto spaceRegistry = std::make_shared<gert::OpImplSpaceRegistryV2>();
+    gert::DefaultOpImplSpaceRegistryV2::GetInstance().SetSpaceRegistry(spaceRegistry);
+    uint32_t opType = op::GenOpTypeId("Axpy");
+    gert::TilingContext* tilingCtx = op::internal::OpRunContextMgr::opRunCtx_.UpdateTilingCtx(
+        opType, *ctx->GetOpArg(op::OpArgDef::OP_INPUT_ARG), *ctx->GetOpArg(op::OpArgDef::OP_OUTPUT_ARG),
+        *ctx->GetOpArg(op::OpArgDef::OP_ATTR_ARG));
+    ASSERT_NE(tilingCtx, nullptr);
+
+    // 已有tiling结果用于验证三参调用不写入新键
+    ASSERT_EQ(tilingCtx->SetTilingKey(123456UL), ge::GRAPH_SUCCESS);
+    ASSERT_EQ(tilingCtx->SetSimdNumBlocks(8U), ge::GRAPH_SUCCESS);
+
+    // 三参调用保持原json行为
+    EXPECT_EQ(aclnnOpInfoRecord::OpInfoSerialize(tilingCtx, opt, &kernelInfo), 0);
+    EXPECT_EQ(aclnnOpInfoRecord::OpInfoDump(), 0);
+    op::DestroyOpArgContext(ctx);
+}
+
+// 场景：kernelName为空时整键不写入
+TEST_F(OpInfoRecordUtest, Utest_OpInfoSerializeEmptyKernelName)
+{
+    aclnnOpInfoRecord::OpCompilerOption opt("", 0);
+    aclnnOpInfoRecord::OpKernelInfo kernelInfo(OP_API_COMMON_UT_SRC_DIR
+                                               "/built-in/op_impl/ai_core/tbe/kernel/ascend910/axpy/"
+                                               "Axpy_233851a3505389e43928a8bba133a74d_high_performance.json",
+                                               0);
+    op::Shape shape{33, 15, 1, 48};
+    auto self = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    auto other = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    auto out = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    float alpha = 13.37;
+    auto input = OP_INPUT(self.get(), other.get());
+    auto output = OP_OUTPUT(out.get());
+    auto attr = OP_ATTR(alpha);
+    auto ctx = op::MakeOpArgContext(input, output, attr);
+    auto spaceRegistry = std::make_shared<gert::OpImplSpaceRegistryV2>();
+    gert::DefaultOpImplSpaceRegistryV2::GetInstance().SetSpaceRegistry(spaceRegistry);
+    uint32_t opType = op::GenOpTypeId("Axpy");
+    gert::TilingContext* tilingCtx = op::internal::OpRunContextMgr::opRunCtx_.UpdateTilingCtx(
+        opType, *ctx->GetOpArg(op::OpArgDef::OP_INPUT_ARG), *ctx->GetOpArg(op::OpArgDef::OP_OUTPUT_ARG),
+        *ctx->GetOpArg(op::OpArgDef::OP_ATTR_ARG));
+    ASSERT_NE(tilingCtx, nullptr);
+
+    ASSERT_EQ(tilingCtx->SetTilingKey(42UL), ge::GRAPH_SUCCESS);
+
+    aclnnOpInfoRecord::RuntimeInfo runtimeInfo; // kernelName默认为空
+    runtimeInfo.tilingArgsIndex = -1;
+
+    EXPECT_EQ(aclnnOpInfoRecord::OpInfoSerialize(tilingCtx, opt, &kernelInfo, &runtimeInfo), 0);
+    EXPECT_EQ(aclnnOpInfoRecord::OpInfoDump(), 0);
+    op::DestroyOpArgContext(ctx);
+}
+
 TEST_F(OpInfoRecordUtest, Utest_OpInfoSerialize_without_supportInfo)
 {
     aclnnOpInfoRecord::OpCompilerOption opt("", 0);
@@ -108,4 +234,36 @@ TEST_F(OpInfoRecordUtest, Utest_OpInfoPathEqual)
     aclnnOpInfoRecord::Path pathC = aclnnOpInfoRecord::Path(configPath);
     EXPECT_EQ(pathA == pathB, true);
     EXPECT_EQ(pathA == pathC, false);
+}
+
+// 场景：不设置tilingCond时透传默认值
+TEST_F(OpInfoRecordUtest, Utest_OpInfoSerializeTilingCondDefault)
+{
+    aclnnOpInfoRecord::OpCompilerOption opt("", 0);
+    aclnnOpInfoRecord::OpKernelInfo kernelInfo(OP_API_COMMON_UT_SRC_DIR
+                                               "/built-in/op_impl/ai_core/tbe/kernel/ascend910/axpy/"
+                                               "Axpy_233851a3505389e43928a8bba133a74d_high_performance.json",
+                                               0);
+    op::Shape shape{33, 15, 1, 48};
+    auto self = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    auto other = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    auto out = std::make_unique<aclTensor>(shape, op::DataType::DT_FLOAT, op::Format::FORMAT_ND, nullptr);
+    float alpha = 13.37;
+    auto input = OP_INPUT(self.get(), other.get());
+    auto output = OP_OUTPUT(out.get());
+    auto attr = OP_ATTR(alpha);
+    auto ctx = op::MakeOpArgContext(input, output, attr);
+    auto spaceRegistry = std::make_shared<gert::OpImplSpaceRegistryV2>();
+    gert::DefaultOpImplSpaceRegistryV2::GetInstance().SetSpaceRegistry(spaceRegistry);
+    uint32_t opType = op::GenOpTypeId("Axpy");
+    gert::TilingContext* tilingCtx = op::internal::OpRunContextMgr::opRunCtx_.UpdateTilingCtx(
+        opType, *ctx->GetOpArg(op::OpArgDef::OP_INPUT_ARG), *ctx->GetOpArg(op::OpArgDef::OP_OUTPUT_ARG),
+        *ctx->GetOpArg(op::OpArgDef::OP_ATTR_ARG));
+    ASSERT_NE(tilingCtx, nullptr);
+
+    aclnnOpInfoRecord::RuntimeInfo runtimeInfo;
+
+    EXPECT_EQ(aclnnOpInfoRecord::OpInfoSerialize(tilingCtx, opt, &kernelInfo, &runtimeInfo), 0);
+    EXPECT_EQ(aclnnOpInfoRecord::OpInfoDump(), 0);
+    op::DestroyOpArgContext(ctx);
 }

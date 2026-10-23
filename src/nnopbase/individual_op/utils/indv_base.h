@@ -118,6 +118,7 @@ typedef struct {
     uint32_t numBlocks = 0U;
     bool needAtomic = false;
     uint32_t scheMode = 0U;
+    int32_t tilingCond = -1;
     uint32_t aicpuNumBlocks = 0U;
     uint32_t dynUbufSize = 0U;
     std::vector<uint8_t> staticTilingData;

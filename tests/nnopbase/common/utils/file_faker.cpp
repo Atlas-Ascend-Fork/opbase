@@ -1143,8 +1143,21 @@ int32_t NnopbaseCreateStubBinJsonFor1980(const std::string& filePath, const std:
     fprintf(file, "    \"binFileName\": \"kernel_bninference_d_dync_main\",\n");
     fprintf(file, "    \"binFileSuffix\": \".o\",\n");
     fprintf(file, "    \"coreType\": \"MIX\",\n");
+    fprintf(file, "    \"kernelName\": \"kernel_bninference_d_dync_main\",\n");
     fprintf(file, "    \"opParaSize\": 6900,\n");
     fprintf(file, "    \"supportInfo\": {\n");
+    fprintf(file, "        \"inputs\": [\n");
+    fprintf(file, "            {\"name\": \"x1\", \"index\": 0, \"dtype\": \"float32\", \"format\": \"ND\", "
+                  "\"paramType\": \"required\", \"shape\": [-2]},\n");
+    fprintf(file, "            {\"name\": \"x2\", \"index\": 1, \"dtype\": \"float32\", \"format\": \"ND\", "
+                  "\"paramType\": \"required\", \"shape\": [-2]},\n");
+    fprintf(file, "            {\"name\": \"x3\", \"index\": 2, \"dtype\": \"float32\", \"format\": \"ND\", "
+                  "\"paramType\": \"required\", \"shape\": [-2]}\n");
+    fprintf(file, "        ],\n");
+    fprintf(file, "        \"outputs\": [\n");
+    fprintf(file, "            {\"name\": \"y\", \"index\": 0, \"dtype\": \"float32\", \"format\": \"ND\", "
+                  "\"paramType\": \"required\", \"shape\": [-2]}\n");
+    fprintf(file, "        ],\n");
     fprintf(file, "        \"op_debug_config\": \"oom,ccec\"\n");
     fprintf(file, "    },\n");
     fprintf(file, "    \"kernelList\":[\n");

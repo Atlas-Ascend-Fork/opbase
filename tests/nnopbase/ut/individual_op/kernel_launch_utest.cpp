@@ -47,6 +47,7 @@ TEST_F(NnopbaseKernelLaunchUt, test)
     nlohmann::json binJson = nlohmann::json::parse(R"(
         {
             "coreType": "VectorCore",
+            "kernelName": "AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b",
             "kernelList": [
                 {
                     "kernelName": "AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_1"
@@ -87,6 +88,7 @@ TEST_F(NnopbaseKernelLaunchUt, test)
     } socGuard{oriSocVersion};
     SetSocVersion(socVersion);
     EXPECT_EQ(NnopbaseKernelRegister(executor, &binInfo), OK);
+    EXPECT_EQ(binInfo.kernelName, "AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b");
     EXPECT_EQ(nnopbase::GetMagicFormBin(true, &binInfo), "ACL_RT_BINARY_MAGIC_ELF_AICORE");
     EXPECT_EQ(binInfo.hasReg, true);
     EXPECT_EQ(NnopbaseKernelRegister(executor, &binInfo), OK);

@@ -87,6 +87,7 @@ struct NnopbaseTilingState {
     uint32_t* scheMode = nullptr;
     uint32_t* dynUbufSize = nullptr;
     uint32_t* aicpuNumBlocks = nullptr;
+    int32_t* tilingCond = nullptr; // kOutputTilingCond槽位；无效值-1
     NnopbaseKernelRunContextExt contextExt{};
 
     void Init()
@@ -97,6 +98,7 @@ struct NnopbaseTilingState {
         scheMode = nullptr;
         dynUbufSize = nullptr;
         aicpuNumBlocks = nullptr;
+        tilingCond = nullptr;
         contextExt = {};
     }
 };

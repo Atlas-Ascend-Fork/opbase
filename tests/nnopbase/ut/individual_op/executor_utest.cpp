@@ -1144,6 +1144,34 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedTilingContextBuildOnce)
     FreeCustomizedExecutor(executor);
 }
 
+// 场景：tilingCond槽位默认值与tiling函数写入结果传递
+TEST_F(NnopbaseExecutorUnitTest, ExecutorTilingCondSlotBoundAndReset)
+{
+    NnopbaseExecutor* executor = nullptr;
+    GetCustomizedExecutor(executor, "StubCustomOp");
+    ASSERT_NE(executor->regInfo, nullptr);
+
+    ASSERT_EQ(NnopbaseExecutorGenCustomizedDynamicKey(executor), OK);
+    ASSERT_TRUE(executor->tiling.contextExt.hasBuilt);
+
+    auto* context = reinterpret_cast<gert::TilingContext*>(executor->tiling.contextExt.context);
+    ASSERT_EQ(context->GetTilingCond(), -1);
+
+    // 负值验证int32有符号传递
+    static constexpr int32_t tilingCondValue = -7;
+    executor->regInfo->tiling = [](gert::TilingContext* context_) -> unsigned int {
+        return context_->SetTilingCond(tilingCondValue);
+    };
+    size_t workspaceLen = 0U;
+    ASSERT_EQ(NnopbaseExecutorRunForWorkspace(executor, &workspaceLen), OK);
+    ASSERT_EQ(context->GetTilingCond(), tilingCondValue);
+    ASSERT_NE(executor->tiling.tilingCond, nullptr);
+    ASSERT_EQ(*(executor->tiling.tilingCond), tilingCondValue);
+    ASSERT_EQ(executor->args->tilingInfo.tilingCond, tilingCondValue);
+
+    FreeCustomizedExecutor(executor);
+}
+
 // TC03 [场景: genSimplifiedKey 返回失败 + 入口四处判空]
 // gen 返回 GRAPH_FAILED 时应告警返回 ACLNN_ERR_PARAM_INVALID 而非 OP_LOGE，因为可回落动态查找。
 // 入口 regInfo/args/opType 判空返回 ACLNN_ERR_PARAM_NULLPTR，genSimplifiedKey 判空返回可回落错误码。

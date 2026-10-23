@@ -271,6 +271,13 @@ static aclnnStatus NnopbaseSetOpJsonConfig(NnopbaseBinInfo* binInfo, nlohmann::j
         OP_LOGW("Failed to get opParaSize, reason: %s", e.what());
     }
 
+    try {
+        binInfo->kernelName = binJsonInfo["kernelName"].get<std::string>();
+        OP_LOGI("Get kernelName is [%s], binPath is [%s].", binInfo->kernelName.c_str(), binInfo->binPath.c_str());
+    } catch (const nlohmann::json::exception& e) {
+        OP_LOGW("Failed to get kernelName, reason: %s.", e.what()); // 解析不到留空，dump侧不写键
+    }
+
     NNOPBASE_ASSERT_OK_RETVAL(NnopbaseGetDebugOptions(binInfo, binJsonInfo));
     NnopbaseGetOomFlag(binInfo, binJsonInfo);
     NnopbaseGetInitValue(binJsonInfo, binInfo);

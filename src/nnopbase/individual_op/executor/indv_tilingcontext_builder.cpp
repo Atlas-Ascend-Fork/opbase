@@ -180,7 +180,6 @@ void NnopbaseTilingBuildOpOutputs(NnopbaseExecutor* executor)
     }
 }
 
-// 设置tilingkey, numBlocks, sechmode, 直接使用value上的内存，在executor上保存下来地址
 // 若无动态输入，在不需要重新刷新，有动态输入场景需要重新刷新
 static void NnopbaseTilingSetContextOutputStep1(NnopbaseExecutor* const executor)
 {
@@ -197,8 +196,12 @@ static void NnopbaseTilingSetContextOutputStep1(NnopbaseExecutor* const executor
     /* kOutputAtomicCleanFlag. */
     executor->tiling.needAtomic = op::internal::PtrCastTo<bool>(values[index]->data.inplace);
     values[index]->deleter = nullptr;
-    /* 4 for OutputTilingData, OutputWorkspace, OutputTilingCond, OutputScheduleMode. */
-    index += 4U;
+    /* Skip OutputTilingData and OutputWorkspace. */
+    index += 3U;
+    /* kOutputTilingCond. */
+    executor->tiling.tilingCond = op::internal::PtrCastTo<int32_t>(values[index]->data.inplace);
+    values[index]->deleter = nullptr;
+    index++;
     /* kOutputScheduleMode. */
     executor->tiling.scheMode = op::internal::PtrCastTo<uint32_t>(values[index]->data.inplace);
     values[index]->deleter = nullptr;
@@ -266,6 +269,8 @@ aclnnStatus NnopbaseTilingContextBuild(NnopbaseExecutor* executor)
     *(executor->tiling.needAtomic) = false;
     *(executor->tiling.aicpuNumBlocks) = 0U;
     *(executor->tiling.dynUbufSize) = 0U;
+    // tiling函数未写入时的无效值
+    *(executor->tiling.tilingCond) = -1;
     NnopbaseTilingSetContextOutputStep2(executor);
 
     NnopbaseTilingBuildOpInputs(executor);

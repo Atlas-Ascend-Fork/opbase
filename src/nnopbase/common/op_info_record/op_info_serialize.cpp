@@ -209,6 +209,47 @@ void AddJsonToOpInfo(const nlohmann::json& opJson)
 
 void AddJsonToOpInfoDebug(const nlohmann::json& opJson) { g_opInfoStatisticsDebug.emplace(opJson); }
 
+void AddTilingResultToJson(nlohmann::json& opJson, gert::TilingContext* ctx,
+                           const aclnnOpInfoRecord::RuntimeInfo* runtimeInfo)
+{
+    if (runtimeInfo == nullptr) {
+        return;
+    }
+    std::string tilingDataHex;
+    const auto rawTilingData = ctx->GetRawTilingData();
+    if (rawTilingData != nullptr && rawTilingData->GetData() != nullptr) {
+        static constexpr char HEX_CHARS[] = "0123456789abcdef";
+        const auto* p = static_cast<const uint8_t*>(rawTilingData->GetData());
+        tilingDataHex.reserve(rawTilingData->GetDataSize() * 2U);
+        for (size_t i = 0U; i < rawTilingData->GetDataSize(); i++) {
+            tilingDataHex.push_back(HEX_CHARS[p[i] >> 4U]);
+            tilingDataHex.push_back(HEX_CHARS[p[i] & 0x0FU]);
+        }
+    }
+    opJson["tiling_data"] = tilingDataHex;
+    opJson["tiling_key"] = std::to_string(ctx->GetTilingKey());
+    opJson["block_dim"] = std::to_string(ctx->GetSimdNumBlocks());
+    const size_t wsNum = ctx->GetWorkspaceNum();
+    std::string workspaceBytes;
+    const size_t* wsSizes = ctx->GetWorkspaceSizes(wsNum);
+    if (wsSizes != nullptr) {
+        for (size_t i = 0U; i < wsNum; i++) {
+            workspaceBytes += std::to_string(wsSizes[i]);
+            workspaceBytes += " ";
+        }
+    }
+    opJson["workspace_bytes"] = workspaceBytes;
+    opJson["clear_atomic"] = ctx->NeedAtomic();
+    opJson["schedule_mode"] = ctx->GetScheduleMode();
+    opJson["local_memory_size"] = ctx->GetDynUBufSize();
+    opJson["aicpu_block_dim"] = ctx->GetAicpuNumBlocks();
+    opJson["tiling_cond"] = ctx->GetTilingCond();
+    if (!runtimeInfo->kernelName.empty()) {
+        opJson["kernel_name"] = runtimeInfo->kernelName;
+    }
+    opJson["tiling_args_index"] = runtimeInfo->tilingArgsIndex;
+}
+
 } // namespace
 
 int32_t OpInfoDump(void)
@@ -233,7 +274,8 @@ int32_t OpInfoDump(void)
  * @return int32_t: 0 == SUCCESS, others is FAILED
  */
 int32_t OpInfoSerialize(const gert::TilingContext* ctx, const aclnnOpInfoRecord::OpCompilerOption& opt,
-                        const aclnnOpInfoRecord::OpKernelInfo* kernelInfo)
+                        const aclnnOpInfoRecord::OpKernelInfo* kernelInfo,
+                        const aclnnOpInfoRecord::RuntimeInfo* runtimeInfo)
 {
     OP_CHECK(ctx != nullptr, OP_LOGE(ACLNN_ERR_INNER, "OpInfoSerialize ctx is nullptr!"), return -1);
     OP_CHECK(kernelInfo != nullptr, OP_LOGE(ACLNN_ERR_INNER, "OpInfoSerialize kernelInfo is nullptr!"), return -1);
@@ -269,6 +311,7 @@ int32_t OpInfoSerialize(const gert::TilingContext* ctx, const aclnnOpInfoRecord:
         jsonDebug["impl_mode"] = opt.impl_mode;
         jsonDebug["deterministic"] = (opt.deterministic == 0U) ? "false" : "true";
         jsonDebug["deterministic_level"] = opt.deterministic;
+        AddTilingResultToJson(jsonDebug, const_cast<gert::TilingContext*>(ctx), runtimeInfo);
         std::lock_guard<std::mutex> lck(g_opInfoStatisticsLck);
         AddJsonToOpInfoCompile(jsonDebug); // dump json for compile, not needed "bin_type" and "bin_info"
         jsonDebug["bin_type"] = kernelInfo->bin_type;
