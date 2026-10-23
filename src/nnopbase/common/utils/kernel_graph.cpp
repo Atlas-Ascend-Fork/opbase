@@ -267,18 +267,20 @@ size_t KernelGraph::PrintGraph()
     for (auto& node : kernelNodes_) {
         size_t count = 0;
         for (auto& output : node->GetOutputs()) {
+            const aclTensor* outAclTensor = output->GetAclTensor();
             OP_LOGD("Node[%s %ld] output total[%zu], current %zu, is from wsp %d, acltensor: %p, child-nodes are: %s.",
                     op::OpTypeDict::ToString(node->GetOpType()).GetString(), node->GetOriginalId(),
-                    node->GetOutputs().size(), count, output->GetAclTensor()->IsFromWorkspace(), output->GetAclTensor(),
-                    GetChildNodesName(output).c_str());
+                    node->GetOutputs().size(), count, outAclTensor != nullptr && outAclTensor->IsFromWorkspace(),
+                    outAclTensor, GetChildNodesName(output).c_str());
             ++count;
         }
         count = 0;
         for (auto& input : node->GetInputs()) {
+            const aclTensor* inAclTensor = input->GetAclTensor();
             OP_LOGD("Node[%s %ld], input total[%zu], current %zu, is from wsp %d, acltensor: %p, father-nodes are: %s.",
                     op::OpTypeDict::ToString(node->GetOpType()).GetString(), node->GetOriginalId(),
-                    node->GetInputs().size(), count, input->GetAclTensor()->IsFromWorkspace(), input->GetAclTensor(),
-                    GetChildNodesName(input).c_str());
+                    node->GetInputs().size(), count, inAclTensor != nullptr && inAclTensor->IsFromWorkspace(),
+                    inAclTensor, GetChildNodesName(input).c_str());
             ++count;
         }
         ++nodeSize;

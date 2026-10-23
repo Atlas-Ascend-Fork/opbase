@@ -76,6 +76,7 @@ void* BuildKernelNodeImpl(uint32_t opType, FVector<aclTensor*>& aclInputs, FVect
     for (KernelTensor* kt : kts) {
         const aclTensor* tensor = kt->GetAclTensor();
         if (tensor == nullptr) {
+            OP_LOGW("The input aclTensor of op type %u is null, skip adding peer tensor.", opType);
             continue;
         }
 
@@ -93,9 +94,17 @@ void* BuildKernelNodeImpl(uint32_t opType, FVector<aclTensor*>& aclInputs, FVect
     }
 
     for (auto& out : kn->GetOutputs()) {
+        if (out->GetAclTensor() == nullptr) {
+            OP_LOGW("The output aclTensor of op type %u is null, skip setting extend info.", opType);
+            continue;
+        }
         aclTensorExtend* extend = static_cast<aclTensorExtend*>(out->GetAclTensor()->GetExtend());
         if (extend == nullptr) {
             aclTensorExtend* extendTensor = new aclTensorExtend;
+            if (extendTensor == nullptr) {
+                OP_LOGW("Failed to allocate aclTensorExtend for the output tensor of op type %u.", opType);
+                continue;
+            }
             extendTensor->SetKernelTensor(out);
             out->GetAclTensor()->SetExtend(extendTensor);
         } else {
