@@ -20,6 +20,7 @@
 #include "exe_graph/runtime/tiling_parse_context.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "op_common/log/log.h"
+#include "op_common/op_host/util/op_const_def.h"
 
 namespace Ops {
 namespace Base {
@@ -92,10 +93,10 @@ uint32_t GetVRegSize(const T* context)
     OP_CHECK_IF(platformInfoPtr == nullptr, OP_LOGE("GetVRegSize", "platformInfoPtr is nullptr"), return 0);
 
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-    uint32_t vRegSize = ascendcPlatform.GetVecRegLen();
-    OP_CHECK_IF(vRegSize == 0U, OP_LOGD("GetVRegSize", "get vRegSize from platform failed, use default 256U"),
-                return 256U);
-    return vRegSize;
+    if (ascendcPlatform.GetCurNpuArch() == Ops::Base::DAV_5162) {
+        return 32U;
+    }
+    return 256U;
 }
 
 template <typename T>
