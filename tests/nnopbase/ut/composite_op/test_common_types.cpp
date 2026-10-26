@@ -134,6 +134,31 @@ TEST_F(CommonTypesTest, TestAclScalar_ToTypes)
     }
 }
 
+// 覆盖 aclScalar::ToUint16 在 (32767, 65535] 区间的转换: 这些值是 uint16_t 的合法值,
+// 但超出 int16_t 表示范围。
+// 注意: 误用 To<int16_t>() 时, 运行期可能因低 16 位守恒而碰巧返回正确值;
+// 本用例仅在启用 -fsanitize=undefined,float-cast-overflow 时才能捕获该问题。
+TEST_F(CommonTypesTest, TestAclScalarToUint16BeyondInt16Range)
+{
+    // 区间下界与公共可表示部分
+    aclScalar int16MaxScalar(32767.0F);
+    EXPECT_EQ(32767U, int16MaxScalar.ToUint16());
+    aclScalar int16MaxPlusOneScalar(32768.0F);
+    EXPECT_EQ(32768U, int16MaxPlusOneScalar.ToUint16());
+
+    // 区间典型值与 uint16_t 上限
+    aclScalar midRangeScalar(40000.0F);
+    EXPECT_EQ(40000U, midRangeScalar.ToUint16());
+    aclScalar uint16MaxScalar(65535.0F);
+    EXPECT_EQ(65535U, uint16MaxScalar.ToUint16());
+
+    // 浮点源类型: fp16 与 bfloat16, 取值均可被对应类型精确表示
+    aclScalar fp16Scalar(op::fp16_t(40000.0F));
+    EXPECT_EQ(40000U, fp16Scalar.ToUint16());
+    aclScalar bfloat16Scalar(op::bfloat16(32768.0F));
+    EXPECT_EQ(32768U, bfloat16Scalar.ToUint16());
+}
+
 // ============================================================================
 // Test ConvertCustomFloatTo: 以自定义浮点类型为源类型，验证 To<T>() 转换
 // 覆盖 ConvertCustomFloatTo 的三个分支:

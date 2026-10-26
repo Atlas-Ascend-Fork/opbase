@@ -1147,7 +1147,7 @@ int16_t aclScalar::ToInt16() const { return To<int16_t>(); }
 int32_t aclScalar::ToInt32() const { return To<int32_t>(); }
 int64_t aclScalar::ToInt64() const { return To<int64_t>(); }
 uint8_t aclScalar::ToUint8() const { return To<uint8_t>(); }
-uint16_t aclScalar::ToUint16() const { return To<int16_t>(); }
+uint16_t aclScalar::ToUint16() const { return To<uint16_t>(); }
 uint32_t aclScalar::ToUint32() const { return To<uint32_t>(); }
 uint64_t aclScalar::ToUint64() const { return To<uint64_t>(); }
 op::fp16_t aclScalar::ToFp16() const { return To<op::fp16_t>(); }
