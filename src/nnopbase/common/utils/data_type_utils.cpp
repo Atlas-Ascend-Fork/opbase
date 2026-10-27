@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <map>
 #include <string>
 
 #include "graph/utils/type_utils.h"
@@ -22,10 +23,21 @@ constexpr int64_t BIT_TO_BTYE_ALIGN = 7;
 
 using std::string;
 
+namespace {
+const std::map<DataType, std::string> gAdditionalDataTypeToStringMap = {
+    {op::internal::DT_HIFLOAT4, "DT_HIFLOAT4"},
+    {op::internal::DT_HIFLOAT4_SCALE, "DT_HIFLOAT4_SCALE"},
+};
+} // namespace
+
 DataType ToDataType(const string& dataTypeStr) { return ge::TypeUtils::SerialStringToDataType(dataTypeStr); }
 
 ge::AscendString ToString(DataType dataType)
 {
+    const auto iter = gAdditionalDataTypeToStringMap.find(dataType);
+    if (iter != gAdditionalDataTypeToStringMap.end()) {
+        return ge::AscendString(iter->second.c_str());
+    }
     return ge::AscendString(ge::TypeUtils::DataTypeToSerialString(dataType).c_str());
 }
 

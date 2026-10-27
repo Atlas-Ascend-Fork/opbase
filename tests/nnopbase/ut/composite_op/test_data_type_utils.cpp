@@ -307,8 +307,20 @@ TEST_F(TestDataTypeUtils, ToStringContainerOverloads)
               "[DT_FLOAT16,DT_FLOAT]");
     EXPECT_EQ(op::ToString(std::vector<op::DataType>{op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT}),
               "[DT_FLOAT16,DT_FLOAT]");
+    // 容器重载同样复用补充表：新类型也要能打出名字
+    EXPECT_EQ(op::ToString(std::vector<op::DataType>{op::internal::DT_HIFLOAT4, op::internal::DT_HIFLOAT4_SCALE}),
+              "[DT_HIFLOAT4,DT_HIFLOAT4_SCALE]");
     // 空列表
     EXPECT_EQ(op::ToString(std::vector<op::DataType>{}), "[]");
+}
+
+// 不在类型域内的值：补充表未命中、ge 也不认识，打印效果为 UNDEFINED（ge 侧会另打一条 not supported 告警）
+TEST_F(TestDataTypeUtils, ToStringUnsupportedDataType)
+{
+    EXPECT_EQ(op::ToString(op::internal::DT_MAX), "UNDEFINED");
+    // 已支持与不支持的值混在容器里
+    EXPECT_EQ(op::ToString(std::vector<op::DataType>{op::internal::DT_HIFLOAT4, op::internal::DT_MAX}),
+              "[DT_HIFLOAT4,UNDEFINED]");
 }
 
 TEST_F(TestDataTypeUtils, TypeSize)
