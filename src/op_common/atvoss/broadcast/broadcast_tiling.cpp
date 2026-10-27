@@ -583,6 +583,7 @@ ge::graphStatus DoBrodcastTiling(const BroadcastTilingParams& broadcastTilingPar
     // 当preferMultiCore为true且当前使用的核数少于总核数，尝试降低UB分块以充分利用更多核心
     if (broadcastTilingParams.preferMultiCore && blockNum < static_cast<uint64_t>(broadcastTilingParams.coreNum)) {
         // dstFusedProduct为尽量切多核时的理想多核切分因子
+        const uint64_t originMaxElemNum = maxElemNum;
         uint64_t dstFusedProduct = blockFormer * broadcastTilingParams.coreNum;
         uint64_t tmpFusedProduct = fusedProduct;
         while (tmpFusedProduct < dstFusedProduct) {
@@ -594,6 +595,9 @@ ge::graphStatus DoBrodcastTiling(const BroadcastTilingParams& broadcastTilingPar
         }
         // 计算最终调整后的多核切分因子
         maxElemNum = (maxElemNum + CACHE_LINE + CACHE_LINE - 1) / CACHE_LINE * CACHE_LINE;
+        if (maxElemNum > originMaxElemNum) {
+            maxElemNum = originMaxElemNum;
+        }
         fusedProduct = GetBlockSplitFactor(broadcastTilingData, ubInfo, maxElemNum);
         // 更新blockFormer和blockNum
         blockFormer = (fusedProduct + broadcastTilingParams.coreNum - 1) / broadcastTilingParams.coreNum;
