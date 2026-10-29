@@ -10,6 +10,8 @@
 
 #include <algorithm>
 
+#include "utils/extern_math_util.h"
+
 #include "opdev/format_utils.h"
 #include "opdev/shape_utils.h"
 #include "opdev/tensor_view_utils.h"
@@ -20,15 +22,20 @@ using StrideShapePairs = FVector<std::pair<int64_t, int64_t>, op::MAX_DIM_NUM>;
 
 inline bool IsContiguous(const Shape& shape, const Strides& strides)
 {
-    int64_t validStride = 1;
+    int64_t expectedStride = 1;
     for (int64_t i = static_cast<int64_t>(strides.size()) - 1; i >= 0; --i) {
         if (shape[i] == 1) {
             continue;
         }
-        if (validStride != strides[i]) {
+        if (expectedStride != strides[i]) {
             return false;
         }
-        validStride *= shape[i];
+        if (ge::MulOverflow(expectedStride, shape[i], expectedStride)) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "Tensor view int64 multiplication overflow, view shape: %s, view strides: %s.",
+                    op::ToString(shape).GetString(), op::ToString(strides).GetString());
+            return false;
+        }
     }
     return true;
 }
@@ -94,12 +101,19 @@ inline StrideShapePairs BuildStrideShapePairs(const op::Shape& viewShape, const 
 
 inline bool IsContiguous(const StrideShapePairs& strideShapePairs)
 {
-    int64_t stride = 1;
+    int64_t expectedStride = 1;
     for (auto it = strideShapePairs.rbegin(); it != strideShapePairs.rend(); it++) {
-        if (it->first != stride) {
+        if (it->first != expectedStride) {
             return false;
         }
-        stride *= it->second;
+        int64_t nextExpectedStride = 0;
+        if (ge::MulOverflow(expectedStride, it->second, nextExpectedStride)) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "Tensor view int64 multiplication overflow, expected stride: %ld, view shape dim: %ld.",
+                    expectedStride, it->second);
+            return false;
+        }
+        expectedStride = nextExpectedStride;
     }
     return true;
 }

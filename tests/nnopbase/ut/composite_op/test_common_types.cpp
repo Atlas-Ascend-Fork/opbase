@@ -8,6 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <cstdint>
+
 #include "gtest/gtest.h"
 #include <vector>
 #include "opdev/common_types.h"
@@ -935,6 +937,16 @@ TEST_F(CommonTypesTest, CreateViewTensor2)
     EXPECT_EQ(dst->GetOriginalShape(), Shape({16, 16, 16}));
     EXPECT_EQ(dst->GetStorageShape(), Shape({4913}));
     EXPECT_EQ(dst->GetViewStrides(), src.GetViewStrides());
+}
+
+TEST_F(CommonTypesTest, CreateViewStorageShapeOverflowReturnsNull)
+{
+    // 存储形状的维度乘积超出 int64 表示范围，CreateView 应安全失败，而不是在有符号乘法处崩溃
+    aclTensor src(Shape({2, 2}), DataType::DT_FLOAT, Format::FORMAT_ND, nullptr);
+    aclOpExecutor exe;
+    aclTensor* view = exe.CreateView(&src, Shape({INT64_MAX, INT64_MAX}), Shape({INT64_MAX, INT64_MAX}),
+                                     src.GetViewStrides(), 0);
+    EXPECT_EQ(view, nullptr);
 }
 
 #define CHECK_ARRAY(arrayName, value, count, valueType, arrayType)                   \

@@ -13,6 +13,8 @@
 #include <sstream>
 #include <chrono>
 
+#include "utils/extern_math_util.h"
+
 #include "kernel_graph.h"
 #include "memory_allocator.h"
 #include "opdev/op_config.h"
@@ -21,6 +23,7 @@
 #include "bridge_graph.h"
 #include "bridge_pool.h"
 #include "dsa_task.h"
+#include "opdev/shape_utils.h"
 #include "opdev/tensor_view_utils.h"
 #include "kernel_workspace.h"
 #include "shape_inference.h"
@@ -700,7 +703,11 @@ aclTensor* aclOpExecutor::CreateView(const aclTensor* tensor, const op::Shape& o
     op::Shape storageShapeCorrect{1};
     int64_t storageSize = 1;
     for (uint64_t i = 0; i < storageShape.GetDimNum(); i++) {
-        storageSize *= storageShape.GetDim(i);
+        if (ge::MulOverflow(storageSize, storageShape.GetDim(i), storageSize)) {
+            OP_LOGE(ACLNN_ERR_INNER, "Storage shape size exceeds the int64 range, storage shape is %s.",
+                    op::ToString(storageShape).GetString());
+            return nullptr;
+        }
     }
     int64_t actualShapeLen = storageSize - offset;
     OP_CHECK(

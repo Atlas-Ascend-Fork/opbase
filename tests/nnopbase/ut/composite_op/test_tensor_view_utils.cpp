@@ -8,6 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <cstdint>
+
 #include "gtest/gtest.h"
 
 #include "opdev/tensor_view_utils.h"
@@ -58,6 +60,43 @@ TEST_F(TensorViewUtilsTest, IsContiguous)
     aclDestroyTensor(tensor);
 }
 
+TEST_F(TensorViewUtilsTest, IsContiguousShapeProductOverflowReturnsFalse)
+{
+    // 维度乘积超出 int64 表示范围，该形状不可能对应真实张量；期望判定为非连续且不发生有符号溢出崩溃
+    auto tensor = CreateAclTensor({INT64_MAX, INT64_MAX}, {INT64_MAX, 1}, 0, {INT64_MAX, INT64_MAX});
+    EXPECT_FALSE(IsContiguous(tensor));
+    aclDestroyTensor(tensor);
+}
+
+TEST_F(TensorViewUtilsTest, IsContiguousMinimalShapeProductOverflowReturnsFalse)
+{
+    // 乘积恰为 INT64_MAX + 1，是刚越过 int64 上限的最小溢出；连续 stride 下应在乘法处判定为非连续
+    auto tensor = CreateAclTensor({INT64_MAX / 2 + 1, 2}, {2, 1}, 0, {INT64_MAX / 2 + 1, 2});
+    EXPECT_FALSE(IsContiguous(tensor));
+    aclDestroyTensor(tensor);
+}
+
+TEST_F(TensorViewUtilsTest, IsContiguousLargestRepresentableShapeProductReturnsTrue)
+{
+    // 乘积恰好等于 INT64_MAX 时仍在 int64 范围内，溢出检查不应把这类边界形状误判为非连续
+    auto tensor = CreateAclTensor({INT64_MAX}, {1}, 0, {INT64_MAX});
+    EXPECT_TRUE(IsContiguous(tensor));
+    aclDestroyTensor(tensor);
+
+    // size 为 1 的维度不参与 stride 推导，跳过后乘积仍为 INT64_MAX
+    tensor = CreateAclTensor({INT64_MAX, 1}, {1, 1}, 0, {INT64_MAX, 1});
+    EXPECT_TRUE(IsContiguous(tensor));
+    aclDestroyTensor(tensor);
+}
+
+TEST_F(TensorViewUtilsTest, IsContiguousShapeProductOverflowWithUnitDimReturnsFalse)
+{
+    // 跳过 size 为 1 的维度后，外层维度乘积 INT64_MAX * INT64_MAX 仍会溢出
+    auto tensor = CreateAclTensor({INT64_MAX, INT64_MAX, 1}, {INT64_MAX, 1, 1}, 0, {INT64_MAX, INT64_MAX, 1});
+    EXPECT_FALSE(IsContiguous(tensor));
+    aclDestroyTensor(tensor);
+}
+
 TEST_F(TensorViewUtilsTest, Validate)
 {
     // auto tensor = CreateAclTensor({4, 5, 6, 7}, {210, 42, 7, 1}, 0, {4, 5, 6, 7});
@@ -97,5 +136,22 @@ TEST_F(TensorViewUtilsTest, CanPickViewAsContiguous)
 
     tensor = CreateAclTensor({4, 5, 6, 7}, {42, 0, 7, 1}, 0, {4, 1, 6, 7});
     EXPECT_FALSE(op::CanPickViewAsContiguous({tensor, tensor, tensor}));
+    aclDestroyTensor(tensor);
+}
+
+TEST_F(TensorViewUtilsTest, CanPickViewAsContiguousShapeProductOverflowReturnsFalse)
+{
+    // 与 IsContiguous 溢出用例相同的输入，经 CanPickViewAsContiguous 入口同样不应发生溢出崩溃
+    auto tensor = CreateAclTensor({INT64_MAX, INT64_MAX}, {INT64_MAX, 1}, 0, {INT64_MAX, INT64_MAX});
+    EXPECT_FALSE(op::CanPickViewAsContiguous(tensor));
+    aclDestroyTensor(tensor);
+}
+
+TEST_F(TensorViewUtilsTest, CanPickViewAsContiguousTransposedShapeProductOverflowReturnsFalse)
+{
+    // 转置连续布局：第一个 IsContiguous 重载在 stride 不匹配处提前返回 false，
+    // 会继续进入 StrideShapePairs 重载，该路径的乘积溢出也应安全返回 false
+    auto tensor = CreateAclTensor({INT64_MAX, INT64_MAX}, {1, INT64_MAX}, 0, {INT64_MAX, INT64_MAX});
+    EXPECT_FALSE(op::CanPickViewAsContiguous(tensor));
     aclDestroyTensor(tensor);
 }
