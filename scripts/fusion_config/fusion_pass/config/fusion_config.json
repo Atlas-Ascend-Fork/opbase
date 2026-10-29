@@ -241,6 +241,7 @@
                 "WeightQuantBatchMatmulV2TransposeNZFusionPass":"5127",
                 "WeightQuantBatchMatmulV2TransposeFusionPass":"5128",
                 "MatMulA8W8TransposeTransDataFusionPass": "5129",
+                "FusedWeightQuantMatMulFusionPass": "5129",
                 "DreluFusionPass": "5130",
                 "BatchNormBnInferOnlyFusionPass": "5130",
                 "BatchNormBnInferFusionPass": "5140",
