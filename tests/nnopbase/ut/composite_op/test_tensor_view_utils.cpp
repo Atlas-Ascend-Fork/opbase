@@ -110,6 +110,38 @@ TEST_F(TensorViewUtilsTest, Validate)
     tensor = CreateAclTensor({4, 5, 6, 7}, {211, 42, 7, 1}, 0, {4, 5, 6, 7});
     EXPECT_FALSE(op::Validate(tensor));
     aclDestroyTensor(tensor);
+
+    tensor = CreateAclTensor({2}, {INT64_MAX}, 0, {1});
+    EXPECT_FALSE(op::Validate(tensor));
+    aclDestroyTensor(tensor);
+
+    tensor = CreateAclTensor({3}, {INT64_MAX}, 0, {1});
+    EXPECT_FALSE(op::Validate(tensor));
+    aclDestroyTensor(tensor);
+}
+
+TEST_F(TensorViewUtilsTest, ValidateOverflowPreservesCompatibility)
+{
+    auto tensor = CreateAclTensor({1}, {INT64_MIN}, 0, {1});
+    tensor->SetViewShape(op::Shape({3}));
+    tensor->SetViewStrides(op::Strides({INT64_MIN}));
+    EXPECT_TRUE(op::Validate(tensor));
+    aclDestroyTensor(tensor);
+
+    tensor = CreateAclTensor({1}, {0}, 0, {1});
+    tensor->SetViewShape(op::Shape({-1}));
+    tensor->SetViewStrides(op::Strides({0}));
+    EXPECT_TRUE(op::Validate(tensor));
+    tensor->SetViewShape(op::Shape({INT64_MIN}));
+    tensor->SetViewStrides(op::Strides({0}));
+    EXPECT_TRUE(op::Validate(tensor));
+    aclDestroyTensor(tensor);
+
+    tensor = CreateAclTensor({1}, {INT64_MIN}, 0, {1});
+    tensor->SetViewShape(op::Shape({2, 2}));
+    tensor->SetViewStrides(op::Strides({INT64_MIN, INT64_MIN}));
+    EXPECT_TRUE(op::Validate(tensor));
+    aclDestroyTensor(tensor);
 }
 
 TEST_F(TensorViewUtilsTest, CanPickViewAsContiguous)

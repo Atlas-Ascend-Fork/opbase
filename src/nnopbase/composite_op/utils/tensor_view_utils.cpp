@@ -67,10 +67,30 @@ bool Validate(const aclTensor* tensor)
     int64_t maxViewOffset = viewOffset;
     int64_t minViewOffset = viewOffset;
     for (size_t i = 0; i < viewStrides.size(); i++) {
-        maxViewOffset += std::max(static_cast<int64_t>(0), (viewStrides[i] * (viewShape[i] - 1)));
-        minViewOffset += std::min(static_cast<int64_t>(0), (viewStrides[i] * (viewShape[i] - 1)));
+        if (viewShape[i] < 0) {
+            OP_LOGW("ViewShape contains a negative dimension.");
+        }
+        int64_t dimSpan = 0;
+        if (__builtin_sub_overflow(viewShape[i], static_cast<int64_t>(1), &dimSpan)) {
+            OP_LOGW("ViewShape exceeds the supported dimension range.");
+        }
+        int64_t strideOffset = 0;
+        if (__builtin_mul_overflow(viewStrides[i], dimSpan, &strideOffset)) {
+            OP_LOGW("ViewShape and ViewStride exceed the supported offset range.");
+        }
+        int64_t nextMaxViewOffset = 0;
+        int64_t nextMinViewOffset = 0;
+        const bool maxOverflow = __builtin_add_overflow(
+            maxViewOffset, std::max(static_cast<int64_t>(0), strideOffset), &nextMaxViewOffset);
+        const bool minOverflow = __builtin_add_overflow(
+            minViewOffset, std::min(static_cast<int64_t>(0), strideOffset), &nextMinViewOffset);
+        if (maxOverflow || minOverflow) {
+            OP_LOGW("ViewShape and ViewStride exceed the supported offset range.");
+        }
+        maxViewOffset = nextMaxViewOffset;
+        minViewOffset = nextMinViewOffset;
     }
-    if (maxViewOffset + 1 > storageSize || minViewOffset < 0) {
+    if (maxViewOffset >= storageSize || minViewOffset < 0) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "ViewShape overlap.");
         return false;
     }
