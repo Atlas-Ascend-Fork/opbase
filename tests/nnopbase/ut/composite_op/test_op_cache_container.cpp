@@ -20,6 +20,26 @@
 
 using namespace op::internal;
 
+struct LifecycleKey {
+    int id = 0;
+    virtual ~LifecycleKey() = default;
+    explicit LifecycleKey(int value = 0) : id(value) {}
+};
+
+struct LifecycleValue : LifecycleKey, ListHead, HlistNode {
+    LifecycleValue() = default;
+    explicit LifecycleValue(int value) : LifecycleKey(value) {}
+    LifecycleValue(const LifecycleValue& other) : LifecycleKey(other) {}
+};
+
+struct LifecycleHash {
+    size_t operator()(const LifecycleKey& key) const { return static_cast<size_t>(key.id); }
+};
+
+struct LifecycleEqual {
+    bool operator()(const LifecycleKey& lhs, const LifecycleKey& rhs) const { return lhs.id == rhs.id; }
+};
+
 class OpCacheContainerUt : public testing::Test {
 protected:
     static void SetUpTestCase() {}
@@ -163,4 +183,47 @@ TEST_F(OpCacheContainerUt, FindAndErase)
             delete[] buf[i];
         }
     }
+}
+
+TEST_F(OpCacheContainerUt, ClearBeforeDestruction)
+{
+    OpCacheContainer<LifecycleKey, LifecycleValue, LifecycleHash, LifecycleEqual> container;
+    container.init(1);
+    LifecycleValue value(7);
+    EXPECT_TRUE(container.insert(value).second);
+
+    container.clear();
+
+    EXPECT_EQ(container.size(), 0);
+    EXPECT_EQ(container.bucket_count(), 0);
+}
+
+TEST_F(OpCacheContainerUt, ClearTwice)
+{
+    OpCacheContainer<LifecycleKey, LifecycleValue, LifecycleHash, LifecycleEqual> container;
+    container.init(1);
+    LifecycleValue value(7);
+    EXPECT_TRUE(container.insert(value).second);
+
+    container.clear();
+    container.clear();
+
+    EXPECT_EQ(container.size(), 0);
+    EXPECT_EQ(container.bucket_count(), 0);
+}
+
+TEST_F(OpCacheContainerUt, ReinitializeAfterClear)
+{
+    OpCacheContainer<LifecycleKey, LifecycleValue, LifecycleHash, LifecycleEqual> container;
+    container.init(1);
+    LifecycleValue first(7);
+    EXPECT_TRUE(container.insert(first).second);
+    container.clear();
+
+    EXPECT_TRUE(container.init(1));
+    LifecycleValue second(9);
+    EXPECT_TRUE(container.insert(second).second);
+
+    EXPECT_EQ(container.size(), 1);
+    EXPECT_EQ(container.bucket_count(), 3);
 }

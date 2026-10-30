@@ -220,6 +220,9 @@ public:
             delete value;
         }
         delete[] buckets_;
+        buckets_ = nullptr;
+        bucketNum_ = 0;
+        entryNum_ = 0;
     }
 
     bool init(size_t capacity)
