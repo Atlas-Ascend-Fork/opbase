@@ -1255,12 +1255,13 @@ void ReduceOpTiling::CalcUserWorkSpace()
     uint64_t groupR = tilingData_->groupR;
     uint64_t outSize = tilingData_->outSize;
     uint64_t size = opDag_.maxInputBytes;
+    size_t sysWorkSpaceSize = 0;
     if (groupR > 1UL) {
         workSpaceSize_ = compileInfo_->vectorCoreNum * CeilAlign(outSize * size, compileInfo_->cacheLineSize);
+        auto platformInfo = context_->GetPlatformInfo();
+        auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
+        sysWorkSpaceSize = ascendcPlatform.GetLibApiWorkSpaceSize();
     }
-    auto platformInfo = context_->GetPlatformInfo();
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
-    size_t sysWorkSpaceSize = ascendcPlatform.GetLibApiWorkSpaceSize();
     workspaces[0] = sysWorkSpaceSize + workSpaceSize_;
 }
 
