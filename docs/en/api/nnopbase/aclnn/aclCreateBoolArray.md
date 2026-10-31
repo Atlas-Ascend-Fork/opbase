@@ -17,7 +17,7 @@ aclBoolArray *aclCreateBoolArray(const bool *value, uint64_t size)
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
 | value | Input| Bool pointer on the host. Its value will be copied to the aclBoolArray.|
-| size | Input| Length of the Boolean array. The value is a positive integer.|
+| size | Input| Length of the Boolean array. The value is a non-negative integer; 0 creates an empty array.|
 
 ## Returns
 

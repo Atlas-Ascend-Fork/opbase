@@ -17,7 +17,7 @@ aclTensorList *aclCreateTensorList(const aclTensor *const *value, uint64_t size)
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | value | 输入 | aclTensor类型的指针数组，其指向的值会赋给TensorList。 |
-| size | 输入 | 张量列表的长度，取值为正整数。 |
+| size | 输入 | 张量列表的长度，取值为非负整数；为0时创建空列表。 |
 
 ## 返回值说明
 

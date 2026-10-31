@@ -17,7 +17,7 @@ aclScalarList *aclCreateScalarList(const aclScalar *const *value, uint64_t size)
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | value | 输入 | 指向aclScalar指针数组首地址的指针，数组内aclScalar指针会依次拷贝给aclScalarList。 |
-| size | 输入 | 标量列表的长度，取值为正整数。 |
+| size | 输入 | 标量列表的长度，取值为非负整数；为0时创建空列表。 |
 
 ## 返回值说明
 

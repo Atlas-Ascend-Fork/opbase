@@ -17,7 +17,7 @@ aclFloatArray *aclCreateFloatArray(const float *value, uint64_t size)
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
 | value | Input| Float pointer on the host. Its value will be copied to the aclFloatArray.|
-| size | Input| Length of a floating-point array. The value is a positive integer.|
+| size | Input| Length of a floating-point array. The value is a non-negative integer; 0 creates an empty array.|
 
 ## Returns
 

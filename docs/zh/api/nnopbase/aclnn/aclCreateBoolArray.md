@@ -17,7 +17,7 @@ aclBoolArray *aclCreateBoolArray(const bool *value, uint64_t size)
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | value | 输入 | Host侧的bool类型指针，其指向的值会拷贝给aclBoolArray。 |
-| size | 输入 | 布尔型数组的长度，取值为正整数。 |
+| size | 输入 | 布尔型数组的长度，取值为非负整数；为0时创建空数组。 |
 
 ## 返回值说明
 

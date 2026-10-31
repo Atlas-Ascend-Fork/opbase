@@ -17,7 +17,7 @@ aclIntArray *aclCreateIntArray(const int64_t *value, uint64_t size)
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | value | 输入 | Host侧的int64_t类型的指针，其指向的值会拷贝给aclIntArray。 |
-| size | 输入 | 整型数组的长度，取值为正整数。 |
+| size | 输入 | 整型数组的长度，取值为非负整数；为0时创建空数组。 |
 
 ## 返回值说明
 

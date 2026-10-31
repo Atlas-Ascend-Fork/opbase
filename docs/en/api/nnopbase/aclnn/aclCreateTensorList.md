@@ -17,7 +17,7 @@ aclTensorList *aclCreateTensorList(const aclTensor *const *value, uint64_t size)
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
 | value | Input| Pointer array of the aclTensor type. Its value will be assigned to the TensorList.|
-| size | Input| Length of the tensor list. The value is a positive integer.|
+| size | Input| Length of the tensor list. The value is a non-negative integer; 0 creates an empty list.|
 
 ## Returns
 

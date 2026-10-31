@@ -17,7 +17,7 @@ aclScalarList *aclCreateScalarList(const aclScalar *const *value, uint64_t size)
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
 | value | Input| Pointer to the start address of the aclScalar pointer array. The aclScalar pointers in the array are copied to the aclScalarList in sequence.|
-| size | Input| Length of the scalar list. The value is a positive integer.|
+| size | Input| Length of the scalar list. The value is a non-negative integer; 0 creates an empty list.|
 
 ## Returns
 
