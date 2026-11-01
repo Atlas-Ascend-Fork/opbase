@@ -15,7 +15,7 @@ aclnnStatus aclSetDynamicTensorAddr(aclOpExecutor *executor, size_t irIndex, con
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | executor | 输入 | 设置为复用状态的aclOpExecutor。 |
-| irIndex | 输入 | 待刷新的aclTensorList在算子原型定义中的索引，从0开始计数。 |
+| irIndex | 输入 | 待刷新的aclTensorList在算子原型定义中的索引，先输入、后输出，从0开始统一计数；输出参数的索引需加上输入参数个数。 |
 | relativeIndex | 输入 | 待刷新的aclTensor在aclTensorList中的索引。如果aclTensorList有N个Tensor，其取值范围为[0, N-1]。 |
 | tensors | 输入 | 待刷新的aclTensorList指针。 |
 | addr | 输入 | 需要刷新到指定aclTensor中的Device存储地址，该地址必须32字节对齐，否则可能会出现未定义错误。 |
@@ -72,8 +72,8 @@ aclSetAclOpExecutorRepeatable(executor);
 void *addr;
 aclSetDynamicTensorAddr(executor, 0, 0, tensorList, addr); // 刷新输入tensorlist中第1个aclTensor的device地址
 aclSetDynamicTensorAddr(executor, 0, 1, tensorList, addr); // 刷新输入tensorlist中第2个aclTensor的device地址
-aclSetDynamicTensorAddr(executor, 0, 0, output, addr); // 刷新输出output中第1个aclTensor的device地址
-aclSetDynamicTensorAddr(executor, 0, 1, output, addr); // 刷新输出output中第2个aclTensor的device地址
+aclSetDynamicTensorAddr(executor, 2, 0, output, addr); // 两个输入参数之后，刷新输出output中第1个aclTensor的device地址
+aclSetDynamicTensorAddr(executor, 2, 1, output, addr); // 刷新输出output中第2个aclTensor的device地址
 ...
 // 调用第2段接口
 aclnnAddCustom(workspace, workspaceSize, executor, stream);

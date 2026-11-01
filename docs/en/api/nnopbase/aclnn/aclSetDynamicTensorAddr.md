@@ -15,7 +15,7 @@ aclnnStatus aclSetDynamicTensorAddr(aclOpExecutor *executor, size_t irIndex, con
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
 | executor | Input| aclOpExecutor set to the reusable state.|
-| irIndex | Input| Index of aclTensorList to be updated in the operator prototype definition, starting from 0.|
+| irIndex | Input| Index of aclTensorList to be updated in the operator prototype definition. Inputs come before outputs in a single zero-based sequence; add the number of input parameters to an output parameter's index.|
 | relativeIndex | Input| Index of aclTensor to be updated in aclTensorList. If aclTensorList has N tensors, the value range is [0, N – 1].|
 | tensors | Input| aclTensorList pointer to be updated.|
 | addr | Input| Device storage address to be updated to the specified aclTensor. The address must be 32-byte aligned. Otherwise, an undefined error may occur.|
@@ -65,8 +65,8 @@ aclSetAclOpExecutorRepeatable(executor);
 void *addr;
 aclSetDynamicTensorAddr(executor, 0, 0, tensorList, addr); // Update the device address of the first aclTensor in the input tensor list.
 aclSetDynamicTensorAddr(executor, 0, 1, tensorList, addr); // Update the device address of the second aclTensor in the input tensor list.
-aclSetDynamicTensorAddr(executor, 0, 0, output, addr); // Update the device address of the first aclTensor in the output.
-aclSetDynamicTensorAddr(executor, 0, 1, output, addr); // Update the device address of the second aclTensor in the output.
+aclSetDynamicTensorAddr(executor, 2, 0, output, addr); // After the two input parameters, update the device address of the first aclTensor in the output.
+aclSetDynamicTensorAddr(executor, 2, 1, output, addr); // Update the device address of the second aclTensor in the output.
 ...
 // Call the second-phase API.
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
