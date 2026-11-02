@@ -493,8 +493,7 @@ std::unique_ptr<AicpuTask> AicpuEvictOneTask(const TaskSpaceCtx& taskCache)
 }
 
 AicpuTask* AicpuCommitTask(const TaskSpaceCtx& taskCache, std::unique_ptr<AicpuTask>& task, const size_t seed,
-                           aclOpExecutor* executor, const FVector<const aclTensor*>& inputs, bool& needRegister,
-                           std::unique_ptr<AicpuTask>& evictedOwner)
+                           const aclOpExecutor* executor, bool& needRegister, std::unique_ptr<AicpuTask>& evictedOwner)
 {
     const std::lock_guard<std::mutex> lk(taskCache.mutex);
     if (!taskCache.hasInit) {
@@ -555,7 +554,7 @@ AicpuTask* AicpuTaskSpace::GetOrCreateTask(aclOpExecutor* executor, const FVecto
     }
     bool needRegister = false;
     std::unique_ptr<AicpuTask> evictedOwner;
-    AicpuTask* committedTask = AicpuCommitTask(taskCache, newTask, seed, executor, inputs, needRegister, evictedOwner);
+    AicpuTask* committedTask = AicpuCommitTask(taskCache, newTask, seed, executor, needRegister, evictedOwner);
     if (needRegister) {
         SaveAicpuTaskSpace(this);
     }

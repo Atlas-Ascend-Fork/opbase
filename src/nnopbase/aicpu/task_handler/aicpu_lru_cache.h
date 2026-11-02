@@ -33,9 +33,9 @@ struct SpaceCacheData {
     std::unordered_map<AicpuTask*, IdleLruInfo> taskInfo;
 };
 inline std::mutex gSpaceCacheMutex;
-inline std::unordered_map<void*, SpaceCacheData>& SpaceCacheDataMap()
+inline std::unordered_map<const void*, SpaceCacheData>& SpaceCacheDataMap()
 {
-    static std::unordered_map<void*, SpaceCacheData> instance;
+    static std::unordered_map<const void*, SpaceCacheData> instance;
     return instance;
 }
 
@@ -43,17 +43,17 @@ inline size_t GetCachedTaskNum(const void* space)
 {
     const std::lock_guard<std::mutex> lk(gSpaceCacheMutex);
     const auto& map = SpaceCacheDataMap();
-    const auto it = map.find(const_cast<void*>(space));
+    const auto it = map.find(space);
     return (it == map.end()) ? 0U : it->second.cachedTaskNum;
 }
 
 inline void IncCachedTaskNum(const void* space)
 {
     const std::lock_guard<std::mutex> lk(gSpaceCacheMutex);
-    ++SpaceCacheDataMap()[const_cast<void*>(space)].cachedTaskNum;
+    ++SpaceCacheDataMap()[space].cachedTaskNum;
 }
 
-inline void RegisterCachedTask(void* space, AicpuTask* task, const size_t seed)
+inline void RegisterCachedTask(const void* space, AicpuTask* task, const size_t seed)
 {
     const std::lock_guard<std::mutex> lk(gSpaceCacheMutex);
     auto& data = SpaceCacheDataMap()[space];
@@ -66,7 +66,7 @@ inline void RegisterCachedTask(void* space, AicpuTask* task, const size_t seed)
     it->second.seed = seed;
 }
 
-inline void ActivateCachedTask(AicpuTask* task, void* space)
+inline void ActivateCachedTask(AicpuTask* task, const void* space)
 {
     const std::lock_guard<std::mutex> lk(gSpaceCacheMutex);
     auto& map = SpaceCacheDataMap();
@@ -83,7 +83,7 @@ inline void ActivateCachedTask(AicpuTask* task, void* space)
     it->second.idleIt = data.idleLru.begin();
 }
 
-inline void ClearSpaceCacheData(void* space)
+inline void ClearSpaceCacheData(const void* space)
 {
     const std::lock_guard<std::mutex> lk(gSpaceCacheMutex);
     (void)SpaceCacheDataMap().erase(space);
@@ -107,8 +107,7 @@ bool AicpuCreateTaskUnlocked(const TaskSpaceCtx& taskCache, aclOpExecutor* execu
 std::unique_ptr<AicpuTask> AicpuEvictOneTask(const TaskSpaceCtx& taskCache);
 
 AicpuTask* AicpuCommitTask(const TaskSpaceCtx& taskCache, std::unique_ptr<AicpuTask>& task, const size_t seed,
-                           aclOpExecutor* executor, const FVector<const aclTensor*>& inputs, bool& needRegister,
-                           std::unique_ptr<AicpuTask>& evictedOwner);
+                           const aclOpExecutor* executor, bool& needRegister, std::unique_ptr<AicpuTask>& evictedOwner);
 
 } // namespace internal
 } // namespace op

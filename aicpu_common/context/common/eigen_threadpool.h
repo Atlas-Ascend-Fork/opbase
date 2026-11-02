@@ -10,6 +10,7 @@
 #ifndef AICPU_CONTEXT_COMMON_EIGEN_THREAD_POOL_H
 #define AICPU_CONTEXT_COMMON_EIGEN_THREAD_POOL_H
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>
