@@ -79,7 +79,7 @@ bash install_deps.sh
 
     ```bash
     # 卸载命令
-    ./${install_path}/cann/share/info/opbase/script/uninstall.sh
+    "${install_path}/cann/share/info/opbase/script/uninstall.sh"
     ```
 
 ### 未联网编译
