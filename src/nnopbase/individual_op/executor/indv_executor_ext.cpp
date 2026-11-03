@@ -16,6 +16,7 @@
 #include "utils/indv_soc.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 #include "register/op_binary_resource_manager.h"
+#include "op_dfx_internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -385,9 +386,9 @@ aclnnStatus NnopbaseExecutorSetGlobalConfig()
     g_nnopbaseSysCfgParams.enableArgsCache = nnopbase::EnableNnopbaseArgsCache();   // 是否开启args(tiling)缓存
     g_nnopbaseSysCfgParams.deterministicLevel = nnopbase::GetGlobalDeterministic(); // 确定性设置
     g_nnopbaseSysCfgParams.implMode = nnopbase::NnopbaseGetImplMode(
-        g_nnopbaseSysCfgParams.precision);                                          // 高性能/高精度模式设置
+        g_nnopbaseSysCfgParams.precision); // 高性能/高精度模式设置
     NNOPBASE_ASSERT_OK_RETVAL(
-        nnopbase::NnopbaseSetOverFlowAddr(g_nnopbaseSysCfgParams.overflowAddr));    // 设置溢出检测地址
+        nnopbase::NnopbaseSetOverFlowAddr(g_nnopbaseSysCfgParams.overflowAddr)); // 设置溢出检测地址
     g_nnopbaseSysCfgParams.enableDebugKernel = nnopbase::GetDebugKernel();
 
     OP_LOGD("Set global config timeStamp enable = %d, argsCache enable = %d, deterministicLevel = %d,"
@@ -497,8 +498,11 @@ aclnnStatus NnopbaseExecutorInsertMemsetOp(NnopbaseExecutor* executor)
 static inline void NnopbaseExecutorPreportMemsetProfiling(const NnopbaseExecutor* const executor, uint32_t numBlocks,
                                                           const uint32_t taskType, const uint64_t launchBeginTime)
 {
-    NnopbaseInnerReportLaunchInfo(launchBeginTime, executor->dfx.memsetItemId);
-    NnopbaseReportMemsetAdditionInfo(executor, numBlocks, taskType, launchBeginTime + 1U);
+    if (op::internal::IsTilingProfilingEnabled(executor->opTypeId) ||
+        op::internal::IsL0ProfilingEnabled(executor->opTypeId)) {
+        NnopbaseInnerReportLaunchInfo(launchBeginTime, executor->dfx.memsetItemId);
+        NnopbaseReportMemsetAdditionInfo(executor, numBlocks, taskType, launchBeginTime + 1U);
+    }
     return;
 }
 
@@ -608,9 +612,12 @@ aclnnStatus NnopbaseLaunchMemsetTask(NnopbaseExecutor* executor, aclrtStream str
 void NnopbaseExecutorReportProfiling(NnopbaseExecutor* const executor, uint32_t numBlocks, const uint32_t taskType,
                                      const uint64_t launchBeginTime, aclrtStream stream)
 {
-    NnopbaseInnerReportLaunchInfo(launchBeginTime, executor->dfx.itemId);
-    NnopbaseReportAdditionInfo(executor, numBlocks, taskType, launchBeginTime + 1U);
-    NnopbaseReportAttrAndHostInfo(executor, launchBeginTime + 1U);
+    if (op::internal::IsTilingProfilingEnabled(executor->opTypeId) ||
+        op::internal::IsL0ProfilingEnabled(executor->opTypeId)) {
+        NnopbaseInnerReportLaunchInfo(launchBeginTime, executor->dfx.itemId);
+        NnopbaseReportAdditionInfo(executor, numBlocks, taskType, launchBeginTime + 1U);
+        NnopbaseReportAttrAndHostInfo(executor, launchBeginTime + 1U);
+    }
     NnopbaseReportCacheOpInfo(executor, numBlocks, taskType, stream);
     return;
 }

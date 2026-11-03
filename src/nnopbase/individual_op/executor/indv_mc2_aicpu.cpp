@@ -10,26 +10,15 @@
 
 #include "indv_mc2_aicpu.h"
 #include "utils/thread_var_container.h"
+#include "version_gate.h"
+#include "op_dfx_internal.h"
 #include "runtime/runtime/rt_model.h"
 #include "utils/indv_soc.h"
 #include <cstddef>
 
 #include <cstdint>
-#ifndef PRODUCT_SIDE_IS_DEVICE
-#include "version/runtime_version.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-// runtime 9.2.0起支持将ACL_STREAM_LAUNCH_BLOCKING流属性设置为NO_BLOCKING模式
-#define STREAM_NO_BLOCKING_SUPPORT_VER 90200000
-
-// device侧不涉及该场景，构建时runtime版本低于9.2.0时整段逻辑不编入
-#if !defined(PRODUCT_SIDE_IS_DEVICE) && defined(RUNTIME_VERSION_NUM) && \
-    (RUNTIME_VERSION_NUM >= STREAM_NO_BLOCKING_SUPPORT_VER)
-#define NNOPBASE_SUPPORT_STREAM_NO_BLOCKING 1
 #endif
 
 namespace {
@@ -106,21 +95,16 @@ aclnnStatus DoHcclAllocComResourceByTiling(NnopbaseExecutor* executor, HcclComm 
     return nnopbase::IndvHcclWrapper::GetInstance().HcclAllocComResourceByTiling(comm, stream, tilingData, commCtx);
 }
 
-#ifdef NNOPBASE_SUPPORT_STREAM_NO_BLOCKING
+#if NNOPBASE_RUNTIME_VERSION_AT_LEAST(NNOPBASE_STREAM_NO_BLOCKING_MIN_RUNTIME_VERSION)
 // 查询失败属执行异常返回错误，版本不足仅置isSupported为false放行
 aclnnStatus NnopbaseIsStreamNoBlockingSupported(bool& isSupported)
 {
-    static int32_t runtimeVerNum = -1;
-    static const aclError ret = aclsysGetVersionNum("runtime", &runtimeVerNum);
-    if (ret != ACL_SUCCESS) {
-        OP_LOGE(ACLNN_ERR_INNER, "Failed to get runtime version num, ret is %d.", ret);
+    const auto state = op::internal::CheckVersion(
+        "stream_no_blocking", {op::internal::RuntimeAtLeast(NNOPBASE_STREAM_NO_BLOCKING_MIN_RUNTIME_VERSION)});
+    if (state == op::internal::FeatureState::QUERY_FAILED) {
         return ACLNN_ERR_INNER;
     }
-    isSupported = runtimeVerNum >= STREAM_NO_BLOCKING_SUPPORT_VER;
-    if (!isSupported) {
-        OP_LOGW("Skip setting aicpu streams to no blocking, runtime version num is %d, required is %d.", runtimeVerNum,
-                STREAM_NO_BLOCKING_SUPPORT_VER);
-    }
+    isSupported = state == op::internal::FeatureState::SUPPORTED;
     return OK;
 }
 
@@ -434,8 +418,11 @@ aclnnStatus NnopbaseAicpuKernelLaunch(NnopbaseExecutor* const executor)
                                       executor->mc2.aicpuStreams[0], RT_KERNEL_USE_SPECIAL_TIMEOUT));
     OP_LOGI("%s launch successfully, numBlocks is %u.", opType.c_str(), numBlocks);
 
-    NnopbaseInnerReportLaunchInfo(launchBeginTime, executor->dfx.aicpuItemId);
-    NnopbaseReportAicpuAdditionInfo(launchBeginTime + 1, &opType[0]);
+    if (op::internal::IsTilingProfilingEnabled(executor->opTypeId) ||
+        op::internal::IsL0ProfilingEnabled(executor->opTypeId)) {
+        NnopbaseInnerReportLaunchInfo(launchBeginTime, executor->dfx.aicpuItemId);
+        NnopbaseReportAicpuAdditionInfo(launchBeginTime + 1, &opType[0]);
+    }
     NnopbaseReportCacheOpInfo(executor, 0U, MSPROF_GE_TASK_TYPE_AI_CPU, executor->mc2.aicpuStreams[0]);
     return OK;
 }
@@ -504,8 +491,7 @@ static aclnnStatus NnopbaseMC2KernelCCU(NnopbaseExecutor* const executor, aclrtS
         OP_LOGE(ACLNN_ERR_INNER,
                 "CCU split launch is not available on socVersion[%s] with hcclServerType[%d], and direct CCU "
                 "fusion launch is not supported. contextAddr[0] is %p, commHandle[0] is %p, fallback is %d.",
-                nnopbase::IndvSoc::GetInstance().GetCurSocVersion().c_str(),
-                static_cast<int>(executor->mc2.serverType),
+                nnopbase::IndvSoc::GetInstance().GetCurSocVersion().c_str(), static_cast<int>(executor->mc2.serverType),
                 executor->mc2.contextAddrs.empty() ? nullptr : executor->mc2.contextAddrs[0],
                 executor->mc2.commHandles.empty() ? nullptr : executor->mc2.commHandles[0],
                 static_cast<int>(executor->mc2.fallback));

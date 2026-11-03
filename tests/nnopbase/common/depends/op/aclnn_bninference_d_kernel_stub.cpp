@@ -73,7 +73,7 @@ aclnnStatus aclnnBninferenceDKernelGetWorkspaceSize(const aclTensor* x1, const a
     NNOPBASE_ASSERT_NOTNULL_RETVAL(executor);
     *executor = reinterpret_cast<aclOpExecutor*>(nnopExecutor);
     NNOPBASE_ASSERT_OK_RETVAL(NnopbaseAddTilingId(*executor, &tilingId));
-    NnopbaseAddOpTypeId(*executor, 32);
+    NnopbaseAddOpTypeId(*executor, op::GenOpTypeId("bninference_d_kernel"));
     NNOPBASE_ASSERT_OK_RETVAL(NnopbaseAddInput(*executor, x1, 0));
     NNOPBASE_ASSERT_OK_RETVAL(NnopbaseAddInput(*executor, x2, 1));
     NNOPBASE_ASSERT_OK_RETVAL(NnopbaseAddInput(*executor, x3, 2));

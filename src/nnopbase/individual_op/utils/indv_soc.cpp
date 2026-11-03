@@ -58,15 +58,16 @@ bool IndvSoc::UseCoreTypeMagic(void) const
 bool IndvSoc::SupportMc2FusionLaunch(void)
 {
     const std::string& curSocVersion = GetCurSocVersion();
-    return (curSocVersion == OPS_SUBPATH_ASCEND950) || (curSocVersion == OPS_SUBPATH_ASCEND960DT) ||
-           (curSocVersion == OPS_SUBPATH_ASCEND350);
+    return (curSocVersion != OPS_SUBPATH_ASCEND910) && (curSocVersion != OPS_SUBPATH_ASCEND910B) &&
+           (curSocVersion != OPS_SUBPATH_ASCEND910_93) && (curSocVersion != OPS_SUBPATH_ASCEND310P) &&
+           (curSocVersion != OPS_SUBPATH_ASCEND310B) && (curSocVersion != OPS_SUBPATH_ASCEND610LITE);
 }
 
 bool IndvSoc::NeedAlignInitValues(void) const
 {
-    // 910B以及后继芯片场景 需要在Memset的输入tensor上做shape对齐
-    return (socVersion != OPS_SUBPATH_ASCEND310B) && (socVersion != OPS_SUBPATH_ASCEND310P) &&
-           (socVersion != OPS_SUBPATH_ASCEND610LITE) && (socVersion != OPS_SUBPATH_ASCEND910);
+    // 910B以及后继芯片场景 不需要在Memset的输入tensor上做shape对齐
+    return (socVersion == OPS_SUBPATH_ASCEND310B) || (socVersion == OPS_SUBPATH_ASCEND310P) ||
+           (socVersion == OPS_SUBPATH_ASCEND610LITE) || (socVersion == OPS_SUBPATH_ASCEND910);
 }
 
 bool IndvSoc::NeedsExtraMemoryForOverflowDump(void) const { return socVersion == OPS_SUBPATH_ASCEND910B; }
@@ -94,8 +95,8 @@ bool IndvSoc::NnopbaseUseMc2Client(const NnopbaseHcclServerType sType)
     const std::string& curSocVersion = GetCurSocVersion();
     const bool isSupportFusionLaunch = SupportMc2FusionLaunch();
     const bool useMc2Client = (isSupportFusionLaunch && ((sType == NNOPBASE_HCCL_SERVER_TYPE_END) ||
-                                                          (sType == NNOPBASE_HCCL_SERVER_TYPE_AICPU) ||
-                                                          (sType == NNOPBASE_HCCL_SERVER_TYPE_CCU)));
+                                                         (sType == NNOPBASE_HCCL_SERVER_TYPE_AICPU) ||
+                                                         (sType == NNOPBASE_HCCL_SERVER_TYPE_CCU)));
     OP_LOGD("NnopbaseUseMc2Client check, socVersion=%s, sType=%d, isSupportFusionLaunch=%d, useMc2Client=%d",
             curSocVersion.c_str(), static_cast<int>(sType), isSupportFusionLaunch, useMc2Client);
     return useMc2Client;

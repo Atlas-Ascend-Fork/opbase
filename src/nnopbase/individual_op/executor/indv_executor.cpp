@@ -27,17 +27,13 @@
 #include "static_kernel_helper.h"
 #include "bridge_dfx.h"
 #include "acl/acl_rt.h"
-#ifndef PRODUCT_SIDE_IS_DEVICE
-#include "version/runtime_version.h"
-#include "version/metadef_version.h"
-#endif
+#include "version_gate.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 NnopbaseSysGlobalParams g_nnopbaseSysCfgParams = {nullptr, false, 0U, true, false, "", false};
 static std::mutex g_nnopbaseRegisterMtx;
-#define CUSTOM_EXCEPTION_CALL_BACK_SUPPORT_VER 90000000
 namespace {
 constexpr uint32_t NNOPBASE_MAX_TENSOR_NUM = 50U;
 constexpr int32_t NNOPBASE_MODULE_TYPE_AICORE = 4;
@@ -72,19 +68,48 @@ std::vector<aclrtLaunchKernelAttr> CreateRtsLaunchCfgAttrs(uint8_t scheMode, uin
     return attrs;
 }
 
+bool IsOpProfilingLaunchAttrSupported()
+{
+#if NNOPBASE_RUNTIME_VERSION_AT_LEAST(NNOPBASE_OP_PROFILING_MIN_RUNTIME_VERSION)
+    static const bool supported = op::internal::CheckVersion(
+                                      "op_profiling",
+                                      {op::internal::RuntimeAtLeast(NNOPBASE_OP_PROFILING_MIN_RUNTIME_VERSION)}) ==
+                                  op::internal::FeatureState::SUPPORTED;
+    return supported;
+#else
+    return false;
+#endif
+}
+
+void AddIndvOpProfilingLaunchKernelAttr(const uint32_t opType, std::vector<aclrtLaunchKernelAttr>& kernelAttrs)
+{
+    if (!(op::internal::opProfilingSwitch.kernelLaunchFlag || op::internal::opProfilingSwitch.additionInfoFlag ||
+          op::internal::opProfilingSwitch.level2ProfilingFlag)) {
+        return;
+    }
+    if (!op::internal::IsSpecifiedOpProfilingEnabled() || !op::internal::CheckSpecifiedOpProfiling(opType)) {
+        return;
+    }
+    if (!IsOpProfilingLaunchAttrSupported()) {
+        return;
+    }
+
+    aclrtLaunchKernelAttr profilingAttr = {
+        .id = ACL_RT_LAUNCH_KERNEL_ATTR_ENABLE_PROFILING,
+        .value = {.enableProfiling = 1U},
+    };
+    kernelAttrs.push_back(profilingAttr);
+}
+
 aclnnStatus RegisterCustomizedCallback(NnopbaseExecutor* const executor, NnopbaseBinInfo* const binInfo)
 {
-#ifndef PRODUCT_SIDE_IS_DEVICE
-#if defined(RUNTIME_VERSION_NUM) && defined(METADEF_VERSION_NUM) &&    \
-    (RUNTIME_VERSION_NUM >= CUSTOM_EXCEPTION_CALL_BACK_SUPPORT_VER) && \
-    (METADEF_VERSION_NUM >= CUSTOM_EXCEPTION_CALL_BACK_SUPPORT_VER)
-    static int32_t metadefVerNum = -1;
-    static int32_t runtimeVerNum = -1;
-    static auto aclRetForMetadef = aclsysGetVersionNum("metadef", &metadefVerNum);
-    static auto aclRetForRts = aclsysGetVersionNum("runtime", &runtimeVerNum);
-    if (aclRetForMetadef == ACL_SUCCESS && aclRetForRts == ACL_SUCCESS &&
-        metadefVerNum >= CUSTOM_EXCEPTION_CALL_BACK_SUPPORT_VER &&
-        runtimeVerNum >= CUSTOM_EXCEPTION_CALL_BACK_SUPPORT_VER) {
+#if NNOPBASE_RUNTIME_VERSION_AT_LEAST(NNOPBASE_CUSTOM_EXCEPTION_CALLBACK_MIN_RUNTIME_VERSION) && \
+    NNOPBASE_METADEF_VERSION_AT_LEAST(NNOPBASE_CUSTOM_EXCEPTION_CALLBACK_MIN_METADEF_VERSION)
+    const auto state = op::internal::CheckVersion(
+        "custom_exception_callback",
+        {op::internal::RuntimeAtLeast(NNOPBASE_CUSTOM_EXCEPTION_CALLBACK_MIN_RUNTIME_VERSION),
+         op::internal::MetaDefAtLeast(NNOPBASE_CUSTOM_EXCEPTION_CALLBACK_MIN_METADEF_VERSION)});
+    if (state == op::internal::FeatureState::SUPPORTED) {
         auto& registry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
         NNOPBASE_ASSERT_NOTNULL_RETVAL(registry);
         auto opImpl = registry->GetOpImpl(executor->opType);
@@ -106,7 +131,6 @@ aclnnStatus RegisterCustomizedCallback(NnopbaseExecutor* const executor, Nnopbas
                     executor->opType);
         }
     }
-#endif
 #endif
     return OK;
 }
@@ -902,7 +926,7 @@ static aclnnStatus NnopbaseExecutorDoTiling(NnopbaseExecutor* executor)
         OP_LOGE_FOR_EXECUTION_TILING_ERROR("Failed to execute tiling function");
         return ACLNN_ERR_INNER_TILING_ERROR;
     }
-    if (executor->dfx.tilingId != nullptr) {
+    if (executor->dfx.tilingId != nullptr && op::internal::IsTilingProfilingEnabled(executor->opTypeId)) {
         NnopbaseReportApiInfo(tilingBeginTime, *executor->dfx.tilingId);
     }
     RecordNnopbaseTime(executor, NnopbaseTimeIdx::kTilingEnd);
@@ -1183,6 +1207,7 @@ static aclnnStatus NnopbaseExecutorLaunchKernel(NnopbaseExecutor* executor, aclr
     uint8_t scheMode = static_cast<uint8_t>(executor->args->tilingInfo.scheMode);
     uint32_t dynUbufSize = executor->args->tilingInfo.dynUbufSize;
     auto attrs = CreateRtsLaunchCfgAttrs(scheMode, dynUbufSize, is195x);
+    AddIndvOpProfilingLaunchKernelAttr(executor->opTypeId, attrs);
     if (executor->args->binInfo->isStaticShape) {
         OP_LOGI("Launch static kernel %s task, numBlocks is %u, scheMode is %u, dynUbufSize is %u.", executor->opType,
                 numBlocks, scheMode, dynUbufSize);
@@ -1238,6 +1263,7 @@ static aclnnStatus NnopbaseExecutorVectorCoreLaunchKernel(NnopbaseExecutor* exec
     attrs.push_back(schemModeAttr);
     attrs.push_back(engineTypeAttr);
     attrs.push_back(numBlocksOffsetAttr);
+    AddIndvOpProfilingLaunchKernelAttr(executor->opTypeId, attrs);
 
     aclrtLaunchKernelCfg cfg;
     cfg.attrs = attrs.data();

@@ -19,21 +19,18 @@
 
 #include "acl/acl_rt.h"
 #include "platform/soc_spec.h"
-#ifndef PRODUCT_SIDE_IS_DEVICE
-#include "version/runtime_version.h"
-#endif
-
 #include "aclnn/acl_meta.h"
 #include "opdev/platform.h"
 #include "opdev/op_log.h"
 #include "opdev/op_errno.h"
+#include "version_gate.h"
 #include "op_common/op_host/util/op_const_def.h"
 
 namespace op {
 namespace internal {
 
 namespace {
-#if defined(NNOPBASE_RUNTIME_VERSION_SUPPORT_PCIE_THROUGH)
+#if NNOPBASE_RUNTIME_VERSION_AT_LEAST(NNOPBASE_PCIE_THROUGH_MIN_RUNTIME_VERSION)
 using PcieAddrRange = aclrtAddrRange;
 #else
 struct PcieAddrRange {
@@ -61,7 +58,7 @@ bool IsPcieThroughEnvEnabled()
 
 bool IsHostDeviceConnectWithPcie([[maybe_unused]] uint32_t deviceId)
 {
-#if defined(NNOPBASE_RUNTIME_VERSION_SUPPORT_PCIE_THROUGH)
+#if NNOPBASE_RUNTIME_VERSION_AT_LEAST(NNOPBASE_PCIE_THROUGH_MIN_RUNTIME_VERSION)
     int64_t hdConnectType = ACL_HOST_DEVICE_CONNECT_TYPE_UB;
     auto ret = aclrtGetDeviceInfo(deviceId, ACL_DEV_ATTR_HD_CONNECT_TYPE, &hdConnectType);
     if (ret != ACL_SUCCESS) {
@@ -83,7 +80,7 @@ bool IsHostDeviceConnectWithPcie([[maybe_unused]] uint32_t deviceId)
 
 aclnnStatus GetPcieAddrRange([[maybe_unused]] std::vector<PcieAddrRange>& addrRanges)
 {
-#if defined(NNOPBASE_RUNTIME_VERSION_SUPPORT_PCIE_THROUGH)
+#if NNOPBASE_RUNTIME_VERSION_AT_LEAST(NNOPBASE_PCIE_THROUGH_MIN_RUNTIME_VERSION)
     addrRanges.clear();
     if (aclrtHostGetDevicePointerAddrRange == nullptr) {
         OP_LOGW("aclrtHostGetDevicePointerAddrRange symbol is not found");
@@ -169,7 +166,7 @@ bool IsPcieThroughEnabled() { return g_pcieThroughEnabled; }
 
 bool IsTensorAddrInPcieRange(const void* const addr)
 {
-    uintptr_t addrVal = reinterpret_cast<uintptr_t>(addr);              // NOLINT
+    uintptr_t addrVal = reinterpret_cast<uintptr_t>(addr); // NOLINT
     for (const auto& range : g_pcieAddrRanges) {
         uintptr_t start = reinterpret_cast<uintptr_t>(range.startAddr); // NOLINT
         uintptr_t end = reinterpret_cast<uintptr_t>(range.endAddr);     // NOLINT

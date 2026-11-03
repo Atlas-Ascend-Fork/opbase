@@ -25,6 +25,7 @@
 #include "opdev/op_cache.h"
 #include "op_dfx_internal.h"
 #include "op_feature_internal.h"
+#include "version_gate.h"
 #include "op_cache_internal.h"
 #include "kernel_utils.h"
 #include "bridge_dfx.h"
@@ -227,14 +228,12 @@ void AddOpProfilingLaunchKernelAttr(uint32_t opType, [[maybe_unused]] std::vecto
     if (!op::internal::IsSpecifiedOpProfilingEnabled() || !op::internal::CheckSpecifiedOpProfiling(opType)) {
         return;
     }
-#if defined(NNOPBASE_RUNTIME_VERSION_SUPPORT_OP_PROFILING)
-    static int32_t runtimeVerNum = -1;
-    static const aclError runtimeVerRet = aclsysGetVersionNum("runtime", &runtimeVerNum);
-    if (runtimeVerRet != ACL_SUCCESS || runtimeVerNum < PKG_VERSION_NUM_9_2_0) {
+#if NNOPBASE_RUNTIME_VERSION_AT_LEAST(NNOPBASE_OP_PROFILING_MIN_RUNTIME_VERSION)
+    const auto state = op::internal::CheckVersion(
+        "op_profiling", {op::internal::RuntimeAtLeast(NNOPBASE_OP_PROFILING_MIN_RUNTIME_VERSION)});
+    if (state != op::internal::FeatureState::SUPPORTED) {
         OP_LOGW("[AddOpProfilingLaunchKernelAttr] ACL_RT_LAUNCH_KERNEL_ATTR_ENABLE_PROFILING attr is not "
-                "supported, get runtime version return %d, runtime version num is %d, required is %d, "
-                "skip adding attr.",
-                runtimeVerRet, runtimeVerNum, PKG_VERSION_NUM_9_2_0);
+                "supported because runtime version does not meet requirement, skip adding attr.");
         return;
     }
     kernelAttrs.emplace_back();

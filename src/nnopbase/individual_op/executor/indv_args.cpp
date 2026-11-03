@@ -54,8 +54,8 @@ static bool NnopbaseHasNonContiguousInput(const std::vector<NnopbaseParamInstanc
     return false;
 }
 
-static aclnnStatus NnopbaseCollectOomStorageShapeRecords(
-    const NnopbaseExecutor* const executor, std::vector<NnopbaseOomStorageShapeRecord>& records)
+static aclnnStatus NnopbaseCollectOomStorageShapeRecords(const NnopbaseExecutor* const executor,
+                                                         std::vector<NnopbaseOomStorageShapeRecord>& records)
 {
     if ((executor == nullptr) || (executor->args == nullptr) || (executor->args->binInfo == nullptr) ||
         (!executor->args->binInfo->oomConfig.storageShapeEnabled)) {
@@ -68,8 +68,7 @@ static aclnnStatus NnopbaseCollectOomStorageShapeRecords(
     CHECK_COND(instances.size() >= instanceCount, ACLNN_ERR_PARAM_INVALID,
                "Input instance count[%zu] is less than param count[%u].", instances.size(), instanceCount);
     CHECK_COND(inputInstances.size() >= instanceCount, ACLNN_ERR_PARAM_INVALID,
-               "Cached input instance count[%zu] is less than param count[%u].", inputInstances.size(),
-               instanceCount);
+               "Cached input instance count[%zu] is less than param count[%u].", inputInstances.size(), instanceCount);
     if (!NnopbaseHasNonContiguousInput(instances, instanceCount)) {
         return OK;
     }
@@ -160,7 +159,7 @@ static aclnnStatus NnopbaseAppendOomStorageShapeRecord(const NnopbaseExecutorArg
 static inline NnopbaseUChar* NnopbasePrepareDimInfo(NnopbaseUChar* addr, const GertShape& shape)
 {
     const int64_t shapeSize = shape.GetShapeSize();
-    if (shapeSize > 0) {    // 非空tensor场景
+    if (shapeSize > 0) { // 非空tensor场景
         const size_t dimNum = shape.GetDimNum();
         if (dimNum == 0U) { // Scalar场景相当于shape={1}的tensor
             addr = nnopbase::NnopbaseAppendByte<uint64_t>(addr, 1ULL);
@@ -317,8 +316,8 @@ static aclnnStatus NnopbaseAppendOomStorageShapeExt(NnopbaseExecutor* const exec
         *argsAddr->ptr++ = static_cast<NnopbaseUChar>(executor->args->binInfo->oomConfig.version & 0x0FU);
     }
     for (const auto& record : records) {
-        OP_LOGI("Oom storage shape record startIndex is %zu, isTensorList is %d, count is %u.",
-                record.startIndex, record.isTensorList, record.count);
+        OP_LOGI("Oom storage shape record startIndex is %zu, isTensorList is %d, count is %u.", record.startIndex,
+                record.isTensorList, record.count);
         NNOPBASE_ASSERT_OK_RETVAL(NnopbaseAppendOomStorageShapeRecord(executor->args, record, argsAddr));
     }
     // 扩展区尾部按8B对齐补padding，清零防止输出侧注册误消费。
@@ -328,8 +327,7 @@ static aclnnStatus NnopbaseAppendOomStorageShapeExt(NnopbaseExecutor* const exec
         if (padding != 0U) {
             const errno_t ret = memset_s(argsAddr->ptr, padding, 0, padding);
             if (ret != EOK) {
-                OP_LOGW("Failed to memset_s OOM storage shape padding, ret is %d, padding size is %zu.", ret,
-                        padding);
+                OP_LOGW("Failed to memset_s OOM storage shape padding, ret is %d, padding size is %zu.", ret, padding);
             }
         }
         argsAddr->ptr += padding;
@@ -393,8 +391,8 @@ size_t NnopbaseGetOomInfoExtMaxSize(const NnopbaseExecutor* const executor)
     size_t size = 0U;
     const auto& instances = executor->ownArgs.inputs.paramDescs.instances;
     const uint32_t instanceCount = executor->ownArgs.inputs.paramDescs.count;
-    const uint32_t validInstanceCount =
-        static_cast<uint32_t>(std::min(instances.size(), static_cast<size_t>(instanceCount)));
+    const uint32_t validInstanceCount = static_cast<uint32_t>(
+        std::min(instances.size(), static_cast<size_t>(instanceCount)));
     if (validInstanceCount != instanceCount) {
         OP_LOGW("Input instance count[%zu] is less than param count[%u], skip invalid OOM size entries.",
                 instances.size(), instanceCount);
@@ -450,7 +448,7 @@ size_t NnopbaseCalcArgsSize(NnopbaseExecutor* const executor, const size_t tilin
     executor->args->tilingDataOffset = argsLen;
     if (executor->args->outputs.outPutShapeSize != 0U) {
         executor->args->tilingDataOffset += sizeof(void*);
-        argsLen += sizeof(void*) * 2;                                          // 2 is outputshape and oom
+        argsLen += sizeof(void*) * 2; // 2 is outputshape and oom
     }
     argsLen += (irNum + NNOPBASE_NORM_MAX_WORKSPACE_NUMS + 1) * sizeof(void*); // oom, 1 is for automicIndex
     argsLen += NnopbaseGetOomInfoExtMaxSize(executor);
@@ -653,14 +651,21 @@ void** NnopbaseExecutorPrepareOutputsParamsExt(NnopbaseExecutor* const executor,
 std::vector<aclrtPlaceHolderInfo> NnopbaseGetRTSPlaceHolder(NnopbaseRTArgsExt* const argsExt)
 {
     std::vector<aclrtPlaceHolderInfo> hostInputInfoPtr;
+    OP_LOGD("RTS placeholder args addr is %p, argsSize is %u, hasTiling is %u, hostInputInfoNum is %u.", argsExt->args,
+            argsExt->argsSize, argsExt->hasTiling, argsExt->hostInputInfoNum);
     if (argsExt->hasTiling != 0) {
         hostInputInfoPtr.push_back({argsExt->tilingAddrOffset, argsExt->tilingDataOffset});
+        OP_LOGD("RTS tiling placeholder addrOffset is %u, dataOffset is %u.", argsExt->tilingAddrOffset,
+                argsExt->tilingDataOffset);
     }
     for (int i = 0; i < argsExt->hostInputInfoNum; i++) {
         aclrtPlaceHolderInfo* ptr = argsExt->hostInputInfoPtr + i;
         hostInputInfoPtr.push_back({ptr->addrOffset, ptr->dataOffset});
+        OP_LOGD("RTS host input[%d] placeholder addrOffset is %u, dataOffset is %u.", i, ptr->addrOffset,
+                ptr->dataOffset);
     }
 
+    OP_LOGD("RTS placeholder total number is %zu.", hostInputInfoPtr.size());
     return hostInputInfoPtr;
 }
 
