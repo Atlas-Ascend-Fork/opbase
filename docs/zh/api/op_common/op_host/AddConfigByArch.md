@@ -12,8 +12,16 @@
 | DAV_2002 | ascend310p |
 | DAV_2201 | ascend910b、ascend910_93 |
 | DAV_3002 | ascend310b |
+| DAV_3003 | kirinx90 |
+| DAV_3004 | ascend031 |
 | DAV_3102 | ascend610lite |
-| DAV_3510 | ascend950 |
+| DAV_3113 | kirin9030 |
+| DAV_3505 | ascend035 |
+| DAV_3510 | ascend950、ascend350 |
+| DAV_5102 | mc62、ascend630 |
+| DAV_5162 | ascend5162 |
+| DAV_9201 | ascend960dt |
+| DAV_9202 | ascend960pr |
 
 ## 函数原型
 
