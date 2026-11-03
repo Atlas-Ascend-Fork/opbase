@@ -93,6 +93,7 @@ FeatureState CheckVersionOnce(const char* featureName, std::initializer_list<Ver
     }
     return FeatureState::SUPPORTED;
 }
+#endif
 
 FeatureState CheckVersion(const char* featureName, std::initializer_list<VersionGate> requirements)
 {
@@ -107,4 +108,3 @@ FeatureState CheckVersion(const char* featureName, std::initializer_list<Version
 
 } // namespace internal
 } // namespace op
-#endif
