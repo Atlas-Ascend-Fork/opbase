@@ -170,15 +170,13 @@ Execute ops_base_ut successful.
 ```bash
 # 设置环境变量
 source ${ASCEND_HOME_PATH}/bin/setenv.bash
-export LD_LIBRARY_PATH=build/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="$(pwd)/build/:$LD_LIBRARY_PATH"
 
 # 运行nnopbase UT测试
-cd build/tests/nnopbase/ut/
-./nnopbase_utest
+(cd build/tests/nnopbase/ut && ./nnopbase_utest)
 
 # 运行op_common UT测试
-cd build/tests/op_common/
-./op_common_utest
+(cd build/tests/op_common && ./op_common_utest)
 ```
 
 其中 `${ASCEND_HOME_PATH}` 为CANN安装路径，默认为 `/usr/local/Ascend/cann`。
