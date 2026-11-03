@@ -24,7 +24,7 @@ Sets the data at a specified position in a host-side tensor allocated by `AllocH
 
 - API for setting the value at a specified index for a tensor
 
-    | Parameter| Input/Output| Description|
+| Parameter| Input/Output| Description|
 | --- | --- | --- |
 | index | Input| Index of the `aclTensor` element to be set.|
 | value | Input| Target value of the specified `aclTensor` element.|
@@ -32,7 +32,7 @@ Sets the data at a specified position in a host-side tensor allocated by `AllocH
 
 - API for using an existing memory block to initialize tensor data
 
-    | Parameter| Input/Output| Description|
+| Parameter| Input/Output| Description|
 | --- | --- | --- |
 | value | Input| Pointer to the data memory to be written to `aclTensor`.|
 | size | Input| Number of elements to be written.|
