@@ -24,8 +24,8 @@ Docs目录结构说明如下：
 
 | 文档                                                         | 说明                                                         |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [算子调用指南](https://gitcode.com/cann/ops-math/blob/master/docs/README.md) | 提供算子库的调用方法和调用流程介绍，包括aclnn API、图模式调用等。<br>各算子库math、nn、cv、transformer调用指南基本一致，以math仓为例。 |
-| [算子开发指南](https://gitcode.com/cann/ops-math/blob/master/docs/README.md) | 提供AI Core/AI CPU算子的开发流程和交付件介绍。<br>各算子库math、nn、cv、transformer开发指南基本一致，以math仓为例。 |
+| [算子调用指南](https://gitcode.com/cann/ops-math/blob/9.3.0-beta.1/docs/README.md) | 提供算子库的调用方法和调用流程介绍，包括aclnn API、图模式调用等。<br>各算子库math、nn、cv、transformer调用指南基本一致，以math仓为例。 |
+| [算子开发指南](https://gitcode.com/cann/ops-math/blob/9.3.0-beta.1/docs/README.md) | 提供AI Core/AI CPU算子的开发流程和交付件介绍。<br>各算子库math、nn、cv、transformer开发指南基本一致，以math仓为例。 |
 | aclnn API开发指南                                            | **正在建设中**，欢迎您关注和提问！                           |
 
 ### API类文档

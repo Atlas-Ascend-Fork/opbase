@@ -64,21 +64,21 @@ If you have Ascend devices and want to quickly set up an Ascend environment, you
 docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_manager --device /dev/devmm_svm --device /dev/hisi_hdc -v /usr/local/dcmi:/usr/local/dcmi -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi -v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/ -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info -v /etc/ascend_install.info:/etc/ascend_install.info -it swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops bash
 ```
 
-| Parameter| Description| Remarks|
+| Parameter | Description | Remarks |
 | :--- | :--- | :--- |
-| `--name cann_container` | Defines a container name for easy management.| You can customize a name.|
-| `--device /dev/davinci0` | Maps the host's NPUs into the container.| `davinci0` is NPU 0. This is an example only. To obtain the device ID (for example, `NPU 0` or `NPU 1`), run the `npu-smi info` command on the host.|
-| `--device /dev/davinci_manager` | Maps the NPU device management interface.| - |
-| `--device /dev/devmm_svm` | Maps the device memory management interface.| - |
-| `--device /dev/hisi_hdc` | Maps the host-device communication interface.| - |
-| `-v /usr/local/dcmi:/usr/local/dcmi` | Mounts the tools and libraries related to the Device Container Management Interface (DCMI).| - |
-| `-v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi` | Mounts the `npu-smi` tool.| This allows you to use this tool in the container to query the NPU status and performance.|
-| `-v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/` | (Critical) Mounts the host's NPU driver libraries into the container.| - |
-| `-v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info` | Mounts the driver version information file.| - |
-| `-v /etc/ascend_install.info:/etc/ascend_install.info` | Mounts the CANN software installation information file.| - |
-| `-it` | Specifies the combination of `-i` (interactive) and `-t` (pseudo-TTY).| - |
-| `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops` | Specifies the Docker image to be run.|Ensure that the image name and tag are the same as those of the image pulled using `docker pull`.|
-| `bash` | Specifies the command to be executed immediately after the container is started.| - |
+| `--name cann_container` | Defines a container name for easy management. | You can customize a name. |
+| `--device /dev/davinci0` | Maps the host's NPUs into the container. | `davinci0` is NPU 0. This is an example only. To obtain the device ID (for example, `NPU 0` or `NPU 1`), run the `npu-smi info` command on the host. |
+| `--device /dev/davinci_manager` | Maps the NPU device management interface. | - |
+| `--device /dev/devmm_svm` | Maps the device memory management interface. | - |
+| `--device /dev/hisi_hdc` | Maps the host-device communication interface. | - |
+| `-v /usr/local/dcmi:/usr/local/dcmi` | Mounts the tools and libraries related to the Device Container Management Interface (DCMI). | - |
+| `-v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi` | Mounts the `npu-smi` tool. | This allows you to use this tool in the container to query the NPU status and performance. |
+| `-v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/` | (Critical) Mounts the host's NPU driver libraries into the container. | - |
+| `-v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info` | Mounts the driver version information file. | - |
+| `-v /etc/ascend_install.info:/etc/ascend_install.info` | Mounts the CANN software installation information file. | - |
+| `-it` | Specifies the combination of `-i` (interactive) and `-t` (pseudo-TTY). | - |
+| `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops` | Specifies the Docker image to be run. | Ensure that the image name and tag are the same as those of the image pulled using `docker pull`. |
+| `bash` | Specifies the command to be executed immediately after the container is started. | - |
 
 ### Method 3: Manual Installation
 
@@ -125,11 +125,11 @@ You can use a project script to automate the installation of these dependencies.
 1. Download the source code.
 
     Download the branch source code that matches the CANN version. Replace \$\{tag\_version\} with the branch tag name.
-   
+
     ```bash
     git clone -b ${tag_version} https://gitcode.com/cann/opbase.git
     ```
-    
+
 2. Install dependencies.
 
     Use the project script install\_deps.sh to install the dependencies. For a system that does not support the script, adapt it based on this section.
@@ -137,6 +137,7 @@ You can use a project script to automate the installation of these dependencies.
     ```bash
     bash install_deps.sh
     ```
+
 ## Environment Verification
 
 After installing the CANN package, verify that the environment and driver are normal.

@@ -1,5 +1,5 @@
 # CHANGELOG
-   
+
 > 本文档记录各版本的重要变更，版本按时间倒序排列。
 
 ## v8.5.0-beta.1
@@ -9,7 +9,7 @@
 opbase 首个 Beta 版本 v8.5.0-beta.1 现已发布。
 本版本引入了多项新增特性、问题修复及性能改进，目前仍处于测试阶段。
 我们诚挚欢迎社区反馈，以进一步提升 opbase 的稳定性和功能完备性。
-使用方式请参阅[官方文档](https://gitcode.com/cann/opbase/blob/master/README.md)。
+使用方式请参阅[官方文档](https://gitcode.com/cann/opbase/blob/9.3.0-beta.1/README.md)。
 
 ### 🔗 版本地址
 

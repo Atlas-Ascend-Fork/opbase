@@ -76,4 +76,4 @@
 
 - [EZ0038 Invalid\_Argument](EZ0038-Invalid_Argument.md)
 
-- [EZ2001 Execution\_Error](https://gitcode.com/cann/runtime/blob/master/docs/en/error_code_ref/EZ2001-Execution_Error.md)
+- [EZ2001 Execution\_Error](https://gitcode.com/cann/runtime/blob/9.3.0-beta.1/docs/en/error_code_ref/EZ2001-Execution_Error.md)
