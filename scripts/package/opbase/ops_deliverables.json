@@ -2,7 +2,7 @@
     "version": "1.0",
     "placeholders": {
         "description": "这里的placeholders都要解析替换，如果有对应名称，则替换成对应环境的信息进行替换",
-        "socversion": "AI Core SoC 版本号",
+        "socversion": "AI Core SoC 版本号，soc为short soc",
         "os": "操作系统名字，例如：linux",
         "arch": "硬件架构名字，例如：aarch64"
     },
@@ -101,6 +101,19 @@
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-transformer/dynamic",
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-legacy/dynamic",
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-legacy"
+            ]
+        },
+        {
+            "name": "ops-info",
+            "type": "json",
+            "description": "算子信息库内容",
+            "paths": [
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-cv.json",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-math.json",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-nn.json",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-oam.json",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-transformer.json",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-legacy.json"
             ]
         }
     ]
