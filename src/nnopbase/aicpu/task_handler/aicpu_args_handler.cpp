@@ -150,7 +150,7 @@ aclnnStatus GetAttrValueFromGe(const GeAttrValue& geAttrValue, domi::tensorflow:
             std::vector<int64_t> listIntValue;
             geAttrValue.GetValue<std::vector<int64_t>>(listIntValue);
             AICPU_ASSERT_NOTNULL_RETVAL(attrValue.mutable_list());
-            for (int32_t value : listIntValue) {
+            for (const int64_t& value : listIntValue) {
                 attrValue.mutable_list()->add_i(value);
             }
             break;
