@@ -32,7 +32,7 @@ Possible causes:
 - When a single-operator API is called, aclOpExecutor reuse cannot be enabled in the following scenarios:
 
   - If L0 APIs related to host-to-device and device-to-device copy are used, such as CopyToNpu, CopyNpuToNpu, and CopyToNpuSync, aclOpExecutor cannot be reused.
-  - If the L0 ViewCopy API is used and the source address and destination address of ViewCopy are the same, aclOpExecutor cannot be reused.
+  - If the L0 ViewCopy API is used and the source address and destination address of ViewCopy are the same, aclOpExecutor cannot be reused. If an in-place scenario is declared through the `inplaceFlag` parameter (four-parameter prototype) when ViewCopy is called, the same source and destination addresses no longer affect aclOpExecutor reuse.
 
 - When a single-operator API is called, a device tensor cannot be created in the operator API. Only external tensors can be used.
 - aclOpExecutor that is set to the reusable state does not clear the executor resources after the second-phase API is executed. It needs to be used together with [aclDestroyAclOpExecutor](aclDestroyAclOpExecutor.md) to destroy the resources.
