@@ -130,6 +130,7 @@
 
     ```bash
     git clone -b ${tag_version} https://gitcode.com/cann/opbase.git
+    cd opbase
     ```
 
 2. 安装依赖。
