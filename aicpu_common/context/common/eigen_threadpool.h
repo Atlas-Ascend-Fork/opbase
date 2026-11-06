@@ -15,6 +15,7 @@
 #include <memory>
 #include <mutex>
 #define EIGEN_USE_THREADS
+#include <unsupported/Eigen/CXX11/ThreadPool>
 #include <unsupported/Eigen/CXX11/Tensor>
 
 namespace aicpu {
