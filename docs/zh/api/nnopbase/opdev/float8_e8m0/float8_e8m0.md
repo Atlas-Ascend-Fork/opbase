@@ -14,7 +14,7 @@
 | operator double() | 将Float8E8M0转换为double。 |
 | Epsilon() | 返回Float8E8M0数据类型的机器epsilon值。 |
 | Highest() | 返回Float8E8M0数据类型的最大值。 |
-| Lowest() | 返回Float8E8M0数据类型的最小正值（无符号格式，返回最小正值）。 |
+| Lowest() | 返回Float8E8M0数据类型的最小正值（无符号格式）。 |
 | MinPositive() | 返回Float8E8M0数据类型的最小正值。 |
 | IsZero() | 判断当前Float8E8M0数值是否为零。 |
 | IsNaN() | 判断当前Float8E8M0数值是否为NaN。 |
@@ -24,7 +24,7 @@
 | isnan(const Float8E8M0 &a) | 判断给定的Float8E8M0数值a是否为NaN。 |
 | isfinite(const Float8E8M0 &a) | 判断给定的Float8E8M0数值a是否为有限值。 |
 | min() | 返回Float8E8M0数据类型的最小正值。 |
-| lowest() | 返回Float8E8M0数据类型的最小正值（无符号格式，返回最小正值）。 |
+| lowest() | 返回Float8E8M0数据类型的最小正值（无符号格式）。 |
 | max() | 返回Float8E8M0数据类型的最大值。 |
 | epsilon() | 返回Float8E8M0数据类型的机器epsilon值。 |
 | round_error() | 返回Float8E8M0数据类型的最大舍入误差。 |

@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-对于满足broadcast关系（广播规则介绍参考[NumPy](https://numpy.org/doc/stable/user/basics.broadcasting.html)官网）的两个shape，推导他们broadcast后的shape。例如\[1, 10\]与\[2, 1\] broadcast后的shape为\[2, 10\]。
+对于满足broadcast关系（广播规则介绍参考[NumPy](https://numpy.org/doc/stable/user/basics.broadcasting.html)官网）的两个shape，推导它们broadcast后的shape。例如\[1, 10\]与\[2, 1\] broadcast后的shape为\[2, 10\]。
 
 ## 函数原型
 

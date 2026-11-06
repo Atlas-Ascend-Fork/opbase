@@ -25,7 +25,7 @@ bool IsEmpty()
 ## 调用示例
 
 ```cpp
-// 判断input为空tensor则return，否则获取他的数据类型
+// 判断input为空tensor则return，否则获取它的数据类型
 void Func(const aclTensor *input) {
     if (input->IsEmpty()) {
         return;

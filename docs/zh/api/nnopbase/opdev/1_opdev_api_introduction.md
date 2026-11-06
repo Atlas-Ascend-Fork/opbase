@@ -142,7 +142,7 @@
 | [Reshape](L0/Reshape.md) | 将输入tensor x的shape转换成该函数的第二个参数shape。 | aclnn_kernels/reshape.h |
 | [Slice](L0/Slice.md) | 从输入tensor中提取所需的切片。 | aclnn_kernels/slice.h |
 | [Transpose](L0/Transpose.md) | 将输入tensor x的shape按指定维度的排列顺序perm进行转置并输出。 | aclnn_kernels/transpose.h |
-| [TransData](L0/TransData.md) | j将输入tensor的format转换为指定的dstPrimaryFormat。 | aclnn_kernels/transdata.h |
+| [TransData](L0/TransData.md) | 将输入tensor的format转换为指定的dstPrimaryFormat。 | aclnn_kernels/transdata.h |
 | [TransDataSpecial](L0/TransDataSpecial.md) | 将输入tensor的format转换为指定的dstPrimaryFormat，与TransData类似。 | aclnn_kernels/transdata.h |
 | [ReFormat](L0/ReFormat.md) | 在指定format和输入x的维度相同时，将输入数据格式设置为目标format。 | aclnn_kernels/transdata.h |
 | [IsNullptr](L0/IsNullptr.md) | 判断输入的指针是否为空。| aclnn_kernels/op_error_check.h |

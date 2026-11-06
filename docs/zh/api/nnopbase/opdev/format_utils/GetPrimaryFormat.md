@@ -18,7 +18,7 @@ Format GetPrimaryFormat(Format format)
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| format | 输入 | 原始目标数据格式。 |
+| format | 输入 | 原始数据格式。 |
 
 ## 返回值说明
 

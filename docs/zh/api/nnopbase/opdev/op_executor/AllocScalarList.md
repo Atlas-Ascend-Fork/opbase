@@ -28,7 +28,7 @@ aclScalarList *AllocScalarList(const aclScalar *const *scalars, uint64_t size)
 ## 调用示例
 
 ```cpp
-// 初始化5个aclScalar，并将他们组装为一个aclScalarList
+// 初始化5个aclScalar，并将它们组装为一个aclScalarList
 void Func(aclOpExecutor *executor) {
     int64_t val = 5;
     std::vector<aclScalar *> scalars;

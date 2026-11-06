@@ -18,7 +18,7 @@ OP_OUTSHAPE(x...)
 
 ## 约束说明
 
-只支持存放一个输出tensor shape的Tensor(outShapeTensor), 其对应shape为(9\*需要刷新的tensor个数,)。每个输出tensor的shape占9位，其中第一位表示维数，剩下8位表示具体的每个维度的具体值。
+只支持存放一个输出tensor shape的Tensor(outShapeTensor), 其对应shape为(9\*需要刷新的tensor个数,)。每个输出tensor的shape占9位，其中第一位表示维数，剩下8位表示每个维度的具体值。
 
 ## 调用示例
 

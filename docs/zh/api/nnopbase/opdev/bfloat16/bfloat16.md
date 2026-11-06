@@ -29,7 +29,7 @@
 | lowest() | bfloat16数据类型的最小值。 |
 | min_positive_normal() | bfloat16数据类型最小的正数正常值。 |
 | IsZero() | 判断当前bfloat16数值是不是0。 |
-| float_isnan(const float &x) | 判断float类型数值x是不是非正常数。 |
+| float_isnan(const float &x) | 判断float类型数值x是不是非数（NaN）。 |
 | isinf(const bfloat16 &a) | 判断给定的bfloat16数值a是不是无穷大。 |
 | isnan(const bfloat16 &a) | 判断给定的bfloat16数值a是否不是一个数。 |
 | isfinite(const bfloat16 &a) | 判断给定的bfloat16数值a是否为有限值。 |

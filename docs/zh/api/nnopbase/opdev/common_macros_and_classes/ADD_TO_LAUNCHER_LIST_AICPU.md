@@ -33,6 +33,6 @@ ADD_TO_LAUNCHER_LIST_AICPU(KERNEL_NAME, attrNames, opArgs...)
 ## 调用示例
 
 ```cpp
-// 调用ADD_TO_LAUNCHER_LIST_AICPU创建IndexPut算子的执行任务，其中IndexPut是算子名，accumulate是算子的属性名，selfRef，values，masks，indices是算子输入参数，out是算子输出参数，accumulate是算子的属性参数
+// 调用ADD_TO_LAUNCHER_LIST_AICPU创建IndexPut算子的执行任务，其中IndexPut是算子名，accumulate是算子的属性名，selfRef，values，masks，indices是算子输入参数，out是算子输出参数
 ADD_TO_LAUNCHER_LIST_AICPU(IndexPut, OP_ATTR_NAMES({"accumulate"}), OP_INPUT(selfRef, values, masks, indices), OP_OUTPUT(out), OP_ATTR(accumulate));
 ```

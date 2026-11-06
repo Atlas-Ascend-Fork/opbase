@@ -14,7 +14,7 @@ template<typename to> bool CheckOverflows()
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| to | 输入 | 判断当前是aclScalar转为to表示的数据类型时，是否会溢出。 |
+| to | 输入 | 判断当前aclScalar转为to表示的数据类型时，是否会溢出。 |
 
 ## 返回值说明
 

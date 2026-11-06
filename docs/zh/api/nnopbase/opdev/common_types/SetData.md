@@ -20,7 +20,7 @@
 
 ## 参数说明
 
-> **说明**：ge::DataType介绍参见[《基础数据结构和接口参考》](https://www.hiascend.com/document/redirect/CannCommunitybasicopapi)中”ge命名空间 > DataType“。
+> **说明**：ge::DataType介绍参见[《基础数据结构和接口参考》](https://www.hiascend.com/document/redirect/CannCommunitybasicopapi)中“ge命名空间 > DataType”。
 
 - 设置指定索引处的值的接口说明
 

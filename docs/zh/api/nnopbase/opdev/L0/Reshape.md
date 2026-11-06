@@ -23,7 +23,7 @@
 
 ## 功能说明
 
-该函数不改变算子tensor数据，只是将用户传入的输入tensor x的shape转换成该函数的第二个参数shape。
+该函数不改变tensor数据，只是将用户传入的输入tensor x的shape转换成该函数的第二个参数shape。
 
 ## 函数原型
 

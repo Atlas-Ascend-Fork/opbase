@@ -46,14 +46,14 @@
 | erase(const_iterator const pos) | 删除SmallVector容器指定位置的一个元素。 |
 | erase(const_iterator const first, const_iterator const last) | 删除SmallVector容器指定范围[first, last)的元素。 |
 | push_back(const T &value) | 在SmallVector容器末尾加上一个元素。 |
-| push_back(T &&value) | 在SmallVector容器末尾加上元素value元素。 |
+| push_back(T &&value) | 在SmallVector容器末尾加上value元素。 |
 | emplace_back(Args &&...args) | 在SmallVector容器末尾插入一个元素，该元素是通过args参数直接构造出来的。 |
 | pop_back() | 删除SmallVector容器最后一个元素。 |
 | resize(const size_type count) | 调整SmallVector容器大小为count。如果count小于当前容器大小，则取前count个元素，否则在容器后面使用默认构造函数增加相应的元素。 |
 | resize(const size_type count, const T &value) | 调整SmallVector容器大小为count。如果count小于当前容器大小，则取前count个元素，否则将value复制到增加的元素中。 |
 | swap(SmallVector &other) | 将SmallVector容器的内容与other SmallVector容器的内容交换。 |
 | GetPointer(const size_type idx = 0UL) | 返回指定位置的地址。 |
-| InitStorage(const size_type size) | 初始化整个容器内存，若size小于当前容量，初始化当前容量大小的内存，若size大于当前容量，resize容器到size大小，在初始化内存。 |
+| InitStorage(const size_type size) | 初始化整个容器内存，若size小于当前容量，初始化当前容量大小的内存，若size大于当前容量，resize容器到size大小，再初始化内存。 |
 | CopyRange(T *iter, InputIt first, const InputIt last) | 拷贝[first, last)范围内存到迭代器iter位置。 |
 | MoveFrom(SmallVector &other) | 从other容器拷贝内存到当前容器。 |
 | CheckOutOfRange(const size_type index) | 检查index是否超出容器范围。 |

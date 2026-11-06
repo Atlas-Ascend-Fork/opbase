@@ -28,7 +28,7 @@ bool IsContiguous(const aclTensor *tensor)
 ## 调用示例
 
 ```cpp
-// 判断当tensor非连续时，返回。
+// 判断tensor非连续时，返回。
 void Func(aclTensor *tensor) {
     if (!IsContiguous(tensor)) {
         return;

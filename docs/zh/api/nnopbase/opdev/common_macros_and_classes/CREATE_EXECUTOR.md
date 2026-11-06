@@ -16,7 +16,7 @@ CREATE_EXECUTOR()
 
 ## 约束说明
 
-- 在使用aclOpExecutor前，必需要调用此宏创建。
+- 在使用aclOpExecutor前，需要调用此宏创建。
 - L2一阶段接口返回前，需要调用ReleaseTo将executor转移到L2接口入参的executor中。
 
 ## 调用示例
