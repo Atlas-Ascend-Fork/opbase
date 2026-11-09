@@ -25,7 +25,7 @@ const op::Strides& GetViewStrides() const
 ## 调用示例
 
 ```cpp
-// 获取input的View Stride并依次打印出每一维的stride大小
+// 获取input的ViewStride并依次打印出每一维的stride大小
 void Func(const aclTensor *input) {
     auto strides = input->GetViewStrides();
     for (int64_t stride : strides) {

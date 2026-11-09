@@ -39,7 +39,7 @@ const aclTensor *Contiguous(const aclTensor *x, aclOpExecutor *executor)
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| x | 输入 | 待转换的输入tensor。数据类型和数据格式不限制。输入不要求是连续内存，但要求所表达的数据在Storage范围内。 |
+| x | 输入 | 待转换的输入tensor。数据类型和数据格式不限制。输入不要求是连续存储，但要求所表达的数据在Storage范围内。 |
 | executor | 输入 | op执行器，包含了算子计算流程。 |
 
 ## 返回值说明

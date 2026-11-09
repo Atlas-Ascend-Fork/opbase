@@ -14,7 +14,7 @@ aclnnStatus aclDestroyBoolArray(const aclBoolArray *array)
 
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| array | 输入 | 需要销毁的aclBoolArray 。 |
+| array | 输入 | 需要销毁的aclBoolArray。 |
 
 ## 返回值说明
 

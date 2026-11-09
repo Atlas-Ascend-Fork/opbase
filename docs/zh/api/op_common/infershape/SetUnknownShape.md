@@ -14,7 +14,7 @@ void SetUnknownShape(int64_t rank, gert::Shape &shape)
 
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| rank | 输入 | 设定shape的维度。 |
+| rank | 输入 | 设置shape的维度。 |
 | shape | 输出 | shape的维度为rank，且每根轴长度都为不确定值。 |
 
 ## 返回值说明

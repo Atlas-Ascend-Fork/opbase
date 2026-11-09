@@ -32,7 +32,7 @@ aclnnStatus aclSetAclOpExecutorRepeatable(aclOpExecutor *executor)
 - 调用单算子API执行接口时，如下场景无法开启aclOpExecutor复用：
 
   - 如果使用了HostToDevice、DeviceToDevice拷贝相关的L0层API，如CopyToNpu、CopyNpuToNpu、CopyToNpuSync等，不支持aclOpExecutor复用。
-  - 如果使用了L0层ViewCopy接口，同时ViewCopy的源地址和目的地址相同时，不支持aclOpExecutor复用；如果调用ViewCopy时通过inplaceFlag参数（4参数原型）声明为原地场景，则同址不再影响aclOpExecutor复用。
+  - 如果使用了L0层ViewCopy接口，ViewCopy的源地址和目的地址相同时，不支持aclOpExecutor复用；如果调用ViewCopy时通过inplaceFlag参数（4参数原型）声明为原地场景，则同址不再影响aclOpExecutor复用。
 
 - 调用单算子API执行接口时，不允许算子API内部创建Device Tensor，只允许使用外部传入的Tensor。
 - 设置成复用状态的aclOpExecutor在第二段接口执行完后不会对executor的资源进行清理，需要和[aclDestroyAclOpExecutor](aclDestroyAclOpExecutor.md)配套使用清理资源。
@@ -60,7 +60,7 @@ aclOpExecutor *executor;
 // 调用第1段接口
 aclnnAddCustomGetWorkspaceSize(tensorList, tensor3, output, &workspaceSize, &executor);
 // 设置executor为可复用
-aclSetAclOpExecutorRepeatable(executor);  
+aclSetAclOpExecutorRepeatable(executor);
 void *addr;
 aclSetDynamicInputTensorAddr(executor, 0, 0, tensorList, addr);   // 刷新输入tensorlist中第1个aclTensor的device地址
 aclSetDynamicInputTensorAddr(executor, 0, 1, tensorList, addr);  // 刷新输入tensorlist中第2个aclTensor的device地址
@@ -68,5 +68,5 @@ aclSetDynamicInputTensorAddr(executor, 0, 1, tensorList, addr);  // 刷新输入
 // 调用第2段接口
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
 // 清理executor
-aclDestroyAclOpExecutor(executor);  
+aclDestroyAclOpExecutor(executor);
 ```

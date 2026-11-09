@@ -55,7 +55,7 @@ static inline bool IsNullptr(const aclFloatArray *floatArr, const char *name)
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| tensor | 输入 | 需要被检查的指针，支持aclTensor *、aclTensorList*、aclScalar *、aclIntArray*、aclBoolArray *、aclFloatArray*类型。 |
+| tensor | 输入 | 需要被检查的指针，支持aclTensor*、aclTensorList*、aclScalar*、aclIntArray*、aclBoolArray*、aclFloatArray*类型。 |
 | name | 输入 | 被检查的指针的一个标识，如果被检查指针为空，则打印的错误日志里会输出此标识（name）。 |
 
 ## 返回值说明

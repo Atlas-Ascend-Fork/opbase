@@ -27,7 +27,7 @@ bool IsRealNumberType(const DataType dtype)
 ## 调用示例
 
 ```cpp
-// 判断dtype不只包含实部时，返回
+// 判断dtype不包含实部时，返回
 void Func(const DataType dtype) {
     if (!IsRealNumberType(dtype)) {
         return;

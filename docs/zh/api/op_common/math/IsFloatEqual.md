@@ -20,7 +20,7 @@ auto IsFloatEqual(T a, T b) -> typename std::enable_if<std::is_floating_point<T>
 
 ## 返回值说明
 
-返回bool类型。true表示两个float或double类型数值相等；flase表示两个float或double类型数值不相等。
+返回bool类型。true表示两个float或double类型数值相等；false表示两个float或double类型数值不相等。
 
 ## 约束说明
 
