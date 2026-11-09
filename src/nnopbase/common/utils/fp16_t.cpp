@@ -987,7 +987,7 @@ fp16_t& fp16_t::operator=(const int8_t& iVal)
     sRet = (uint16_t)((((uint8_t)iVal) & 0x80) >> DIM_7);
     mRet = (uint16_t)((((uint8_t)iVal) & INT8_T_MAX));
 
-    if (mRet == 0) {
+    if (iVal == 0) {
         eRet = 0;
     } else {
         if (sRet) {                          // negative number(<0)

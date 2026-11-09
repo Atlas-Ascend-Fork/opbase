@@ -162,6 +162,22 @@ TEST_F(TestFp16, FormatToString)
     EXPECT_TRUE(fp16_t(3.2) != fp16_t(3.3));
 }
 
+TEST_F(TestFp16, AssignInt8AllValues)
+{
+    // int8_t 的每个取值都能被 fp16 精确表示；非零值的编码唯一，数值相等即保证位模式正确
+    for (int i = -128; i <= 127; ++i) {
+        const int8_t input = static_cast<int8_t>(i);
+        fp16_t value;
+        value = input;
+        EXPECT_FLOAT_EQ(value.toFloat(), static_cast<float>(i)) << "int8 input: " << i;
+    }
+
+    // 数值比较无法区分 +0 和 -0，零的符号位需单独看护
+    fp16_t zero;
+    zero = static_cast<int8_t>(0);
+    EXPECT_EQ(zero.val, 0x0000U);
+}
+
 TEST_F(TestFp16, EAGreaterThanEB)
 {
     fp16_t v1 = 16.0f;
