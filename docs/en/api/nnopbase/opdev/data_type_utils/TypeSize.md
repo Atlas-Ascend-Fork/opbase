@@ -2,7 +2,7 @@
 
 ## Function
 
-Calculates how many bytes a single element of the input data type occupies. For a data type smaller than one byte, `1000` will be added to the base bit size. For example, `Int4` will return `1004`, indicating that one element occupies 4 bits.
+Calculates how many bytes a single element of the input data type occupies. For a data type smaller than one byte, `1000` will be added to the base bit size. For example, `DT_INT4` will return `1004`, indicating that one element occupies 4 bits.
 
 ## Prototype
 

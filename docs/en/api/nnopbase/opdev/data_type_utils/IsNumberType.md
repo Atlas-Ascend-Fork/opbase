@@ -2,7 +2,7 @@
 
 ## Function
 
-Checks if the input data type is numeric.
+Checks if the input data type is numeric, including DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_QINT32, DT_QINT8, DT_QUINT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8, DT_BF16, DT_HIFLOAT8, DT_FLOAT8_E5M2, DT_FLOAT8_E4M3FN, DT_FLOAT8_E8M0, DT_FLOAT6_E3M2, DT_FLOAT6_E2M3, DT_FLOAT4_E2M1, DT_FLOAT4_E1M2, DT_HIFLOAT4, and DT_HIFLOAT4_SCALE.
 
 ## Prototype
 
@@ -14,7 +14,7 @@ bool IsNumberType(const DataType dtype)
 
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
-| dtype | Input| Input data type. It will be checked to see if it is numeric.<br>The numeric types include `Complex128`, `Complex64`, `Float64`, `Float32`, `Float16`, `Int16`, `Int32`, `Int64`, `Int8`, `QInt32`, `QInt8`, `QUInt8`, `UInt16`, `UInt32`, `UInt64`, `UInt8`, and `BFloat16`.|
+| dtype | Input| Input data type.|
 
 ## Returns
 

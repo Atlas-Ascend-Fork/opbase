@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-判断输入的数据类型是否为整数类型，包括Int8、Int16、Int32、Int64、Uint8、Uint16、Uint32、Uint64。
+判断输入的数据类型是否为整数类型，包括DT_INT8、DT_INT16、DT_INT32、DT_INT64、DT_UINT8、DT_UINT16、DT_UINT32、DT_UINT64。
 
 ## 函数原型
 

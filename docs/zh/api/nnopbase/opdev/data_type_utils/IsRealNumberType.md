@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-判断输入的数据类型，是否只包含实部数字类型。
+判断输入的数据类型是否只包含实部数字类型，包括DT_DOUBLE、DT_FLOAT、DT_FLOAT16、DT_INT16、DT_INT32、DT_INT64、DT_INT8、DT_UINT16、DT_UINT32、DT_UINT64、DT_UINT8、DT_BF16、DT_HIFLOAT8、DT_FLOAT8_E5M2、DT_FLOAT8_E4M3FN、DT_FLOAT8_E8M0、DT_FLOAT6_E3M2、DT_FLOAT6_E2M3、DT_FLOAT4_E2M1、DT_FLOAT4_E1M2、DT_HIFLOAT4、DT_HIFLOAT4_SCALE。
 
 ## 函数原型
 
@@ -14,7 +14,7 @@ bool IsRealNumberType(const DataType dtype)
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| dtype | 输入 | 输入数据类型，判断该类型是否仅包含实部。<br>实部数字类型包括：Float64、Float32、Float16、Float8_E5M2、Float8_E4M3FN、Float8_E8M0、Float6_E3M2、Float6_E2M3、Float4_E2M1、Float4_E1M2、HiFloat8、Int16、Int32、Int64、Int8、UInt16、UInt32、UInt64、UInt8、BFloat16。 |
+| dtype | 输入 | 输入的数据类型。 |
 
 ## 返回值说明
 

@@ -2,7 +2,7 @@
 
 ## Function
 
-Checks whether the input data type is a basic type.
+Checks whether the input data type is a basic type, including DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_QINT16, DT_QINT32, DT_QINT8, DT_QUINT16, DT_QUINT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8, and DT_BF16.
 
 ## Prototype
 
@@ -14,7 +14,7 @@ bool IsBasicType(const DataType dtype)
 
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
-| dtype | Input| Input data type, which is used to determine whether the data type is a basic data type.<br>The basic types include Complex128, Complex64, Float64, Float32, Float16, Int16, Int32, Int64, Int8, QInt16, QInt32, QInt8, QUInt16, QUInt8, UInt16, UInt32, UInt64, UInt8, and BFloat16.|
+| dtype | Input| Input data type.|
 
 ## Returns
 

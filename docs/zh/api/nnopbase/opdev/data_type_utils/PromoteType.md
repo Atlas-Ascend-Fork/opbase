@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-不同数据类型参数进行运算时，推导应该将类型提升到何种数据类型进行计算。例如float16与float32进行运算，应该将float16先提升至float32后再做运算。
+不同数据类型参数进行运算时，推导应该将类型提升到何种数据类型进行计算。例如DT_FLOAT16与DT_FLOAT进行运算，应该将DT_FLOAT16先提升至DT_FLOAT后再做运算。
 
 ## 函数原型
 
@@ -28,7 +28,7 @@ ge::DataType PromoteType(ge::DataType type_a, ge::DataType type_b)
 ## 调用示例
 
 ```cpp
-// 校验dtype是否可以与Float32计算，不能则提前返回
+// 校验dtype是否可以与DT_FLOAT计算，不能则提前返回
 void Func(const ge::DataType dtype) {
     if (PromoteType(dtype, DT_FLOAT) == DT_UNDEFINED) {
         return;

@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-判断输入的数据类型，是否为基础类型。
+判断输入的数据类型是否为基础类型，包括DT_COMPLEX128、DT_COMPLEX64、DT_DOUBLE、DT_FLOAT、DT_FLOAT16、DT_INT16、DT_INT32、DT_INT64、DT_INT8、DT_QINT16、DT_QINT32、DT_QINT8、DT_QUINT16、DT_QUINT8、DT_UINT16、DT_UINT32、DT_UINT64、DT_UINT8、DT_BF16。
 
 ## 函数原型
 
@@ -14,7 +14,7 @@ bool IsBasicType(const DataType dtype)
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| dtype | 输入 | 输入数据类型，判断该类型是否为基础数据类型。<br>基础类型包括：Complex128、Complex64、Float64、Float32、Float16、Int16、Int32、Int64、Int8、QInt16、QInt32、QInt8、QUInt16、QUInt8、UInt16、UInt32、UInt64、UInt8、BFloat16。 |
+| dtype | 输入 | 输入的数据类型。 |
 
 ## 返回值说明
 
