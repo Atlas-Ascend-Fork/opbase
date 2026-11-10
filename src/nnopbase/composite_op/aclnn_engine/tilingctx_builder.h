@@ -143,7 +143,7 @@ public:
                     GetThreadLocalContext().opConfigInfo_.usePcieAddr);
             OP_CHECK_NO_RETURN(
                 aclnnOpInfoRecord::OpInfoSerialize(ctx, opCompilerOpt, tilingParseCtx->GetOpKernelInfo()) == 0,
-                OP_LOGW("OpInfoSerialize return failed!"));
+                OP_LOGW("Failed to dump json from dynamic kernel!"));
         }
         return ctx;
     };

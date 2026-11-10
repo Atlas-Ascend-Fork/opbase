@@ -11,9 +11,12 @@
 #include "op_info_serialize.h"
 #include "dump/adump_pub.h"
 #include "mmpa/mmpa_api.h"
+#include <elf.h>
 #include <set>
 #include <mutex>
 #include <fstream>
+#include <string_view>
+#include <vector>
 #include "opdev/op_log.h"
 #include "opdev/op_errno.h"
 #include "opdev/platform.h"
@@ -30,6 +33,9 @@ std::set<nlohmann::json> g_opInfoStatistics;
 std::set<nlohmann::json> g_opInfoStatisticsDebug;
 std::set<nlohmann::json> g_opInfoStatisticsOpcompile;
 constexpr char FILE_TYPE_SPLIT_CHAR = '.';
+constexpr std::string_view RESOURCE_ID_SECTION_NAME = ".ascend.meta";
+constexpr uint16_t RESOURCE_ID_TLV_TYPE = 6U;
+constexpr uint16_t RESOURCE_ID_TLV_LENGTH = 64U;
 
 std::set<std::string> g_opTypeWhiteList = {
     "FlashAttentionScore",
@@ -54,9 +60,8 @@ std::set<std::string> g_opTypeWhiteList = {
     "Renorm",
 };
 
-std::set<std::string> g_opTypeBlackList = {
-    "ReduceSum", "ReduceMin", "ReduceMax", "ArgMinWithValue", "GatherV2", "ArgMaxWithValue", "Range",
-    "FusedInferAttentionScore"};
+std::set<std::string> g_opTypeBlackList = {"ReduceSum", "ReduceMin",       "ReduceMax", "ArgMinWithValue",
+                                           "GatherV2",  "ArgMaxWithValue", "Range",     "FusedInferAttentionScore"};
 
 std::set<std::string> g_opTypeBlackList950 = {"FusedInferAttentionScore"};
 
@@ -167,7 +172,8 @@ int32_t DumpJson(const std::set<nlohmann::json>& gOpInfoStatistics, const OpInfo
     return ret;
 }
 
-void AddPlatformInfoToJson(nlohmann::json& opJson, const gert::TilingContext* ctx)
+void AddPlatformInfoToJson(nlohmann::json& opJson, const gert::TilingContext* ctx,
+                           const aclnnOpInfoRecord::OpCompilerOption& opt)
 {
     auto platformInfo = ctx->GetPlatformInfo();
     if (platformInfo != nullptr) {
@@ -183,14 +189,16 @@ void AddPlatformInfoToJson(nlohmann::json& opJson, const gert::TilingContext* ct
                     opJson["platform_info"]["vector_core_cnt"].get<int32_t>());
         }
     }
+    opJson["platform_info"]["pcie_through_flag"] = opt.enablePcie;
 }
 
-void AddJsonToOpInfoCompile(const nlohmann::json& opJson)
+void DumpJsonToOpInfoCompile(const nlohmann::json& opJson)
 {
     static op::SocVersion socVersion = op::GetCurrentPlatformInfo().GetSocVersion();
-    const std::set<std::string>& blackList =
-        (socVersion != op::SocVersion::ASCEND910B && socVersion != op::SocVersion::ASCEND910_93) ?
-        g_opTypeBlackList950 : g_opTypeBlackList;
+    const std::set<std::string>& blackList = (socVersion != op::SocVersion::ASCEND910B &&
+                                              socVersion != op::SocVersion::ASCEND910_93) ?
+                                                 g_opTypeBlackList950 :
+                                                 g_opTypeBlackList;
     if (blackList.find(opJson["op_type"]) == blackList.cend()) {
         g_opInfoStatisticsOpcompile.emplace(opJson);
     } else {
@@ -198,7 +206,7 @@ void AddJsonToOpInfoCompile(const nlohmann::json& opJson)
     }
 }
 
-void AddJsonToOpInfo(const nlohmann::json& opJson)
+void DumpJsonToOpInfo(const nlohmann::json& opJson)
 {
     if (g_opTypeWhiteList.find(opJson["op_type"]) == g_opTypeWhiteList.cend()) {
         OP_LOGD("TilingContextToJson node type[%s] not in white list!", opJson["op_type"].get<std::string>().c_str());
@@ -207,49 +215,172 @@ void AddJsonToOpInfo(const nlohmann::json& opJson)
     }
 }
 
-void AddJsonToOpInfoDebug(const nlohmann::json& opJson) { g_opInfoStatisticsDebug.emplace(opJson); }
+void DumpJsonToOpInfoDebug(const nlohmann::json& opJson) { g_opInfoStatisticsDebug.emplace(opJson); }
 
-void AddTilingResultToJson(nlohmann::json& opJson, gert::TilingContext* ctx,
-                           const aclnnOpInfoRecord::RuntimeInfo* runtimeInfo)
+bool ReadElfHeaderAndNameTable(const void* const elfBytes, const size_t elfSize, Elf64_Ehdr& header, Elf64_Shdr& names,
+                               const char*& nameData)
 {
-    if (runtimeInfo == nullptr) {
-        return;
+    if (elfBytes == nullptr || elfSize < sizeof(header)) {
+        OP_LOGW("Cannot read resource id: image is null or smaller than an ELF64 header");
+        return false;
     }
-    std::string tilingDataHex;
-    const auto rawTilingData = ctx->GetRawTilingData();
-    if (rawTilingData != nullptr && rawTilingData->GetData() != nullptr) {
-        static constexpr char HEX_CHARS[] = "0123456789abcdef";
-        const auto* p = static_cast<const uint8_t*>(rawTilingData->GetData());
-        tilingDataHex.reserve(rawTilingData->GetDataSize() * 2U);
-        for (size_t i = 0U; i < rawTilingData->GetDataSize(); i++) {
-            tilingDataHex.push_back(HEX_CHARS[p[i] >> 4U]);
-            tilingDataHex.push_back(HEX_CHARS[p[i] & 0x0FU]);
-        }
+    const auto* const bytes = static_cast<const unsigned char*>(elfBytes);
+    const auto containsRange = [elfSize](const uint64_t offset, const uint64_t length) {
+        return offset <= elfSize && length <= elfSize - offset;
+    };
+    if (memcpy_s(&header, sizeof(header), bytes, sizeof(header)) != EOK) {
+        OP_LOGW("Cannot read resource id: the ELF header could not be copied");
+        return false;
     }
-    opJson["tiling_data"] = tilingDataHex;
-    opJson["tiling_key"] = std::to_string(ctx->GetTilingKey());
-    opJson["block_dim"] = std::to_string(ctx->GetSimdNumBlocks());
-    const size_t wsNum = ctx->GetWorkspaceNum();
-    std::string workspaceBytes;
-    const size_t* wsSizes = ctx->GetWorkspaceSizes(wsNum);
-    if (wsSizes != nullptr) {
-        for (size_t i = 0U; i < wsNum; i++) {
-            workspaceBytes += std::to_string(wsSizes[i]);
-            workspaceBytes += " ";
-        }
+    if (std::memcmp(header.e_ident, ELFMAG, SELFMAG) != 0 || header.e_ident[EI_CLASS] != ELFCLASS64 ||
+        header.e_ident[EI_DATA] != ELFDATA2LSB || header.e_ident[EI_VERSION] != EV_CURRENT ||
+        header.e_version != EV_CURRENT || header.e_ehsize != sizeof(header) ||
+        header.e_shentsize != sizeof(Elf64_Shdr) || header.e_shnum == 0U || header.e_shstrndx == SHN_UNDEF ||
+        header.e_shstrndx >= header.e_shnum || header.e_shoff < sizeof(header) ||
+        !containsRange(header.e_shoff, static_cast<uint64_t>(header.e_shnum) * sizeof(Elf64_Shdr))) {
+        OP_LOGW("Cannot read resource id: not a little-endian ELF64 object with a usable section table");
+        return false;
     }
-    opJson["workspace_bytes"] = workspaceBytes;
-    opJson["clear_atomic"] = ctx->NeedAtomic();
-    opJson["schedule_mode"] = ctx->GetScheduleMode();
-    opJson["local_memory_size"] = ctx->GetDynUBufSize();
-    opJson["aicpu_block_dim"] = ctx->GetAicpuNumBlocks();
-    opJson["tiling_cond"] = ctx->GetTilingCond();
-    if (!runtimeInfo->kernelName.empty()) {
-        opJson["kernel_name"] = runtimeInfo->kernelName;
+    const auto* const source = bytes + header.e_shoff + header.e_shstrndx * sizeof(names);
+    if (memcpy_s(&names, sizeof(names), source, sizeof(names)) != EOK) {
+        OP_LOGW("Cannot read resource id: the section name table could not be copied");
+        return false;
     }
-    opJson["tiling_args_index"] = runtimeInfo->tilingArgsIndex;
+    if (names.sh_type != SHT_STRTAB || !containsRange(names.sh_offset, names.sh_size)) {
+        OP_LOGW("Cannot read resource id: section name table is not a readable string table");
+        return false;
+    }
+    nameData = reinterpret_cast<const char*>(bytes + names.sh_offset);
+    return true;
 }
 
+bool ParseResourceId(const unsigned char* const data, const size_t sectionSize, std::string_view& found)
+{
+    size_t offset = 0U;
+    while (offset < sectionSize) {
+        if (sectionSize - offset < sizeof(uint16_t) * 2U) {
+            OP_LOGW("Cannot read resource id: trailing bytes are too short for a TLV head");
+            return false;
+        }
+        uint16_t type = 0U;
+        uint16_t length = 0U;
+        if (memcpy_s(&type, sizeof(type), data + offset, sizeof(type)) != EOK ||
+            memcpy_s(&length, sizeof(length), data + offset + sizeof(type), sizeof(length)) != EOK) {
+            OP_LOGW("Cannot read resource id: a TLV head could not be copied");
+            return false;
+        }
+        offset += sizeof(type) + sizeof(length);
+        if (length > sectionSize - offset) {
+            OP_LOGW("Cannot read resource id: a TLV value runs past the end of .ascend.meta");
+            return false;
+        }
+        if (type == RESOURCE_ID_TLV_TYPE) {
+            if (!found.empty()) {
+                OP_LOGW("Cannot read resource id: more than one resource id entry");
+                return false;
+            }
+            if (length != RESOURCE_ID_TLV_LENGTH) {
+                OP_LOGW("Cannot read resource id: resource id entry has an unexpected length");
+                return false;
+            }
+            const std::string_view value(reinterpret_cast<const char*>(data + offset), length);
+            const bool isValidHex = std::all_of(value.begin(), value.end(), [](const char digit) {
+                return (digit >= '0' && digit <= '9') || (digit >= 'a' && digit <= 'f');
+            });
+            if (!isValidHex) {
+                OP_LOGW("Cannot read resource id: resource id is not lowercase hexadecimal");
+                return false;
+            }
+            found = value;
+        }
+        offset += length;
+    }
+    return true;
+}
+
+bool ReadResourceId(const void* const elfBytes, const size_t elfSize, std::string& resourceId)
+{
+    Elf64_Ehdr header = {};
+    Elf64_Shdr names = {};
+    const char* nameData = nullptr;
+    if (!ReadElfHeaderAndNameTable(elfBytes, elfSize, header, names, nameData)) {
+        return false;
+    }
+    const auto* const bytes = static_cast<const unsigned char*>(elfBytes);
+    const auto readSection = [&](const size_t index, Elf64_Shdr& section) {
+        const auto* const source = bytes + header.e_shoff + index * sizeof(section);
+        return memcpy_s(&section, sizeof(section), source, sizeof(section)) == EOK;
+    };
+    std::string_view found;
+    for (size_t index = 0U; index < header.e_shnum; ++index) {
+        Elf64_Shdr section = {};
+        if (!readSection(index, section)) {
+            OP_LOGW("Cannot read resource id: a section header could not be copied");
+            return false;
+        }
+        if (section.sh_type == SHT_NULL || section.sh_type == SHT_NOBITS || section.sh_name >= names.sh_size) {
+            continue;
+        }
+        const char* const name = nameData + section.sh_name;
+        const auto* const end = static_cast<const char*>(std::memchr(name, '\0', names.sh_size - section.sh_name));
+        if (end == nullptr || std::string_view(name, end - name) != RESOURCE_ID_SECTION_NAME) {
+            continue;
+        }
+        if ((section.sh_type != SHT_NOTE && section.sh_type != SHT_PROGBITS) || section.sh_offset > elfSize ||
+            section.sh_size > elfSize - section.sh_offset) {
+            OP_LOGW("Cannot read resource id: section .ascend.meta is not readable metadata");
+            return false;
+        }
+        if (!ParseResourceId(bytes + section.sh_offset, section.sh_size, found)) {
+            return false;
+        }
+    }
+    if (found.empty()) {
+        OP_LOGI("No resource id: section=%s type=%u", std::string(RESOURCE_ID_SECTION_NAME).c_str(),
+                static_cast<unsigned int>(RESOURCE_ID_TLV_TYPE));
+        return false;
+    }
+    resourceId.assign(found);
+    return true;
+}
+
+std::string ReadBinId(const std::string& binPath)
+{
+    std::ifstream binFile(binPath, std::ios::binary | std::ios::ate);
+    if (!binFile.is_open()) {
+        OP_LOGW("Cannot read bin id: failed to open binary file %s", binPath.c_str());
+        return "";
+    }
+    const std::streamoff fileSize = binFile.tellg();
+    if (fileSize < 0 || static_cast<uint64_t>(fileSize) > std::numeric_limits<size_t>::max()) {
+        OP_LOGW("Cannot read bin id: binary file %s has an invalid size", binPath.c_str());
+        return "";
+    }
+    std::string binBytes(static_cast<size_t>(fileSize), '\0');
+    binFile.seekg(0U, std::ios::beg);
+    binFile.read(binBytes.data(), static_cast<std::streamsize>(binBytes.size()));
+    if (binFile.fail() && !binFile.eof()) {
+        OP_LOGW("Cannot read bin id: failed to read binary file %s", binPath.c_str());
+        return "";
+    }
+    std::string binId;
+    return ReadResourceId(binBytes.data(), binBytes.size(), binId) ? binId : "";
+}
+
+void AddOpInfoToJson(nlohmann::json& opJson, const aclnnOpInfoRecord::OpCompilerOption& opt,
+                     const aclnnOpInfoRecord::OpKernelInfo* kernelInfo,
+                     const aclnnOpInfoRecord::RuntimeInfo* runtimeInfo)
+{
+    opJson["impl_mode"] = opt.impl_mode;
+    opJson["deterministic"] = (opt.deterministic == 0U) ? "false" : "true";
+    opJson["deterministic_level"] = opt.deterministic;
+    opJson["bin_id"] = ReadBinId(kernelInfo->bin_info);
+    opJson["bin_type"] = kernelInfo->bin_type;
+    if (runtimeInfo != nullptr) {
+        opJson["kernel_name"] = runtimeInfo->kernelName;
+        opJson["tiling_args_index"] = runtimeInfo->tilingArgsIndex;
+    }
+}
 } // namespace
 
 int32_t OpInfoDump(void)
@@ -273,7 +404,7 @@ int32_t OpInfoDump(void)
  * @param [in] ctx: TilingContext
  * @return int32_t: 0 == SUCCESS, others is FAILED
  */
-int32_t OpInfoSerialize(const gert::TilingContext* ctx, const aclnnOpInfoRecord::OpCompilerOption& opt,
+int32_t OpInfoSerialize(gert::TilingContext* ctx, const aclnnOpInfoRecord::OpCompilerOption& opt,
                         const aclnnOpInfoRecord::OpKernelInfo* kernelInfo,
                         const aclnnOpInfoRecord::RuntimeInfo* runtimeInfo)
 {
@@ -301,23 +432,19 @@ int32_t OpInfoSerialize(const gert::TilingContext* ctx, const aclnnOpInfoRecord:
             OP_LOGE(ACLNN_ERR_INNER, "Json %s does not contain supportInfo keyword.", builtInJsonPath.c_str());
             return -1;
         }
+        bool needTilingResult = runtimeInfo != nullptr;
         nlohmann::json jsonDebug = TilingContextToJson(ctx, iniConfigMap, builtInJsonConfig["supportInfo"],
-                                                       kernelInfo->isMc2);
+                                                       kernelInfo->isMc2, needTilingResult);
         if (jsonDebug.is_null()) {
             return 0;
         }
-        AddPlatformInfoToJson(jsonDebug, ctx);
-        jsonDebug["platform_info"]["pcie_through_flag"] = opt.enablePcie;
-        jsonDebug["impl_mode"] = opt.impl_mode;
-        jsonDebug["deterministic"] = (opt.deterministic == 0U) ? "false" : "true";
-        jsonDebug["deterministic_level"] = opt.deterministic;
-        AddTilingResultToJson(jsonDebug, const_cast<gert::TilingContext*>(ctx), runtimeInfo);
+        AddPlatformInfoToJson(jsonDebug, ctx, opt);
+        AddOpInfoToJson(jsonDebug, opt, kernelInfo, runtimeInfo);
         std::lock_guard<std::mutex> lck(g_opInfoStatisticsLck);
-        AddJsonToOpInfoCompile(jsonDebug); // dump json for compile, not needed "bin_type" and "bin_info"
-        jsonDebug["bin_type"] = kernelInfo->bin_type;
+        DumpJsonToOpInfoCompile(jsonDebug);
         jsonDebug["bin_info"] = kernelInfo->bin_info;
-        AddJsonToOpInfo(jsonDebug);
-        AddJsonToOpInfoDebug(jsonDebug);
+        DumpJsonToOpInfo(jsonDebug);
+        DumpJsonToOpInfoDebug(jsonDebug);
     } catch (nlohmann::json::exception& e) {
         OP_LOGE(ACLNN_ERR_INNER, "OpInfoSerialize json exception:%s!", e.what());
         return -1;

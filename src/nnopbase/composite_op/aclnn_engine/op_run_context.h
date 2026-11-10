@@ -252,7 +252,8 @@ public:
             OP_LOGI("Call OpInfoSerialize, deterministic level %d, impl mode %s. kernel info %d %s, enablePcie %d.",
                     opCompilerOpt.deterministic, opCompilerOpt.impl_mode.c_str(), kernelInfo.bin_type,
                     kernelInfo.bin_info.c_str(), GetThreadLocalContext().opConfigInfo_.usePcieAddr);
-            (void)ctx;
+            OP_CHECK_NO_RETURN(aclnnOpInfoRecord::OpInfoSerialize(ctx, opCompilerOpt, &kernelInfo, nullptr) == 0,
+                               OP_LOGW("Failed to dump json from static kernel!"));
         }
     }
 

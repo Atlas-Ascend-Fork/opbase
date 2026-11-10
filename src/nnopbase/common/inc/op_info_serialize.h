@@ -50,7 +50,7 @@ struct RuntimeInfo {
  * @param [in] runtimeInfo: 运行时信息
  * @return int32_t: 0 == SUCCESS, others is FAILED
  */
-int32_t OpInfoSerialize(const gert::TilingContext* ctx, const aclnnOpInfoRecord::OpCompilerOption& opt,
+int32_t OpInfoSerialize(gert::TilingContext* ctx, const aclnnOpInfoRecord::OpCompilerOption& opt,
                         const aclnnOpInfoRecord::OpKernelInfo* kernelInfo = nullptr,
                         const aclnnOpInfoRecord::RuntimeInfo* runtimeInfo = nullptr);
 

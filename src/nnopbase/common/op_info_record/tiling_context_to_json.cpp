@@ -563,11 +563,43 @@ void AddExtraInfoToOpJson(nlohmann::json& opJson, const nlohmann::json& attrs)
     opJson["extra_params"] = topoInfosJson;
     return;
 }
+
+void AddTilingResultToJson(nlohmann::json& opJson, gert::TilingContext* ctx)
+{
+    std::string tilingDataHex;
+    const auto rawTilingData = ctx->GetRawTilingData();
+    if (rawTilingData != nullptr && rawTilingData->GetData() != nullptr) {
+        static constexpr char HEX_CHARS[] = "0123456789abcdef";
+        const auto* p = static_cast<const uint8_t*>(rawTilingData->GetData());
+        tilingDataHex.reserve(rawTilingData->GetDataSize() * 2U);
+        for (size_t i = 0U; i < rawTilingData->GetDataSize(); i++) {
+            tilingDataHex.push_back(HEX_CHARS[p[i] >> 4U]);
+            tilingDataHex.push_back(HEX_CHARS[p[i] & 0x0FU]);
+        }
+    }
+    opJson["tiling_data"] = tilingDataHex;
+    opJson["tiling_key"] = std::to_string(ctx->GetTilingKey());
+    opJson["block_dim"] = std::to_string(ctx->GetSimdNumBlocks());
+    const size_t wsNum = ctx->GetWorkspaceNum();
+    std::string workspaceBytes;
+    const size_t* wsSizes = ctx->GetWorkspaceSizes(wsNum);
+    if (wsSizes != nullptr) {
+        for (size_t i = 0U; i < wsNum; i++) {
+            workspaceBytes += std::to_string(wsSizes[i]);
+            workspaceBytes += " ";
+        }
+    }
+    opJson["workspace_bytes"] = workspaceBytes;
+    opJson["clear_atomic"] = ctx->NeedAtomic();
+    opJson["schedule_mode"] = ctx->GetScheduleMode();
+    opJson["local_memory_size"] = ctx->GetDynUBufSize();
+    opJson["aicpu_block_dim"] = ctx->GetAicpuNumBlocks();
+    opJson["tiling_cond"] = ctx->GetTilingCond();
+}
 } // namespace
 
-nlohmann::json TilingContextToJson(const gert::TilingContext* ctx,
-                                   const std::map<std::string, std::string>& iniConfigMap,
-                                   const nlohmann::json& supportInfoJsonConfig, bool isMc2)
+nlohmann::json TilingContextToJson(gert::TilingContext* ctx, const std::map<std::string, std::string>& iniConfigMap,
+                                   const nlohmann::json& supportInfoJsonConfig, bool isMc2, bool needTilingResult)
 {
     const auto computeNodeInfo = ctx->GetComputeNodeInfo();
     nlohmann::json nullJ(nullptr);
@@ -603,6 +635,9 @@ nlohmann::json TilingContextToJson(const gert::TilingContext* ctx,
     opJson["attrs"] = attrs;
     if (isMc2) {
         AddExtraInfoToOpJson(opJson, attrs);
+    }
+    if (needTilingResult) {
+        AddTilingResultToJson(opJson, ctx);
     }
     return opJson;
 }

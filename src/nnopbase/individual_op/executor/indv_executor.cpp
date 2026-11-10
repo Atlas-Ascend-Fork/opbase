@@ -1166,32 +1166,31 @@ aclnnStatus NnopbaseExecutorRunForWorkspace(NnopbaseExecutor* executor, uint64_t
 
 static inline aclnnStatus NnopbaseDumpNodeInfo(NnopbaseExecutor* executor)
 {
-    OP_LOGI("Start dump node info for operator %s", executor->opType);
+    OP_LOGI("Start dump node info for operator %s.", executor->opType);
     // 支持非Mc2算子或者通信模式为AICORE的Mc2算子落盘
     bool isOpSupportDump = (!executor->mc2.enabled) ||
                            (executor->mc2.enabled &&
                             (executor->mc2.serverType == NnopbaseHcclServerType::NNOPBASE_HCCL_SERVER_TYPE_MTE));
     if (op::internal::opProfilingSwitch.recordOpArgFlag && isOpSupportDump) {
+        int8_t binType = 1; // 1 for dynamic, 0 for static
+        aclnnOpInfoRecord::RuntimeInfo runtimeInfo;
+        runtimeInfo.kernelName = executor->args->binInfo->kernelName + "_" +
+                                 std::to_string(executor->args->tilingInfo.tilingKey);
+        runtimeInfo.tilingArgsIndex = executor->hasTiling ?
+                                          static_cast<int64_t>(executor->argsExt.tilingAddrOffset / sizeof(void*)) :
+                                          -1;
         if (executor->args->binInfo->isStaticShape) {
-            OP_LOGD("Static op %s does not need to dump node info.", executor->opType);
-            return OK;
+            OP_CHECK(NnopbaseTilingContextBuild(executor) == OK,
+                     OP_LOGW("Failed to build tiling context for static kernel!"), return OK);
+            binType = 0;
+            runtimeInfo.kernelName = executor->args->binInfo->kernelName;
         }
-        constexpr int8_t binType = 1;
         OP_LOGD("Dump node info, op type[%s] bin path %s, bin type %d.", executor->opType,
                 executor->args->binInfo->binPath.c_str(), binType);
         executor->dfx.opKernelInfo = aclnnOpInfoRecord::OpKernelInfo(executor->args->binInfo->binPath, binType);
         executor->dfx.opKernelInfo.isMc2 = executor->mc2.enabled;
-        aclnnOpInfoRecord::RuntimeInfo runtimeInfo;
-        if (!executor->args->binInfo->kernelName.empty()) {
-            // ELF入口符号名 = kernelName + '_' + tilingKey
-            runtimeInfo.kernelName = executor->args->binInfo->kernelName + "_" +
-                                     std::to_string(executor->args->tilingInfo.tilingKey);
-        }
-        runtimeInfo.tilingArgsIndex = executor->hasTiling ?
-                                          static_cast<int64_t>(executor->argsExt.tilingAddrOffset / sizeof(void*)) :
-                                          -1;
         aclnnOpInfoRecord::OpInfoSerialize(
-            op::internal::PtrCastTo<const gert::TilingContext>(executor->tiling.contextExt.context),
+            op::internal::PtrCastTo<gert::TilingContext>(executor->tiling.contextExt.context),
             aclnnOpInfoRecord::OpCompilerOption(g_nnopbaseSysCfgParams.implMode, executor->deterministicLevel,
                                                 executor->isEnablePcie),
             &executor->dfx.opKernelInfo, &runtimeInfo);
