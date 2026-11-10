@@ -225,7 +225,11 @@ struct Sin : public ElemwiseUnaryOP<T, T, 0, 0, true> {
     __aicore__ inline Sin(LocalTensor<T>& dst, LocalTensor<T>& src, int count)
     {
 #ifdef __CCE_AICORE__
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 5162)
+        static constexpr AscendC::SinConfig config = {AscendC::SinAlgo::POLYNOMIAL_APPROXIMATION};
+#else
         static constexpr AscendC::SinConfig config = {AscendC::SinAlgo::RADIAN_REDUCTION};
+#endif
         AscendC::Sin<T, false, config>(dst, src, count);
 #endif
     }
@@ -236,7 +240,11 @@ struct Cos : public ElemwiseUnaryOP<T, T, 0, 0, true> {
     __aicore__ inline Cos(LocalTensor<T>& dst, LocalTensor<T>& src, int count)
     {
 #ifdef __CCE_AICORE__
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 5162)
+        static constexpr AscendC::CosConfig config = {AscendC::CosAlgo::POLYNOMIAL_APPROXIMATION};
+#else
         static constexpr AscendC::CosConfig config = {AscendC::CosAlgo::RADIAN_REDUCTION};
+#endif
         AscendC::Cos<T, false, config>(dst, src, count);
 #endif
     }
