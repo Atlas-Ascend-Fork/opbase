@@ -233,7 +233,8 @@ TEST_F(NnopbaseIndvArgsTest, AppendOomStorageShapeRecordsForMixedInputs)
     NnopbaseExecutorArgsAddr argsAddr{nullptr, nullptr, launchBuf_.data(), nullptr, nullptr};
 
     ASSERT_EQ(NnopbaseExecutorArgsGetDfxInfo(&executor_, &argsAddr, 1U, nullptr), OK);
-    const auto* extension = launchBuf_.data() + 32U;
+    const size_t exceptionDumpSize = op::internal::IsArgExceptionDumpEnable() ? sizeof(uint64_t) : 0U;
+    const auto* extension = launchBuf_.data() + 32U + exceptionDumpSize;
     EXPECT_EQ(extension[0U], 0x4FU);
     EXPECT_EQ(extension[1U], 0x01U);
 
@@ -277,7 +278,6 @@ TEST_F(NnopbaseIndvArgsTest, AppendOomStorageShapeRecordsForMixedInputs)
     // view连续（strides {2,1}标准）但storage [2,5]超配：按view登记（4），与legacy路径边界一致
     EXPECT_EQ(listStorageSize1, 4U);
 
-    const size_t exceptionDumpSize = op::internal::IsArgExceptionDumpEnable() ? sizeof(uint64_t) : 0U;
     EXPECT_EQ(argsAddr.ptr, launchBuf_.data() + 104U + exceptionDumpSize);
     aclDestroyTensor(contiguousTensor);
     aclDestroyTensor(nonContiguousTensor);
@@ -319,8 +319,9 @@ TEST_F(NnopbaseIndvArgsTest, RefreshCachedStorageShapeBeforeOomSerialization)
 
     NnopbaseExecutorArgsAddr argsAddr{nullptr, nullptr, launchBuf_.data(), nullptr, nullptr};
     ASSERT_EQ(NnopbaseExecutorArgsGetDfxInfo(&executor_, &argsAddr, 1U, nullptr), OK);
+    const size_t exceptionDumpSize2 = op::internal::IsArgExceptionDumpEnable() ? sizeof(uint64_t) : 0U;
     uint64_t storageShapeSize = 0U;
-    std::memcpy(&storageShapeSize, launchBuf_.data() + 29U, sizeof(storageShapeSize));
+    std::memcpy(&storageShapeSize, launchBuf_.data() + 29U + exceptionDumpSize2, sizeof(storageShapeSize));
     EXPECT_EQ(storageShapeSize, 8U);
 
     aclDestroyTensor(tensor);

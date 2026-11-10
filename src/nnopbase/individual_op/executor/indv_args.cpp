@@ -356,9 +356,6 @@ aclnnStatus NnopbaseExecutorArgsGetDfxInfo(NnopbaseExecutor* const executor, Nno
                    ACLNN_ERR_PARAM_INVALID, "Failed to execute memcpy_s oom info, src is %p, dst is %p, size is %u.",
                    argsAddr->ptr, executor->args->dfxInfo.data(), oomSize);
         argsAddr->ptr += oomSize;
-        if (executor->args->binInfo->oomConfig.storageShapeEnabled) {
-            NNOPBASE_ASSERT_OK_RETVAL(NnopbaseAppendOomStorageShapeExt(executor, argsAddr));
-        }
     }
     if (op::internal::IsArgExceptionDumpEnable()) {
         uint64_t atomicIndex = 0U;
@@ -377,6 +374,10 @@ aclnnStatus NnopbaseExecutorArgsGetDfxInfo(NnopbaseExecutor* const executor, Nno
                    "Failed to execute memcpy_s dfx info, exceptionDumpAddr is %p, dfx Info addr is %p, size is %zu.",
                    exceptionDumpAddr, executor->args->dfxInfo.data(),
                    executor->args->dfxInfo.size() * sizeof(uint64_t));
+    }
+    if (executor->args->binInfo->oomConfig.flag &&
+        executor->args->binInfo->oomConfig.storageShapeEnabled) {
+        NNOPBASE_ASSERT_OK_RETVAL(NnopbaseAppendOomStorageShapeExt(executor, argsAddr));
     }
     return OK;
 }
@@ -404,6 +405,8 @@ size_t NnopbaseGetOomInfoExtMaxSize(const NnopbaseExecutor* const executor)
         } else if (instance.tensorList != nullptr) {
             size += NNOPBASE_OOM_STORAGE_SHAPE_TENSOR_LIST_HEADER_SIZE +
                     static_cast<size_t>(instance.tensorList->Size()) * NNOPBASE_OOM_STORAGE_SHAPE_DESC_SIZE;
+        } else {
+            size += NNOPBASE_OOM_STORAGE_SHAPE_TENSOR_SIZE;
         }
     }
     if (size != 0U) {
