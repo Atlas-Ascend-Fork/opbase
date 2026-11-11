@@ -1261,6 +1261,8 @@ void ReduceOpTiling::CalcUserWorkSpace()
         auto platformInfo = context_->GetPlatformInfo();
         auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
         sysWorkSpaceSize = ascendcPlatform.GetLibApiWorkSpaceSize();
+    } else {
+        sysWorkSpaceSize = 32; // normal场景分配32Bworkspace，防止算子kernel入口返回空指针
     }
     workspaces[0] = sysWorkSpaceSize + workSpaceSize_;
 }
