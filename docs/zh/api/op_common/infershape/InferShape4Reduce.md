@@ -21,23 +21,24 @@ ge::graphStatus InferShape4Reduce(gert::InferShapeContext *context)
 返回类型为ge::graphStatus：
 
 - ge::GRAPH\_SUCCESS：InferShape成功。
-- ge::GRAPH\_FAIL：InferShape失败。
+- ge::GRAPH\_FAILED：InferShape失败。
 
 ## 约束说明
 
-无
+- 第0个输入为待归约张量，第1个输入为归约轴张量，轴数据类型为int32或int64。
+- 第0个属性为bool类型的keep_dims。
+- 仅适用于满足上述输入和属性布局的Reduce类算子；IsFinite等形状不变的逐元素算子应使用InferShape4Elewise。
 
 ## 调用示例
 
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// IsFinite算子进行inferShape推导，其推导过程与Reduce算子推导过程一致，可直接复用
-ge::graphStatus InferShape4IsFinite(gert::InferShapeContext* context)
+// ReduceSum的输入为x、axes，第0个属性为keep_dims时，可复用Reduce形状推导。
+ge::graphStatus InferShape4ReduceSum(gert::InferShapeContext* context)
 {
     return Ops::Base::InferShape4Reduce(context);
 }
-// IsFinite算子及其推导函数注册到GE
-IMPL_OP_INFERSHAPE(IsFinite).InferShape(InferShape4IsFinite);
-}
+// 将ReduceSum算子及其形状推导函数注册到GE。
+IMPL_OP_INFERSHAPE(ReduceSum).InferShape(InferShape4ReduceSum);
 ```
