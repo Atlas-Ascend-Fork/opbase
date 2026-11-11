@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-图模式场景下，broadcast类算子的InferShape方法（用于推导输出张量的形状shape）。支持单输入和多输入两种重载。
+图模式场景下，broadcast类算子的InferShape方法（用于推导输出张量的形状shape）。不带inputNum的重载固定使用前两个输入；另一重载使用inputNum指定输入个数。
 
 ## 函数原型
 
@@ -19,7 +19,7 @@ ge::graphStatus InferShape4Broadcast(gert::InferShapeContext* context, size_t in
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | context | 输入 | GE传入的InferShape上下文。 |
-| inputNum | 输入 | 参与broadcast的输入个数，用于多输入场景。 |
+| inputNum | 输入 | 参与broadcast的输入个数，需大于等于1。 |
 
 ## 返回值说明
 
@@ -37,12 +37,12 @@ ge::graphStatus InferShape4Broadcast(gert::InferShapeContext* context, size_t in
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 单输入场景：IsFinite算子进行inferShape推导，其推导过程与Broadcast算子推导过程一致，可直接复用
-ge::graphStatus InferShape4IsFinite(gert::InferShapeContext* context)
+// 双输入场景：Add算子按broadcast规则推导输出shape
+ge::graphStatus InferShape4Add(gert::InferShapeContext* context)
 {
     return Ops::Base::InferShape4Broadcast(context);
 }
-IMPL_OP_INFERSHAPE(IsFinite).InferShape(InferShape4IsFinite);
+IMPL_OP_INFERSHAPE(Add).InferShape(InferShape4Add);
 
 // 多输入场景：多输入broadcast类算子
 ge::graphStatus InferShape4MyOp(gert::InferShapeContext* context)

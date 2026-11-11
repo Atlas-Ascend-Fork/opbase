@@ -22,7 +22,7 @@
 namespace Ops {
 namespace Base {
 
-// Do infershape for OP which is single-input single-output and in-shape equal out-shape.
+// Do infershape for two-input single-output broadcast operators.
 OPBASE_API ge::graphStatus InferShape4Broadcast(gert::InferShapeContext* context);
 
 // Do infershape for OP which is multi-input single-output.
