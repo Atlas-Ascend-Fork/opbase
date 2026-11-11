@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@ logging_error() {
   echo "[ERROR] $@"
 }
 
-# lcov >= 2.0 is strict about several conditions that older versions tolerated.
-# Provide a single ignore set so coverage generation is robust across versions.
-LCOV_IGNORE_ERRORS="--ignore-errors mismatch,inconsistent,empty,negative"
+# lcov >= 2.0 accepts additional error categories; select them after checking its version.
+LCOV_IGNORE_ERRORS=()
 
 mk_dir() {
   local create_dir="$1"
@@ -52,13 +51,19 @@ generate_coverage() {
     exit 1
   fi
 
+  local lcov_version
+  lcov_version="$(lcov --version)"
+  if [[ "${lcov_version}" =~ version[[:space:]]+([0-9]+)\. ]] && (( BASH_REMATCH[1] >= 2 )); then
+    LCOV_IGNORE_ERRORS=(--ignore-errors mismatch,inconsistent,empty,negative)
+  fi
+
   local _path_to_gen="$(dirname -- "${_coverage_file}")"
   if [[ ! -d "${_path_to_gen}" ]]; then
     mk_dir "${_path_to_gen}"
   fi
 
-  lcov -c -d "${_source_dir}" -o "${_coverage_file}" ${LCOV_IGNORE_ERRORS}
-  lcov ${LCOV_IGNORE_ERRORS} -r "${_coverage_file}" "${ASCEND_PARENT_PATH}/*" -o "${_coverage_file}"
+  lcov -c -d "${_source_dir}" -o "${_coverage_file}" "${LCOV_IGNORE_ERRORS[@]}"
+  lcov "${LCOV_IGNORE_ERRORS[@]}" -r "${_coverage_file}" "${ASCEND_PARENT_PATH}/*" -o "${_coverage_file}"
   logging "generated coverage file ${_coverage_file}"
 }
 
@@ -81,7 +86,7 @@ filter_coverage() {
   lcov --remove "${_coverage_file}" '${ASCEND_PARENT_PATH}/*'\
                                     '/usr/include/*'          \
                                     '*/third_party/*' \
-                                    '*/tests/*' -o "${_filtered_file}" ${LCOV_IGNORE_ERRORS}
+                                    '*/tests/*' -o "${_filtered_file}" "${LCOV_IGNORE_ERRORS[@]}"
 }
 
 # generate html report
@@ -98,7 +103,7 @@ generate_html() {
   if [[ ! -d "${_out_path}" ]]; then
     mk_dir "${_out_path}"
   fi
-  genhtml "${_filtered_file}" -o "${_out_path}" ${LCOV_IGNORE_ERRORS}
+  genhtml "${_filtered_file}" -o "${_out_path}" "${LCOV_IGNORE_ERRORS[@]}"
 }
 
 
