@@ -19,7 +19,10 @@ uint32_t GetVRegSize(const T *context)
 
 ## 返回值说明
 
-uint32\_t：返回当前平台的向量寄存器大小，单位bytes。取值随平台而异，平台信息或接口获取失败时默认返回256bytes。
+uint32\_t：返回当前平台的向量寄存器大小，单位bytes。
+
+- DAV\_5162架构返回32bytes，其他架构返回256bytes。
+- context为空或无法获取平台信息（GetPlatformInfo()返回空指针）时返回0。
 
 ## 约束说明
 
