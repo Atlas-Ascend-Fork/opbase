@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_SHAPES_WITH_REASON(entityName, paramNames, incorrectShapes, 
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameters indices 0th tensor and x 0th tensor of DynamicStitch have incorrect shapes
+// 预期输出：Parameters indices 0th tensor and x 0th tensor of DynamicStitch have incorrect shapes
 //          [2,3] and [4,5,6]. Reason: The shape of indices's tensor should match the shape formed by
 //          the first 2 axes of x's corresponding tensor.
 if (indicesShape != expectedShape) {

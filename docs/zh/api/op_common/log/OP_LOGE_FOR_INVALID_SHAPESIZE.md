@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_SHAPESIZE(entityName, paramName, incorrectSize, correctSize)
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameter group_index of SwigluMxQuantWithDualAxis has incorrect shape size 0.
+// 预期输出：Parameter group_index of SwigluMxQuantWithDualAxis has incorrect shape size 0.
 //          It should be > 0.
 if (groupIndexShape.GetShapeSize() == 0) {
     OP_LOGE_FOR_INVALID_SHAPESIZE("SwigluMxQuantWithDualAxis", "group_index",

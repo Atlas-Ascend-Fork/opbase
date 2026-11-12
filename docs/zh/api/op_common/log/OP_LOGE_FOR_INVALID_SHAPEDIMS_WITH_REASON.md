@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_SHAPEDIMS_WITH_REASON(entityName, paramNames, incorrectDims,
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameters dy, cos and sin of RotaryPositionEmbeddingGrad have incorrect shape dims
+// 预期输出：Parameters dy, cos and sin of RotaryPositionEmbeddingGrad have incorrect shape dims
 //          3, 4 and 4. Reason: The numbers of dimensions of input dy, cos and sin should all be 3D or 4D.
 if (dyDimNum != expectedDim || cosDimNum != expectedDim || sinDimNum != expectedDim) {
     std::string dimMsg = std::to_string(dyDimNum) + ", " + std::to_string(cosDimNum) +

@@ -34,7 +34,7 @@ OP_LOGE_WITH_INVALID_ATTR(entityName, attrName, incorrectVal, correctVal)
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Attribute axis of MyOp has incorrect value 3. It should be 0 or 1.
+// 预期输出：Attribute axis of MyOp has incorrect value 3. It should be 0 or 1.
 if (axis_ != "0" && axis_ != "1") {
     OP_LOGE_WITH_INVALID_ATTR("MyOp", "axis", std::to_string(axis_), "0 or 1");
     return false;

@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-获取平台LibApi Workspace的大小，单位bytes。
+获取平台LibApi Workspace的大小，单位字节(Byte)。
 
 ## 函数原型
 
@@ -19,7 +19,7 @@ uint32_t GetWorkspaceSize(const T *context)
 
 ## 返回值说明
 
-uint32\_t：返回平台LibApi Workspace大小，返回0代表获取失败。
+uint32\_t:返回平台LibApi Workspace大小，返回0代表获取失败。
 
 ## 约束说明
 

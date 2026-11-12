@@ -34,7 +34,7 @@ OP_LOGE_WITH_INVALID_INPUT_FORMAT(entityName, paramName, dataFormat, expectedFor
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Input parameter x of ResizeBilinearV2 has incorrect format ND. It should be NCHW or NHWC.
+// 预期输出：Input parameter x of ResizeBilinearV2 has incorrect format ND. It should be NCHW or NHWC.
 if (format_ != NCHW && format_ != NHWC) {
     OP_LOGE_WITH_INVALID_INPUT_FORMAT("ResizeBilinearV2", "x",
         Ops::Base::ToString(format_).c_str(), "NCHW or NHWC");

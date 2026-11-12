@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_DTYPES_WITH_REASON(entityName, paramNames, incorrectDtypes, 
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameters cos and dy of RotaryPositionEmbeddingGrad have incorrect dtypes
+// 预期输出： Parameters cos and dy of RotaryPositionEmbeddingGrad have incorrect dtypes
 //          FLOAT16 and FLOAT32. Reason: The dtypes of input cos and input dy should be the same.
 if (cosDtype != dyDtype) {
     std::string dtypeMsg = Ops::Base::ToString(cosDtype) + " and " + Ops::Base::ToString(dyDtype);

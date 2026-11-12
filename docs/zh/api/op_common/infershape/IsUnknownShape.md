@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-图模式场景下，检查输入shape是否至少有一根轴的长度为不确定值（-1）。
+图模式场景下，检查输入shape是否至少有一根轴的长度为不确定值(-1)。
 
 ## 函数原型
 
@@ -20,8 +20,8 @@ bool IsUnknownShape(const gert::Shape &shape)
 
 返回类型为bool。
 
-- true：输入shape至少有一根轴的长度为不确定值（-1）。
-- false：输入shape的所有轴长度均不是不确定值（-1）。
+- true：输入shape至少有一根轴的长度为不确定值(-1)。
+- false：输入shape的所有轴长度均不是不确定值(-1)。
 
 例如，shape为`[-1, 4]`时返回true，shape为`[3, 4]`时返回false。未知秩由[IsUnknownRank](IsUnknownRank.md)单独判断。
 

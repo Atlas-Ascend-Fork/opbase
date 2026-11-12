@@ -15,7 +15,7 @@
   - 接口定位：提供详细参数说明的接口为正式接口，支持版本向后兼容；未提供详细参数说明的接口为预留接口，您可以暂时不关注。
   - 头文件路径：调用本章接口时，请按实际情况include依赖的头文件，一般定义在`${INSTALL_DIR}/include`目录。其中\$\{INSTALL\_DIR\}表示为CANN软件安装后的路径，以root安装举例，安装后路径为`/usr/local/Ascend/cann`。
 
-**表 1**  op\_common接口列表
+**表 1** op\_common接口列表
 
 <table><thead>
   <tr>
@@ -237,15 +237,15 @@
   </tr>
   <tr>
     <td><a href='platform/GetUbSize.md'>GetUbSize</a></td>
-    <td>获取平台UB（Unified Buffer）空间大小，单位bytes。</td>
+    <td>获取平台UB（Unified Buffer）空间大小，单位Byte。</td>
   </tr>
   <tr>
      <td><a href='platform/GetUbBlockSize.md'>GetUbBlockSize</a></td>
-    <td>获取平台UB（Unified Buffer）的block单元大小，单位bytes。</td>
+    <td>获取平台UB（Unified Buffer）的block单元大小，单位Byte。</td>
   </tr>
   <tr>
      <td><a href='platform/GetVRegSize.md'>GetVRegSize</a></td>
-    <td>获取平台向量寄存器（Vector Register）的大小，单位bytes。</td>
+    <td>获取平台向量寄存器（Vector Register）的大小，单位Byte。</td>
   </tr>
   <tr>
      <td><a href='platform/GetSimtMaxThreadNum.md'>GetSimtMaxThreadNum</a></td>
@@ -253,23 +253,23 @@
   </tr>
   <tr>
      <td><a href='platform/GetSimtMaxDCacheSize.md'>GetSimtMaxDCacheSize</a></td>
-    <td>获取平台SIMT最大DCache大小，单位bytes。</td>
+    <td>获取平台SIMT最大DCache大小，单位Byte。</td>
   </tr>
   <tr>
      <td><a href='platform/GetCacheLineSize.md'>GetCacheLineSize</a></td>
-    <td>获取平台Cache Line的大小，单位bytes。</td>
+    <td>获取平台Cache Line的大小，单位Byte。</td>
   </tr>
   <tr>
      <td><a href='platform/GetSectorCacheLineSize.md'>GetSectorCacheLineSize</a></td>
-    <td>获取平台Sector Cache Line的大小，单位bytes。</td>
+    <td>获取平台Sector Cache Line的大小，单位Byte。</td>
   </tr>
   <tr>
      <td><a href='platform/GetNddmaDcacheSize.md'>GetNddmaDcacheSize</a></td>
-    <td>获取平台NDDMA DCache的大小，单位bytes。</td>
+    <td>获取平台NDDMA DCache的大小，单位Byte。</td>
   </tr>
   <tr>
      <td><a href='platform/GetWorkspaceSize.md'>GetWorkspaceSize</a></td>
-    <td>获取平台LibApi Workspace的大小，单位bytes。</td>
+    <td>获取平台LibApi Workspace的大小，单位Byte。</td>
   </tr>
   <tr>
     <td rowspan="8">infershape</td>
@@ -316,7 +316,7 @@
   </tr>
   <tr>
     <td><a href='op_graph/CANN_OPS_OPB_ASYN_EXEC_ACLNN.md'>CANN_OPS_OPB_ASYN_EXEC_ACLNN</a></td>
-    <td>Aclnn接口在图场景的通用执行接口（异步接口），内部调用了一阶段接口，并把二阶段注册给了GE的context</td>
+    <td>Aclnn接口在图场景的通用执行接口（异步接口），内部调用了一阶段接口，并把二阶段注册给了GE的context。</td>
   </tr>
   <tr>
     <td rowspan="1">op_host</td>

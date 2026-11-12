@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_VALUE(entityName, paramName, incorrectValue, correctValue)
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameter sp of AttentionUpdate has incorrect value 17. It should be
+// 预期输出：Parameter sp of AttentionUpdate has incorrect value 17. It should be
 //          in range of [1, 16].
 if (sp_ < 1 || sp_ > 16) {
     OP_LOGE_FOR_INVALID_VALUE("AttentionUpdate", "sp", std::to_string(sp_), "in range of [1, 16]");

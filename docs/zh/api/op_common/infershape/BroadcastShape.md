@@ -25,10 +25,10 @@ bool BroadcastShape(const std::vector<const gert::Shape*>& inShapes, gert::Shape
 
 ## 返回值说明
 
-bool类型：
+bool类型:
 
-- true：broadcast推导成功。
-- false：broadcast推导失败，输入shape无法进行broadcast。
+- true:broadcast推导成功。
+- false:broadcast推导失败，输入shape无法进行broadcast。
 
 ## 约束说明
 

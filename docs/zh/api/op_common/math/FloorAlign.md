@@ -20,11 +20,11 @@ auto FloorAlign(T x, T align) -> typename std::enable_if<std::is_integral<T>::va
 
 ## 返回值说明
 
-T：返回以align为单元，向下对齐的结果，当align为0时，返回0。
+T:返回以align为单元，向下对齐的结果，当align为0时，返回0。
 
 ## 约束说明
 
-待向下对齐的数值和对齐的单元是相同类型整型（不包括bool类型）。
+待向下对齐的数值和对齐的单元是相同类型整型(不包括bool类型)。
 
 ## 调用示例
 

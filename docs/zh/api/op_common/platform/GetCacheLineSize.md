@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-获取平台Cache Line的大小，单位bytes。
+获取平台Cache Line的大小，单位Byte。
 
 ## 函数原型
 
@@ -19,7 +19,7 @@ uint32_t GetCacheLineSize([[maybe_unused]] const T *context)
 
 ## 返回值说明
 
-uint32\_t：返回平台Cache Line大小（当前为256bytes）。
+uint32\_t:返回平台Cache Line大小(当前为256 Byte)。
 
 ## 约束说明
 

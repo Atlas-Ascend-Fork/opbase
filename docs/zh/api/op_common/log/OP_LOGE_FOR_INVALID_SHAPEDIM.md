@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_SHAPEDIM(entityName, paramName, incorrectDim, correctDim)
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameter x of SoftmaxV2 has incorrect shape dim 5D. It should be less than
+// 预期输出：Parameter x of SoftmaxV2 has incorrect shape dim 5D. It should be less than
 //          or equal to 4.
 if (xShape.GetDimNum() > 4) {
     std::string dimStr = std::to_string(xShape.GetDimNum()) + "D";

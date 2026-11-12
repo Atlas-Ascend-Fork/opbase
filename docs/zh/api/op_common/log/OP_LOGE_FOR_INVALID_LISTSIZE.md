@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_LISTSIZE(entityName, paramName, incorrectSize, correctSize)
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameter axes of SoftmaxV2 has incorrect element nums 2. It should be 1.
+// 预期输出：Parameter axes of SoftmaxV2 has incorrect element nums 2. It should be 1.
 if (axes->GetSize() != 1) {
     OP_LOGE_FOR_INVALID_LISTSIZE("SoftmaxV2", "axes",
         std::to_string(axes->GetSize()), "1");

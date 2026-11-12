@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-获取平台NDDMA DCache的大小，单位bytes。
+获取平台NDDMA DCache的大小，单位字节（Byte）。
 
 ## 函数原型
 

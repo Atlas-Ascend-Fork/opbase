@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON(entityName, paramName, incorrectShape, rea
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameter indices 0th tensor of DynamicStitch has incorrect shape [2,-1,128].
+// 预期输出： Parameter indices 0th tensor of DynamicStitch has incorrect shape [2,-1,128].
 //          Reason: The input indices's tensor has negative dimension.
 if (hasNegativeDim) {
     OP_LOGE_FOR_INVALID_SHAPE_WITH_REASON("DynamicStitch",

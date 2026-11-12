@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-获取平台向量寄存器（Vector Register）的大小，单位bytes。
+获取平台向量寄存器（Vector Register）的大小，单位字节（Byte）。
 
 ## 函数原型
 
@@ -19,9 +19,9 @@ uint32_t GetVRegSize(const T *context)
 
 ## 返回值说明
 
-uint32\_t：返回当前平台的向量寄存器大小，单位bytes。
+uint32\_t：返回当前平台的向量寄存器大小，单位字节（Byte）。
 
-- DAV\_5162架构返回32bytes，其他架构返回256bytes。
+- DAV\_5162架构返回32字节，其他架构返回256字节。
 - context为空或无法获取平台信息（GetPlatformInfo()返回空指针）时返回0。
 
 ## 约束说明

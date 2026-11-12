@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-Aclnn接口在图场景的通用执行接口（同步接口），内部串行调用两阶段执行。
+Aclnn接口是图场景的通用执行接口（同步接口），内部串行调用两阶段执行。
 
 ## 函数原型
 
@@ -14,7 +14,7 @@ CANN_OPS_OPB_SYN_EXEC_ACLNN(ctx, aclnnApi, ...)
 
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| ctx | 输入 | 算子执行上下文（OpExecuteContext），用于分配Workspace和获取Stream。 |
+| ctx | 输入 | 算子执行上下文(OpExecuteContext)，用于分配Workspace和获取Stream。 |
 | aclnnApi | 输入 | 待回调执行的ACLNN算子API名称，如aclnnScatterList。 |
 | ... | 输入 | 算子输入、输出及属性参数，支持gert::Tensor、gert::Tensor列表、标量、属性等类型。 |
 

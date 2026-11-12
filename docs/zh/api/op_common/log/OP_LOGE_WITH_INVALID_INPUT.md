@@ -32,7 +32,7 @@ OP_LOGE_WITH_INVALID_INPUT(entityName, paramName)
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameter input of MyOp is required, but it is empty.
+// 预期输出：Parameter input of MyOp is required, but it is empty.
 if (xDesc == nullptr) {
     OP_LOGE_WITH_INVALID_INPUT("MyOp", "input");
     return false;

@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_SHAPESIZE_WITH_REASON(entityName, paramName, incorrectSize, 
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameter y of ResizeLinear has incorrect shape size [144,144,1].
+// 预期输出：Parameter y of ResizeLinear has incorrect shape size [144,144,1].
 //          Reason: The linear-dimension of output y must be equal to value (256) of input parameter size.
 if (yShape.GetShapeSize() != expectedSize) {
     OP_LOGE_FOR_INVALID_SHAPESIZE_WITH_REASON("ResizeLinear", "y",

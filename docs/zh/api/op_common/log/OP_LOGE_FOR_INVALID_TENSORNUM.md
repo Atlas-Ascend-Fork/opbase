@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_TENSORNUM(entityName, paramName, incorrectNum, correctNum)
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameter instance of Foreach has invalid tensor num 1000.
+// 预期输出：Parameter instance of Foreach has invalid tensor num 1000.
 //          It should be within the range [1, 950].
 if (tensorCount > MAX_COUNT || tensorCount <= 0) {
     OP_LOGE_FOR_INVALID_TENSORNUM("Foreach", "instance",

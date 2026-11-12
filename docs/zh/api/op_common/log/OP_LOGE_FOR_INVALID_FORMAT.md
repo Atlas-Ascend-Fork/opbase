@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_FORMAT(entityName, paramName, incorrectFormat, correctFormat
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameter x of ResizeBilinearV2 has incorrect format ND. It should be
+// 预期输出： Parameter x of ResizeBilinearV2 has incorrect format ND. It should be
 //          NCHW or NHWC.
 if (format_ != ge::FORMAT_NCHW && format_ != ge::FORMAT_NHWC) {
     OP_LOGE_FOR_INVALID_FORMAT("ResizeBilinearV2", "x",

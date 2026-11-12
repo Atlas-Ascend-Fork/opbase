@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(entityName, paramNames, incorrectValues, 
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameters align_corners and half_pixel_centers of ResizeNearestNeighborV2Grad have
+// 预期输出：Parameters align_corners and half_pixel_centers of ResizeNearestNeighborV2Grad have
 //          incorrect values true and true. Reason: The values of attributes align_corners and
 //          half_pixel_centers cannot be true at the same time.
 if (alignCorners_ && halfPixelCenters_) {

@@ -19,7 +19,7 @@ uint32_t GetSimtMaxThreadNum([[maybe_unused]] const T *context)
 
 ## 返回值说明
 
-uint32\_t：返回平台SIMT最大线程数（当前为2048）。
+uint32\_t:返回平台SIMT最大线程数(当前为2048)。
 
 ## 约束说明
 

@@ -10,7 +10,7 @@
 ge::graphStatus InferShape4Reduce(gert::InferShapeContext *context)
 ```
 
-参数说明
+## 参数说明
 
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |

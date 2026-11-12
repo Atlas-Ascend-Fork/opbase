@@ -32,7 +32,7 @@ OP_LOGE_FOR_INVALID_SHAPESIZES_WITH_REASON(entityName, paramNames, incorrectSize
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
 ```cpp
-// 预期输出: Parameters query, key, cos and sin of ApplyRotaryPosEmb have incorrect shape sizes
+// 预期输出：Parameters query, key, cos and sin of ApplyRotaryPosEmb have incorrect shape sizes
 //          0, 0, 0 and 0. Reason: All inputs must be non-empty tensors.
 if (qSize == 0 || kSize == 0 || cSize == 0 || sSize == 0) {
     std::string sizeMsg = std::to_string(qSize) + ", " + std::to_string(kSize) + ", " +

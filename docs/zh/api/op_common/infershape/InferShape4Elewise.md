@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-图模式场景下，elewise类算子的InferShape方法（用于推导输出张量的形状shape）。
+图模式场景下，elewise类算子的InferShape方法（用于推导输出张量的形状）。
 
 ## 函数原型
 

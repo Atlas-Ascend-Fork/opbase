@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-获取平台Sector Cache Line的大小，单位bytes。其值为Cache Line大小的一半。
+获取平台Sector Cache Line的大小，单位字节。其值为Cache Line大小的一半。
 
 ## 函数原型
 
@@ -19,7 +19,7 @@ uint32_t GetSectorCacheLineSize([[maybe_unused]] const T *context)
 
 ## 返回值说明
 
-uint32\_t：返回平台Sector Cache Line大小（当前为128bytes）。
+uint32\_t:返回平台Sector Cache Line大小(当前为128字节)。
 
 ## 约束说明
 
