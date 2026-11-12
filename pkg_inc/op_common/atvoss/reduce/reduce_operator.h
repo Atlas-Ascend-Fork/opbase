@@ -148,6 +148,7 @@ __aicore__ inline int32_t CeilDivision(int32_t num1, int32_t num2)
 }
 #endif
 
+#if (__NPU_ARCH__ != 5162)
 template <bool IsBlockPad, const AscendC::MicroAPI::RegTrait& Trait, typename InputT, typename T, class S, class P>
 __aicore__ inline void PaddingARMode(__ubuf__ T* dstAddr, T padValue, S& shape, P& padding)
 {
@@ -326,6 +327,186 @@ __aicore__ inline void PaddingARMode(__ubuf__ T* dstAddr, T padValue, S& shape, 
         }
     }
 }
+#else
+template <bool IsBlockPad, const AscendC::MicroAPI::RegTrait& Trait, typename InputT, typename T, class S, class P>
+__aicore__ inline void PaddingARMode(__ubuf__ T* dstAddr, T padValue, S& shape, P& padding)
+{
+    const uint32_t dimR = shape.value[1];
+    constexpr uint16_t dtypeSize = IsB64<T>() ? sizeof(float) : sizeof(T);
+    constexpr uint64_t inputBlkElems = BLOCK_SIZE / sizeof(InputT);
+    constexpr uint64_t blkElems = BLOCK_SIZE / sizeof(T);
+    constexpr uint64_t vLElems = VL_LEN / dtypeSize;
+
+    const uint16_t burstPaddingRepeat = static_cast<uint16_t>(padding.burstPaddingRepeat);
+    const uint16_t rPaddingRepeat = static_cast<uint16_t>(padding.rPaddingRepeat);
+    const uint16_t aPaddingRepeat = static_cast<uint16_t>(padding.aPaddingRepeat);
+    const uint64_t burstPaddingLen = padding.burstPaddingLen;
+    const uint32_t rPaddingLen = static_cast<uint32_t>(padding.rPaddingLen);
+    const uint32_t aPaddingLen = static_cast<uint32_t>(padding.aPaddingLen);
+    const uint64_t burstPaddingStart = padding.burstPaddingStart;
+    const uint64_t aPaddingStart = padding.aPaddingStart;
+    const uint64_t rPaddingStart = padding.rPaddingStart;
+    // int64_t mte2 move_align to 4, while reg align to 8
+    const uint64_t mainBurstLenAlign = Ops::Base::CeilAlign(
+        static_cast<uint64_t>(padding.burstPaddingStart + padding.burstPaddingLen), inputBlkElems);
+    // burstLen Padding的block下对齐
+    const uint64_t burstPaddingStartAlign = burstPaddingStart / blkElems * blkElems;
+    // burstLen Padding的block上对齐，如果burstPaddingStart本身对齐，burstPaddingStartAlign = burstPaddingStartCeilAlign
+    const uint64_t burstPaddingStartCeilAlign = Ops::Base::CeilAlign(burstPaddingStart, blkElems);
+    // 不做pad的长度，不能掩盖有效数据，burstPaddingStart非block对齐有效，否则为0
+    const uint64_t noPadMask = burstPaddingStart - burstPaddingStartAlign;
+    // 如果存在非对齐，第一次非对齐处理VLength长度
+    const uint64_t burstPaddingStartUpVL = burstPaddingStartAlign + vLElems;
+    // 是否需要对burstlen做block对齐的补pad
+    const uint16_t isBlockPadding = (IsBlockPad && noPadMask > 0 && burstPaddingLen > 0) ? 1 : 0;
+    // 如果存在非对齐，余下对齐部分的起始位置
+    const uint64_t burstPaddingRemainingStart = (isBlockPadding > 0 ? burstPaddingStartUpVL :
+                                                                      burstPaddingStartCeilAlign);
+    // 如果存在非对齐，余下对齐部分的补pad长度
+    const uint64_t burstPaddingRemainingLen = (mainBurstLenAlign > burstPaddingRemainingStart ?
+                                                   (mainBurstLenAlign - burstPaddingRemainingStart) :
+                                                   0);
+    // 如果存在非对齐，余下对齐部分的repeat次数
+    const uint16_t burstVLRemainingRepeat = Ops::Base::CeilDiv(static_cast<uint64_t>(burstPaddingRemainingLen),
+                                                               static_cast<uint64_t>(vLElems));
+    // r轴补pad的block下对齐
+    const uint64_t rPaddingStartAlign = rPaddingStart / blkElems * blkElems;
+    // r轴补pad的block上对齐
+    const uint64_t rPaddingStartCeilAlign = Ops::Base::CeilAlign(rPaddingStart, blkElems);
+    // 不做pad的长度，不能掩盖有效数据，rPaddingStart非block对齐有效，否则为0, nddma搬入可能非对齐
+    const uint64_t noRPadMask = rPaddingStart - rPaddingStartAlign;
+    // 如果存在非对齐，第一次非对齐处理VLength长度
+    const uint64_t rPaddingStartUpVL = rPaddingStartAlign + vLElems;
+    // r轴补pad后的长度
+    const uint64_t rPaddingLenAlign = Ops::Base::CeilAlign(static_cast<uint64_t>(rPaddingStart + rPaddingLen),
+                                                           inputBlkElems);
+    // 是否需要对r轴做block对齐的补pad
+    const uint16_t isRPaddingBlock = (rPaddingStart % inputBlkElems == 0 ? 0 : 1);
+    // 如果存在非对齐，r轴余下对齐部分的起始位置
+    const uint64_t rPaddingRemainingStart = (rPaddingStart % inputBlkElems == 0 ? rPaddingStartCeilAlign :
+                                                                                  rPaddingStartUpVL);
+    // 如果存在非对齐，余下对齐部分的补pad长度
+    const uint64_t rPaddingRemainingLen = (rPaddingLenAlign > rPaddingRemainingStart ?
+                                               (rPaddingLenAlign - rPaddingRemainingStart) :
+                                               0);
+    // 如果存在非对齐，余下对齐部分的repeat次数
+    const uint16_t rVlRepeat = Ops::Base::CeilDiv(static_cast<uint64_t>(rPaddingRemainingLen),
+                                                  static_cast<uint64_t>(vLElems));
+    const uint16_t aVlRepeat = Ops::Base::CeilDiv(static_cast<uint64_t>(aPaddingLen), static_cast<uint64_t>(vLElems));
+
+    const uint16_t isBurstVLRemainingRepeat = (burstVLRemainingRepeat > 0 && burstPaddingLen > 0) ? 1 : 0;
+    const uint16_t isRepeatA = aVlRepeat > 0 ? 1 : 0;
+    const uint16_t isRepeatR = rVlRepeat > 0 ? 1 : 0;
+    RUN_LOG("mainBurstLenAlign:%lu, burstPaddingStartAlign:%lu, burstPaddingStartCeilAlign:%lu, "
+            "burstPaddingStartUpVL:%lu, burstPaddingRemainingStart:%lu, "
+            "burstPaddingRemainingLen:%lu, rPaddingStartUpVL:%lu, rPaddingStartAlign:%lu, rPaddingStartCeilAlign:%lu, "
+            "rPaddingLenAlign:%lu, rPaddingRemainingStart:%lu, "
+            "rPaddingRemainingLen:%lu\n",
+            mainBurstLenAlign, burstPaddingStartAlign, burstPaddingStartCeilAlign, burstPaddingStartUpVL,
+            burstPaddingRemainingStart, burstPaddingRemainingLen, rPaddingStartUpVL, rPaddingStartAlign,
+            rPaddingStartCeilAlign, rPaddingLenAlign, rPaddingRemainingStart, rPaddingRemainingLen);
+
+    __VEC_SCOPE__
+    {
+        AscendC::MicroAPI::RegTensor<T, Trait> vreg;
+        AscendC::MicroAPI::RegTensor<T, Trait> vregTmp;
+        AscendC::MicroAPI::Duplicate(vreg, padValue);
+        AscendC::MicroAPI::MaskReg mask;
+        /**
+         *      |-----------padMask-------------|--------PaddingLen--------|--------burstPaddingRemainingLen-----------|
+         *  PaddingStartAlign(32B)        PaddingStart                  VLAlign(256B)                 mainBurstLenAlign
+         */
+
+        if constexpr (IsBlockPad) {
+            for (uint16_t k = 0; k < isBlockPadding; k++) {
+                AscendC::MicroAPI::RegTensor<T, Trait> vregPad;
+                AscendC::MicroAPI::MaskReg maskDump;
+                AscendC::MicroAPI::MaskReg
+                    maskAll = AscendC::MicroAPI::CreateMask<T, AscendC::MicroAPI::MaskPattern::ALL, Trait>();
+                uint32_t noPadLen = noPadMask;
+                maskDump = AscendC::MicroAPI::UpdateMask<T, Trait>(noPadLen);
+                AscendC::MicroAPI::Not(maskDump, maskDump, maskAll);
+                for (uint16_t i = 0; i < rPaddingRepeat; i++) {
+                    for (uint16_t j = 0; j < burstPaddingRepeat; j++) {
+                        // 32B Align + Copy In
+                        AscendC::MicroAPI::LoadAlign(
+                            vregPad, dstAddr + burstPaddingStartAlign + i * dimR + j * mainBurstLenAlign);
+                        // Dump
+                        vregTmp = vregPad;
+                        AscendC::MicroAPI::Duplicate<T, AscendC::MicroAPI::MaskMergeMode::ZEROING, T>(vregTmp, padValue,
+                                                                                                      maskDump);
+                        AscendC::MicroAPI::Move(vregPad, vregTmp, maskDump);
+                        // Copy Out
+                        uint32_t outLen = mainBurstLenAlign - burstPaddingStartAlign;
+                        mask = AscendC::MicroAPI::UpdateMask<T, Trait>(outLen);
+                        AscendC::MicroAPI::StoreAlign(
+                            dstAddr + burstPaddingStartAlign + i * dimR + j * mainBurstLenAlign, vregPad, mask);
+                    }
+                }
+            }
+        }
+
+        for (uint16_t l = 0; l < isBurstVLRemainingRepeat; l++) {
+            for (uint16_t i = 0; i < rPaddingRepeat; i++) {
+                for (uint16_t j = 0; j < burstPaddingRepeat; j++) {
+                    uint32_t scalar2 = burstPaddingRemainingLen;
+                    for (uint16_t k = 0; k < burstVLRemainingRepeat; k++) {
+                        mask = AscendC::MicroAPI::UpdateMask<T, Trait>(scalar2);
+                        AscendC::MicroAPI::StoreAlign(
+                            dstAddr + burstPaddingRemainingStart + i * dimR + j * mainBurstLenAlign + k * vLElems, vreg,
+                            mask);
+                    }
+                }
+            }
+        }
+
+        for (uint16_t k = 0; k < isRPaddingBlock; k++) {
+            AscendC::MicroAPI::RegTensor<T, Trait> vregPad;
+            AscendC::MicroAPI::MaskReg maskDump;
+            AscendC::MicroAPI::MaskReg
+                maskAll = AscendC::MicroAPI::CreateMask<T, AscendC::MicroAPI::MaskPattern::ALL, Trait>();
+            uint32_t noPadLen = noRPadMask;
+            maskDump = AscendC::MicroAPI::UpdateMask<T, Trait>(noPadLen);
+            AscendC::MicroAPI::Not(maskDump, maskDump, maskAll);
+            for (uint16_t i = 0; i < rPaddingRepeat; i++) {
+                // 32B Align + Copy In
+                AscendC::MicroAPI::LoadAlign(vregPad, dstAddr + rPaddingStartAlign + i * dimR);
+                // Dump
+                vregTmp = vregPad;
+                AscendC::MicroAPI::Duplicate<T, AscendC::MicroAPI::MaskMergeMode::ZEROING, T>(vregTmp, padValue,
+                                                                                              maskDump);
+                AscendC::MicroAPI::Move(vregPad, vregTmp, maskDump);
+                // Copy Out
+                uint32_t outLen = rPaddingLenAlign - rPaddingStartAlign;
+                mask = AscendC::MicroAPI::UpdateMask<T, Trait>(outLen);
+                AscendC::MicroAPI::StoreAlign(dstAddr + rPaddingStartAlign + i * dimR, vregPad, mask);
+            }
+        }
+
+        // R
+        for (uint16_t k = 0; k < isRepeatR; k++) {
+            for (uint16_t i = 0; i < rPaddingRepeat; i++) {
+                uint32_t maskR = rPaddingRemainingLen;
+                for (uint16_t j = 0; j < rVlRepeat; j++) {
+                    mask = AscendC::MicroAPI::UpdateMask<T, Trait>(maskR);
+                    AscendC::MicroAPI::StoreAlign(dstAddr + rPaddingRemainingStart + i * dimR + j * vLElems, vreg,
+                                                  mask);
+                }
+            }
+        }
+        // A
+        for (uint16_t k = 0; k < isRepeatA; k++) {
+            for (uint16_t i = 0; i < aPaddingRepeat; i++) {
+                uint32_t maskA = aPaddingLen;
+                for (uint16_t j = 0; j < aVlRepeat; j++) {
+                    mask = AscendC::MicroAPI::UpdateMask<T, Trait>(maskA);
+                    AscendC::MicroAPI::StoreAlign(dstAddr + aPaddingStart + i * aPaddingLen + j * vLElems, vreg, mask);
+                }
+            }
+        }
+    }
+}
+#endif
 
 template <const AscendC::MicroAPI::RegTrait& Trait, typename InputT, typename T, class S, class P>
 __aicore__ inline void PaddingRAMode(__ubuf__ T* dstAddr, T padValue, S& shape, P& padding)
@@ -665,8 +846,8 @@ public:
             AscendC::MicroAPI::RegTensor<DCast, Trait> vregReciDimR; // 1 / dimR
             AscendC::MicroAPI::RegTensor<DCast, Trait> vregReciDimA; // 1 / dimA
             AscendC::MicroAPI::RegTensor<DIndex, Trait> vregTmp0;
-            AscendC::MicroAPI::RegTensor<DIndex, Trait> vregTmp1;    // idx0 % dimA * dimR
-            AscendC::MicroAPI::RegTensor<DIndex, Trait> vregTmp2;    // idx0 % dimA
+            AscendC::MicroAPI::RegTensor<DIndex, Trait> vregTmp1; // idx0 % dimA * dimR
+            AscendC::MicroAPI::RegTensor<DIndex, Trait> vregTmp2; // idx0 % dimA
             AscendC::MicroAPI::RegTensor<DCast, Trait> vregCastFloat;
             AscendC::MicroAPI::RegTensor<DIndex, Trait> idx0;
             AscendC::MicroAPI::RegTensor<DIndex, Trait> idx1;
