@@ -24,7 +24,7 @@ namespace Base {
 // 与 Vec::CopyIn 逻辑一致，enablePreAlloc=true 时在目标芯片平台给 DataCopyPad 末尾传 true
 template <class T, bool enablePreAlloc = false>
 __aicore__ inline void CopyInWithPreAlloc(const AscendC::LocalTensor<T>& dst, const AscendC::GlobalTensor<T>& src,
-                                        uint32_t count)
+                                          uint32_t count)
 {
 #ifdef __CCE_AICORE__
     AscendC::DataCopyExtParams copyParams{1, static_cast<uint32_t>(count * sizeof(T)), 0, 0, 0};

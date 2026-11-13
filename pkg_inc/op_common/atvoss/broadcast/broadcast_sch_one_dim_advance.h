@@ -209,7 +209,7 @@ protected:
 
         // Prepare input args
         uint8_t bufId = GetBufId<pos>(pingPong);
-        AscendC::LocalTensor<inputType> inTensor(AscendC::TPosition::VECIN, bufId * blockLen, this->blockLen);
+        AscendC::LocalTensor<inputType> inTensor(AscendC::TPosition::VECIN, bufId * blockLen, this->blockEleLen);
 #ifndef __CCE_KT_TEST__
         inTensor.SetBufferLen(blockEleLen);
 #endif
@@ -226,7 +226,7 @@ protected:
         }
     }
 
-        /**
+    /**
      * 搬入Scalar输入，首次执行时将标量值填充到UB
      * @tparam input 输入Holder类型
      * @tparam inputType 输入数据类型
@@ -238,7 +238,7 @@ protected:
      */
     template <typename input, typename inputType, int pos>
     __aicore__ inline void CopyInScalar(LocalTensor<inputType>& inTensor, uint8_t bufId, uint64_t tileLength,
-                                       int32_t pingPong)
+                                        int32_t pingPong)
     {
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113)
         WaitFlag<HardEvent::V_MTE2>(this->template Mte2Evt<pos>(pingPong));
@@ -248,8 +248,8 @@ protected:
             globalTensor.SetGlobalBuffer(reinterpret_cast<__gm__ inputType*>(inGm[input::Pos].GetPhyAddr(0)));
             inputType scalar = globalTensor.GetValue(0);
             if constexpr (std::is_same_v<inputType, double>) {
-                Vec::Duplicate(inTensor.template ReinterpretCast<int64_t>(),
-                               *reinterpret_cast<const int64_t*>(&scalar), tileLength);
+                Vec::Duplicate(inTensor.template ReinterpretCast<int64_t>(), *reinterpret_cast<const int64_t*>(&scalar),
+                               tileLength);
             } else {
                 Vec::Duplicate(inTensor, scalar, tileLength);
             }
@@ -266,8 +266,8 @@ protected:
 
             GetTensor<TPosition::VECCALC>(bufId);
             if constexpr (std::is_same_v<inputType, double>) {
-                Vec::Duplicate(inTensor.template ReinterpretCast<int64_t>(),
-                               *reinterpret_cast<const int64_t*>(&scalar), tileLength);
+                Vec::Duplicate(inTensor.template ReinterpretCast<int64_t>(), *reinterpret_cast<const int64_t*>(&scalar),
+                               tileLength);
             } else {
                 Vec::Duplicate(inTensor, scalar, tileLength);
             }
@@ -288,8 +288,7 @@ protected:
      */
     template <typename inputType, int pos>
     __aicore__ inline void CopyInVector(LocalTensor<inputType>& inTensor, uint8_t bufId,
-                                        GlobalTensor<inputType>& globalTensor, uint64_t tileLength,
-                                        int32_t pingPong)
+                                        GlobalTensor<inputType>& globalTensor, uint64_t tileLength, int32_t pingPong)
     {
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113)
         WaitFlag<HardEvent::V_MTE2>(this->template Mte2Evt<pos>(pingPong));
@@ -334,7 +333,7 @@ protected:
 
         // Prepare input args
         uint8_t bufId = GetBufId<GetFunOutputPos<input>()>(pingPong);
-        AscendC::LocalTensor<inputType> localTensor(AscendC::TPosition::VECOUT, bufId * blockLen, this->blockLen);
+        AscendC::LocalTensor<inputType> localTensor(AscendC::TPosition::VECOUT, bufId * blockLen, this->blockEleLen);
 #ifndef __CCE_KT_TEST__
         localTensor.SetBufferLen(blockEleLen);
 #endif
@@ -350,7 +349,7 @@ protected:
         SetFlag<HardEvent::MTE3_V>(this->template Mte3Evt<producerPos>(pingPong));
         SetMte3Mte2Flags<Mte2Count>(pingPong);
 #else
-            // Set getBuf
+        // Set getBuf
         GetTensor<TPosition::VECOUT>(bufId);
         // Run func
         Vec::CopyOut<inputType>(globalTensor, localTensor, tileLength);
@@ -434,7 +433,7 @@ protected:
                 }
 
                 AscendC::LocalTensor<TensorType> inputTensor(AscendC::TPosition::VECCALC, bufId * blockLen,
-                                                             this->blockLen);
+                                                             this->blockEleLen);
 #ifndef __CCE_KT_TEST__
                 inputTensor.SetBufferLen(blockEleLen);
 #endif
@@ -547,7 +546,7 @@ protected:
         // Prepare output args
         using OutputType = typename Op::template FunRetArgType<0>;
         uint8_t bufId = GetBufId<pos>(pingPong);
-        AscendC::LocalTensor<OutputType> outTensor(AscendC::TPosition::VECCALC, bufId * blockLen, this->blockLen);
+        AscendC::LocalTensor<OutputType> outTensor(AscendC::TPosition::VECCALC, bufId * blockLen, this->blockEleLen);
 #ifndef __CCE_KT_TEST__
         outTensor.SetBufferLen(blockEleLen);
 #endif
@@ -647,11 +646,11 @@ private:
 
     using FlagSyncBase = PerBufferFlagSync<ElemDag, FlagPolicy>;
     using FlagSyncBase::Mte2Count;
-    using FlagSyncBase::Mte3Count;
     using FlagSyncBase::Mte2Evt;
+    using FlagSyncBase::Mte3Count;
     using FlagSyncBase::Mte3Evt;
-    using FlagSyncBase::WaitMte2VFlags;
     using FlagSyncBase::SetVMte2Flags;
+    using FlagSyncBase::WaitMte2VFlags;
 #endif
 
     GlobalTensor<uint8_t> inGm[inputNums];

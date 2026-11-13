@@ -91,7 +91,8 @@ public:
             Run<0, false>(ubSplitSize, axesIndices, ubLoopIdx, ubLoopIdx & 1);
         }
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113)
-        WaitLoopSyncFlag<BroadcastBaseSch<BrcDag, false, R>::Mte2Count, BroadcastBaseSch<BrcDag, false, R>::Mte3Count>();
+        WaitLoopSyncFlag<BroadcastBaseSch<BrcDag, false, R>::Mte2Count,
+                         BroadcastBaseSch<BrcDag, false, R>::Mte3Count>();
 #endif
     }
 

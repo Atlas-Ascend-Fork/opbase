@@ -27,16 +27,14 @@
 namespace Ops {
 namespace Base {
 static constexpr uint64_t BYTE_LENGTH = 8;
-template <class BrcDag, bool UseNddma, int64_t R = -1>
+template <class BrcDag, bool UseNddma, int64_t R = -1, class TilingDataT = BroadcastBaseTilingData<BrcDag>>
 class BroadcastBaseSch
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113)
     : public PerBufferFlagSync<BrcDag, UseNddma ? Mte2SrcPolicy::Mte2AsMte3 : Mte2SrcPolicy::Strict>
 #endif
 {
 public:
-    __aicore__ inline explicit BroadcastBaseSch(const BroadcastBaseTilingData<BrcDag>* baseTilingData)
-        : tilingData_(baseTilingData)
-    {}
+    __aicore__ inline explicit BroadcastBaseSch(const TilingDataT* baseTilingData) : tilingData_(baseTilingData) {}
 
 protected:
     /* *
@@ -47,9 +45,9 @@ protected:
      * @param ubFormershape UB主块shape
      * @return void
      */
-    template <size_t N>
-    __aicore__ inline void GetUbBroadcastShapeInfo(const int64_t (&oriShape)[N], int64_t inputUblength[2],
-                                                   uint32_t (&ubFormershape)[N])
+    template <typename T, size_t N, size_t M>
+    __aicore__ inline void GetUbBroadcastShapeInfo(const T (&oriShape)[N], int64_t inputUblength[2],
+                                                   uint32_t (&ubFormershape)[M])
     {
         int64_t ubFormerLength = 1;
         int64_t ubTailLength = 1;
@@ -611,22 +609,19 @@ protected:
     constexpr static auto cacheBufferIds_ = BrcDag::template GetBufferIds<UseNddma, true>();
 
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3003 || __NPU_ARCH__ == 3113)
-    constexpr static Mte2SrcPolicy FlagPolicy()
-    {
-        return UseNddma ? Mte2SrcPolicy::Mte2AsMte3 : Mte2SrcPolicy::Strict;
-    }
+    constexpr static Mte2SrcPolicy FlagPolicy() { return UseNddma ? Mte2SrcPolicy::Mte2AsMte3 : Mte2SrcPolicy::Strict; }
 
     using FlagSyncBase = PerBufferFlagSync<BrcDag, FlagPolicy()>;
     using FlagSyncBase::Mte2Count;
-    using FlagSyncBase::Mte3Count;
     using FlagSyncBase::Mte2Evt;
+    using FlagSyncBase::Mte3Count;
     using FlagSyncBase::Mte3Evt;
-    using FlagSyncBase::WaitMte2VFlags;
     using FlagSyncBase::SetVMte2Flags;
+    using FlagSyncBase::WaitMte2VFlags;
 #endif
 
 private:
-    const BroadcastBaseTilingData<BrcDag>* tilingData_;
+    const TilingDataT* tilingData_;
 };
 } // namespace Base
 } // namespace Ops

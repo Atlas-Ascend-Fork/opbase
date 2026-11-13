@@ -22,9 +22,9 @@ static constexpr int64_t BROADCAST_MAX_DIMS = 8;
 static constexpr int64_t NDDMA_MAX_DIMS = 5;
 static constexpr int64_t NDDMA_THROW_DIMS = 3;
 
-template <std::size_t N>
-__aicore__ inline void BroadcastGetAxesIndices(int64_t (&axesIndices)[N], int64_t prodIdx,
-                                               const int64_t (&totalDims)[N], int64_t endIdx, int64_t totalProduct)
+template <typename D, std::size_t N, std::size_t M>
+__aicore__ inline void BroadcastGetAxesIndices(int64_t (&axesIndices)[N], int64_t prodIdx, const D (&totalDims)[M],
+                                               int64_t endIdx, int64_t totalProduct)
 {
     for (int64_t idx = 0; idx < endIdx; idx++) {
         totalProduct = totalProduct / totalDims[idx];
@@ -37,9 +37,9 @@ __aicore__ inline void BroadcastGetAxesIndices(int64_t (&axesIndices)[N], int64_
     return;
 }
 
-template <std::size_t N>
-__aicore__ inline void BroadcastUpdateAxesIndices(int64_t (&axesIndices)[N], const int64_t (&totalDims)[N],
-                                                  int64_t endIdx, int64_t endDim)
+template <typename D, std::size_t N, std::size_t M>
+__aicore__ inline void BroadcastUpdateAxesIndices(int64_t (&axesIndices)[N], const D (&totalDims)[M], int64_t endIdx,
+                                                  int64_t endDim)
 {
     axesIndices[endIdx]++;
     if (axesIndices[endIdx] == endDim) {
@@ -56,8 +56,8 @@ __aicore__ inline void BroadcastUpdateAxesIndices(int64_t (&axesIndices)[N], con
     return;
 }
 
-template <std::size_t N, std::size_t M>
-__aicore__ inline void BroadcastUpdateNddmaAxesIndices(int64_t (&axesIndices)[N], const int64_t (&totalDims)[M],
+template <typename D, std::size_t N, std::size_t M>
+__aicore__ inline void BroadcastUpdateNddmaAxesIndices(int64_t (&axesIndices)[N], const D (&totalDims)[M],
                                                        int64_t startIdx, int64_t endIdx)
 {
     axesIndices[endIdx]++;
@@ -69,8 +69,8 @@ __aicore__ inline void BroadcastUpdateNddmaAxesIndices(int64_t (&axesIndices)[N]
     }
 }
 
-template <std::size_t N>
-__aicore__ inline int64_t BroadcastGetGmOffset(const int64_t (&axesIndices)[N], const int64_t (&totalStrides)[N],
+template <typename D, std::size_t N, std::size_t M>
+__aicore__ inline int64_t BroadcastGetGmOffset(const int64_t (&axesIndices)[N], const D (&totalStrides)[M],
                                                int64_t endIdx, int64_t endDim)
 {
     int64_t gmOffset = 0;
@@ -81,8 +81,8 @@ __aicore__ inline int64_t BroadcastGetGmOffset(const int64_t (&axesIndices)[N], 
     return gmOffset;
 }
 
-template <std::size_t N, std::size_t M>
-__aicore__ inline int64_t BroadcastGetNddmaOffset(int64_t (&nddmaIndices)[N], const int64_t (&totalStrides)[M],
+template <typename D, std::size_t N, std::size_t M>
+__aicore__ inline int64_t BroadcastGetNddmaOffset(int64_t (&nddmaIndices)[N], const D (&totalStrides)[M],
                                                   int64_t startIdx, int64_t endIdx)
 {
     int64_t offset = 0;
@@ -92,8 +92,8 @@ __aicore__ inline int64_t BroadcastGetNddmaOffset(int64_t (&nddmaIndices)[N], co
     return offset;
 }
 
-template <std::size_t N>
-__aicore__ inline int64_t BroadcastFuseAxes(const int64_t (&totalDims)[N], int64_t startIdx, int64_t endIdx)
+template <typename D, std::size_t N>
+__aicore__ inline int64_t BroadcastFuseAxes(const D (&totalDims)[N], int64_t startIdx, int64_t endIdx)
 {
     int64_t product = 1;
     for (int64_t idx = startIdx; idx < endIdx; idx++) {
@@ -102,10 +102,10 @@ __aicore__ inline int64_t BroadcastFuseAxes(const int64_t (&totalDims)[N], int64
     return product;
 }
 
-template <typename T, std::size_t N>
+template <typename T, typename D, std::size_t N>
 __aicore__ inline AscendC::NdDmaParams<T, NDDMA_MAX_DIMS> BroadcastSetNddmaConfigWithoutLoop(
-    const int64_t (&outputDims)[N], const int64_t (&outputStrides)[N], const int64_t (&inputStrides)[N],
-    int64_t shapeLen, int64_t ubSplitSize, int64_t ubSplitAxis)
+    const D (&outputDims)[N], const D (&outputStrides)[N], const D (&inputStrides)[N], int64_t shapeLen,
+    int64_t ubSplitSize, int64_t ubSplitAxis)
 {
     AscendC::NdDmaLoopInfo<NDDMA_MAX_DIMS> loopInfo;
     int64_t axisInsideUb = NDDMA_MAX_DIMS - (shapeLen - ubSplitAxis);
@@ -130,10 +130,12 @@ __aicore__ inline AscendC::NdDmaParams<T, NDDMA_MAX_DIMS> BroadcastSetNddmaConfi
     return paramsMain;
 }
 
-template <typename T, std::size_t N>
-__aicore__ inline AscendC::NdDmaParams<T, NDDMA_MAX_DIMS> BroadcastSetNddmaConfigWithLoop(
-    const int64_t (&outputDims)[N], const int64_t (&outputStrides)[N], const int64_t (&inputStrides)[N],
-    int64_t shapeLen, int64_t ubSplitAxis)
+template <typename T, typename D, std::size_t N>
+__aicore__ inline AscendC::NdDmaParams<T, NDDMA_MAX_DIMS> BroadcastSetNddmaConfigWithLoop(const D (&outputDims)[N],
+                                                                                          const D (&outputStrides)[N],
+                                                                                          const D (&inputStrides)[N],
+                                                                                          int64_t shapeLen,
+                                                                                          int64_t ubSplitAxis)
 {
     AscendC::NdDmaLoopInfo<NDDMA_MAX_DIMS> loopInfo;
     for (uint64_t i = 0; i < NDDMA_MAX_DIMS; i++) {
@@ -147,9 +149,9 @@ __aicore__ inline AscendC::NdDmaParams<T, NDDMA_MAX_DIMS> BroadcastSetNddmaConfi
     return paramsMain;
 }
 
-template <typename T1, typename T2, size_t N>
+template <typename T1, typename T2, typename D, size_t N>
 __aicore__ inline void DataCopyMoveAlign(AscendC::GlobalTensor<T1>& inputGm, AscendC::LocalTensor<T2>& outputTensor,
-                                         const int64_t (&inputStrides)[N], int64_t ubSplitAxis, int64_t ubSplitSize,
+                                         const D (&inputStrides)[N], int64_t ubSplitAxis, int64_t ubSplitSize,
                                          int64_t gmOffset)
 {
     AscendC::DataCopyExtParams dataCopyExtParams;
@@ -164,11 +166,11 @@ __aicore__ inline void DataCopyMoveAlign(AscendC::GlobalTensor<T1>& inputGm, Asc
     }
 }
 
-template <typename T1, typename T2, size_t N>
+template <typename T1, typename T2, typename D, size_t N, size_t M>
 __aicore__ inline void BroadcastNddmaWithoutLoop(AscendC::GlobalTensor<T1>& inputGm,
-                                                 AscendC::LocalTensor<T2>& outputTensor, const int64_t (&outputDims)[N],
-                                                 const int64_t (&outputStrides)[N], const int64_t (&inputStrides)[N],
-                                                 const int64_t (&axesIndices)[N], int64_t ubSplitAxis, int64_t shapeLen,
+                                                 AscendC::LocalTensor<T2>& outputTensor, const D (&outputDims)[N],
+                                                 const D (&outputStrides)[N], const D (&inputStrides)[N],
+                                                 const int64_t (&axesIndices)[M], int64_t ubSplitAxis, int64_t shapeLen,
                                                  int64_t ubSplitSize, int64_t ubFormer)
 {
     int64_t gmOffset = BroadcastGetGmOffset(axesIndices, inputStrides, ubSplitAxis, ubFormer);
@@ -187,21 +189,21 @@ __aicore__ inline void BroadcastNddmaWithoutLoop(AscendC::GlobalTensor<T1>& inpu
     }
 }
 
-template <typename T1, typename T2, size_t N>
+template <typename T1, typename T2, typename D, size_t N, size_t M>
 __aicore__ __attribute__((noinline)) void BroadcastNddmaWithoutLoopNoInline(
-    AscendC::GlobalTensor<T1>& inputGm, AscendC::LocalTensor<T2>& outputTensor, const int64_t (&outputDims)[N],
-    const int64_t (&outputStrides)[N], const int64_t (&inputStrides)[N], const int64_t (&axesIndices)[N],
-    int64_t ubSplitAxis, int64_t shapeLen, int64_t ubSplitSize, int64_t ubFormer)
+    AscendC::GlobalTensor<T1>& inputGm, AscendC::LocalTensor<T2>& outputTensor, const D (&outputDims)[N],
+    const D (&outputStrides)[N], const D (&inputStrides)[N], const int64_t (&axesIndices)[M], int64_t ubSplitAxis,
+    int64_t shapeLen, int64_t ubSplitSize, int64_t ubFormer)
 {
     BroadcastNddmaWithoutLoop(inputGm, outputTensor, outputDims, outputStrides, inputStrides, axesIndices, ubSplitAxis,
                               shapeLen, ubSplitSize, ubFormer);
 }
 
-template <typename T1, typename T2, size_t N>
+template <typename T1, typename T2, typename D, size_t N, size_t M>
 __aicore__ inline void BroadcastNddmaWithLoop(AscendC::GlobalTensor<T1>& inputGm,
-                                              AscendC::LocalTensor<T2>& outputTensor, const int64_t (&outputDims)[N],
-                                              const int64_t (&outputStrides)[N], const int64_t (&inputStrides)[N],
-                                              const int64_t (&axesIndices)[N], int64_t ubSplitAxis, int64_t shapeLen,
+                                              AscendC::LocalTensor<T2>& outputTensor, const D (&outputDims)[N],
+                                              const D (&outputStrides)[N], const D (&inputStrides)[N],
+                                              const int64_t (&axesIndices)[M], int64_t ubSplitAxis, int64_t shapeLen,
                                               int64_t ubSplitSize, int64_t ubFormer)
 {
     int64_t gmOffset = BroadcastGetGmOffset(axesIndices, inputStrides, ubSplitAxis, ubFormer);
@@ -234,21 +236,23 @@ __aicore__ inline void BroadcastNddmaWithLoop(AscendC::GlobalTensor<T1>& inputGm
     }
 }
 
-template <typename T1, typename T2, size_t N>
+template <typename T1, typename T2, typename D, size_t N, size_t M>
 __aicore__ __attribute__((noinline)) void BroadcastNddmaWithLoopNoInline(
-    AscendC::GlobalTensor<T1>& inputGm, AscendC::LocalTensor<T2>& outputTensor, const int64_t (&outputDims)[N],
-    const int64_t (&outputStrides)[N], const int64_t (&inputStrides)[N], const int64_t (&axesIndices)[N],
-    int64_t ubSplitAxis, int64_t shapeLen, int64_t ubSplitSize, int64_t ubFormer)
+    AscendC::GlobalTensor<T1>& inputGm, AscendC::LocalTensor<T2>& outputTensor, const D (&outputDims)[N],
+    const D (&outputStrides)[N], const D (&inputStrides)[N], const int64_t (&axesIndices)[M], int64_t ubSplitAxis,
+    int64_t shapeLen, int64_t ubSplitSize, int64_t ubFormer)
 {
     BroadcastNddmaWithLoop(inputGm, outputTensor, outputDims, outputStrides, inputStrides, axesIndices, ubSplitAxis,
                            shapeLen, ubSplitSize, ubFormer);
 }
 
-template <typename T1, typename T2, size_t N>
-__aicore__ inline void BroadcastNddmaWithLoopContiguousFuseAxis(
-    AscendC::GlobalTensor<T1>& inputGm, AscendC::LocalTensor<T2>& outputTensor, const int64_t (&outputDims)[N],
-    const int64_t (&outputStrides)[N], const int64_t (&inputStrides)[N], const int64_t (&axesIndices)[N],
-    int64_t ubSplitAxis, int64_t shapeLen, int64_t ubSplitSize, int64_t ubFormer)
+template <typename T1, typename T2, typename D, size_t N, size_t M>
+__aicore__ inline void BroadcastNddmaWithLoopContiguousFuseAxis(AscendC::GlobalTensor<T1>& inputGm,
+                                                                AscendC::LocalTensor<T2>& outputTensor,
+                                                                const D (&outputDims)[N], const D (&outputStrides)[N],
+                                                                const D (&inputStrides)[N],
+                                                                const int64_t (&axesIndices)[M], int64_t ubSplitAxis,
+                                                                int64_t shapeLen, int64_t ubSplitSize, int64_t ubFormer)
 {
     int64_t gmOffset = BroadcastGetGmOffset(axesIndices, inputStrides, ubSplitAxis, ubFormer);
     if (outputStrides[ubSplitAxis] != inputStrides[ubSplitAxis]) {

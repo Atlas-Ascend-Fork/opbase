@@ -19,11 +19,11 @@ namespace Base {
 static constexpr int64_t NDDMA_COPYINBRC_INLINE_MAX_SUPPORT = 4;
 static constexpr int64_t NDDMA_COPYINBRC_LEAST_NUMBER_NEED_FUSE = 3;
 
-template <class BrcDag, bool withLoop>
-class BroadcastNddmaSch : public BroadcastBaseSch<BrcDag, true> {
+template <class BrcDag, bool withLoop, class TilingDataT = BroadcastBaseTilingData<BrcDag>>
+class BroadcastNddmaSch : public BroadcastBaseSch<BrcDag, true, -1, TilingDataT> {
 public:
-    __aicore__ inline explicit BroadcastNddmaSch(const BroadcastBaseTilingData<BrcDag>* baseTilingData)
-        : BroadcastBaseSch<BrcDag, true>(baseTilingData), tilingData(baseTilingData)
+    __aicore__ inline explicit BroadcastNddmaSch(const TilingDataT* baseTilingData)
+        : BroadcastBaseSch<BrcDag, true, -1, TilingDataT>(baseTilingData), tilingData(baseTilingData)
     {}
 
     template <class... Args>
@@ -235,7 +235,7 @@ protected:
 private:
     constexpr static int bufferNum = BrcDag::template GetBufferNum<true, true>();
     int copyInBrcCount = 0;
-    const BroadcastBaseTilingData<BrcDag>* tilingData;
+    const TilingDataT* tilingData;
 };
 } // namespace Base
 } // namespace Ops

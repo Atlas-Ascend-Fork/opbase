@@ -195,6 +195,8 @@ public:
     {
         if (brcBaseTilingData != nullptr) {
             *reinterpret_cast<T*>(&brcBaseTilingData->scalarData[offset]) = value;
+        } else if (brcNddmaAdvanceTilingData != nullptr) {
+            *reinterpret_cast<T*>(&brcNddmaAdvanceTilingData->scalarData[offset]) = value;
         } else if (brcOneDimTilingData != nullptr) {
             *reinterpret_cast<T*>(&brcOneDimTilingData->scalarData[offset]) = value;
         } else if (brcNLastTransposeTilingData != nullptr) {
@@ -330,14 +332,18 @@ private:
     /**
      *  根据kernel类型设置schmode
      * @param isUbBroadcast 是否选择了UB BRC模版
+     * @param isNddmaAdvance NDDMA路径是否使用advance tilingData
      * @return
      */
-    void SetSchMode(bool isUbBroadcast)
+    void SetSchMode(bool isUbBroadcast, bool isNddmaAdvance)
     {
         if (isUbBroadcast) {
             int32_t runningRank = tilingData.shapeLen - tilingData.ubSplitAxis;
             int32_t rank = runningRank > HIGH_PERF_RANK ? DEFAULT_ADD_VALUE : runningRank;
             schMode = SCH_MODE_UB_BROADCAST + rank;
+        } else if (isNddmaAdvance) {
+            // advance门控shapeLen<=5蕴含shapeLen-ubSplitAxis<=MAX_NNDMA_DIM，恒走without-loop
+            schMode = SCH_MODE_NDDMA_ADVANCE;
         } else {
             schMode = tilingData.shapeLen - tilingData.ubSplitAxis > MAX_NNDMA_DIM ?
                           SCH_MODE_NDDMA_WITH_LOOP_CACHE_BRC :
@@ -349,24 +355,25 @@ private:
      *  适配tilingData
      * @return
      */
-    void AdaptBroadcastBaseTilingData()
+    template <typename TDst>
+    void AdaptBroadcastBaseTilingData(TDst* dst)
     {
-        brcBaseTilingData->blockFormer = tilingData.blockFormer;
-        brcBaseTilingData->ubFormer = tilingData.ubFormer;
-        brcBaseTilingData->ubOuter = tilingData.ubOuter;
-        brcBaseTilingData->ubTail = tilingData.ubTail;
-        brcBaseTilingData->blockTail = tilingData.blockTail;
-        brcBaseTilingData->shapeLen = tilingData.shapeLen;
-        brcBaseTilingData->ubSplitAxis = tilingData.ubSplitAxis;
-        brcBaseTilingData->dimProductBeforeUbInner = tilingData.dimProductBeforeUbInner;
-        brcBaseTilingData->elemNum = tilingData.elemNum;
-        brcBaseTilingData->blockNum = tilingData.blockNum;
-        std::copy(tilingData.dims.back().begin(), tilingData.dims.back().end(), brcBaseTilingData->outputDims);
-        std::copy(tilingData.strides.back().begin(), tilingData.strides.back().end(), brcBaseTilingData->outputStrides);
+        dst->blockFormer = tilingData.blockFormer;
+        dst->ubFormer = tilingData.ubFormer;
+        dst->ubOuter = tilingData.ubOuter;
+        dst->ubTail = tilingData.ubTail;
+        dst->blockTail = tilingData.blockTail;
+        dst->shapeLen = tilingData.shapeLen;
+        dst->ubSplitAxis = tilingData.ubSplitAxis;
+        dst->dimProductBeforeUbInner = tilingData.dimProductBeforeUbInner;
+        dst->elemNum = tilingData.elemNum;
+        dst->blockNum = tilingData.blockNum;
+        std::copy(tilingData.dims.back().begin(), tilingData.dims.back().end(), dst->outputDims);
+        std::copy(tilingData.strides.back().begin(), tilingData.strides.back().end(), dst->outputStrides);
 
         // 手动循环逐个字节拷贝
         for (uint64_t i = 0; i < BROADCAST_MAX_SCALAR_BYTES; i++) {
-            brcBaseTilingData->scalarData[i] = scalarData[i];
+            dst->scalarData[i] = scalarData[i];
         }
     }
     /**
@@ -436,14 +443,14 @@ private:
      *  根据切分结果，设置CopyIn节点对应的切分大小
      * @return
      */
-    void SetInputParams()
+    template <typename TDst>
+    ge::graphStatus SetInputParams(TDst* dst)
     {
         for (uint32_t i = 0; i < OpDag::InputSize; i++) {
             if (copyInBrcPos.count(i)) {
                 continue;
             }
-            std::copy(tilingData.strides[i].begin(), tilingData.strides[i].end(),
-                      *(brcBaseTilingData->inputStrides + i));
+            std::copy(tilingData.strides[i].begin(), tilingData.strides[i].end(), *(dst->inputStrides + i));
 
             int64_t formerLength = 1;
             int64_t tailLength = 1;
@@ -456,8 +463,57 @@ private:
                 tailLength *= tilingData.dims[i][j];
             }
 
-            brcBaseTilingData->inputDims[i][0] = formerLength;
-            brcBaseTilingData->inputDims[i][1] = tailLength;
+            // inputDims恒为UB内单块元素数（物理量级受ubSize约束，远小于UINT32_MAX），
+            // 不变量由tiling侧ubFormer计算保证，写入前以int64源值校验兜底防上游改动破坏
+            OP_CHECK_IF(
+                (formerLength > static_cast<int64_t>(UINT32_MAX) || tailLength > static_cast<int64_t>(UINT32_MAX)),
+                OP_LOGE(context_->GetNodeName(),
+                        "inputDims %ld/%ld exceeds uint32 capacity, check ubFormer or inner dims product.",
+                        formerLength, tailLength),
+                return ge::GRAPH_FAILED);
+            dst->inputDims[i][0] = formerLength;
+            dst->inputDims[i][1] = tailLength;
+        }
+        return ge::GRAPH_SUCCESS;
+    }
+
+    /**
+     *  获取copyInBrc的位置，并按顺序将对应节点的输入shape信息设置到advance tilingdata中
+     *  Small 无 inputBrcDims 字段（NDDMA 调度器不消费），仅拷贝 strides。
+     * @tparam pos 按顺序执行递归的位置
+     */
+    template <int pos = 0>
+    void SetInputNddmaParamsAdvance()
+    {
+        if constexpr (OpDag::CopyBrcSize != 0) {
+            using Op = typename OpDag::CopyBrcNodes::template At<pos>;
+            using Input = typename Op::InHolders::template At<0>;
+            int64_t idx = Input::Pos;
+            std::copy(tilingData.strides[idx].begin(), tilingData.strides[idx].end(),
+                      *(brcNddmaAdvanceTilingData->inputBrcStrides + pos));
+            if constexpr (pos + 1 < OpDag::CopyBrcSize) {
+                SetInputNddmaParamsAdvance<pos + 1>();
+            }
+        }
+    }
+
+    /**
+     *  获取VecBrc的位置，并按顺序将对应节点的输入shape信息设置到advance tilingdata中
+     *  Small 无 inputVecBrcDims（NDDMA 调度器不消费 VecBrc 形状信息），仅拷贝 strides。
+     *  @tparam pos 按顺序执行递归的位置
+     */
+    template <int pos = 0>
+    void SetInputUbBrcParamsAdvance()
+    {
+        if constexpr (OpDag::VecBrcSize > 0) {
+            using Op = typename OpDag::VecBrcNodes::template At<pos>;
+            using Input = typename Op::SourceInHolders::template At<0>;
+            int64_t idx = Input::Pos;
+
+            brcNddmaAdvanceTilingData->inputVecBrcStrides[pos] = tilingData.strides[idx][tilingData.ubSplitAxis];
+            if constexpr (pos + 1 < OpDag::VecBrcSize) {
+                SetInputUbBrcParamsAdvance<pos + 1>();
+            }
         }
     }
     /**
@@ -631,13 +687,45 @@ private:
         }
     }
 
+    ge::graphStatus CheckNddmaAdvanceTilingDataFit()
+    {
+        for (const auto& dims : tilingData.dims) {
+            for (int64_t dim : dims) {
+                OP_CHECK_IF(
+                    (dim > static_cast<int64_t>(UINT32_MAX) || dim < 0),
+                    OP_LOGI(context_->GetNodeName(),
+                            "broadcast dim %ld exceeds uint32 range after collapse, fallback to large tilingData.",
+                            dim),
+                    return ge::GRAPH_FAILED);
+            }
+        }
+        for (const auto& strides : tilingData.strides) {
+            for (int64_t stride : strides) {
+                OP_CHECK_IF((stride > static_cast<int64_t>(UINT32_MAX) || stride < 0),
+                            OP_LOGI(context_->GetNodeName(),
+                                    "broadcast stride %ld exceeds uint32 range after collapse, fallback to large "
+                                    "tilingData.",
+                                    stride),
+                            return ge::GRAPH_FAILED);
+            }
+        }
+        OP_CHECK_IF((static_cast<uint64_t>(coreNum) > static_cast<uint64_t>(UINT8_MAX)),
+                    OP_LOGI(context_->GetNodeName(),
+                            "AIV core num %lu exceeds uint8 blockNum capacity, fallback to large tilingData.", coreNum),
+                    return ge::GRAPH_FAILED);
+        int64_t elemProduct = 1;
+        for (int64_t dim : tilingData.dims.back()) {
+            OP_CHECK_IF((dim > 0 && elemProduct > INT64_MAX / dim),
+                        OP_LOGI(context_->GetNodeName(),
+                                "broadcast output element product overflows int64, fallback to large tilingData."),
+                        return ge::GRAPH_FAILED);
+            elemProduct *= dim;
+        }
+        return ge::GRAPH_SUCCESS;
+    }
+
     ge::graphStatus DoBroadcastOpTiling(BroadcastTilingParams& broadcastTilingParams)
     {
-        brcBaseTilingData = context_->GetTilingData<BroadcastBaseTilingData<OpDag>>();
-
-        OP_CHECK_IF((brcBaseTilingData == nullptr),
-                    OP_LOGE(context_->GetNodeName(), "Get brcBaseTilingData from GE context failed"),
-                    return ge::GRAPH_FAILED);
         // 1、判断ubbrc用到 2、设置copyIn参数用到
         GetCopyInBrcPosList();
 
@@ -648,9 +736,26 @@ private:
             isUbBroadcast = IsUbBroadcast();
         }
 
+        const bool isNddmaAdvance = !isUbBroadcast &&
+                                    (tilingData.shapeLen <=
+                                     static_cast<int64_t>(BROADCAST_NDDMA_ADVANCE_MAX_DIMS_NUM)) &&
+                                    (CheckNddmaAdvanceTilingDataFit() == ge::GRAPH_SUCCESS);
+        if (isNddmaAdvance) {
+            brcNddmaAdvanceTilingData = context_->GetTilingData<BroadcastNddmaAdvanceTilingData<OpDag>>();
+            OP_CHECK_IF((brcNddmaAdvanceTilingData == nullptr),
+                        OP_LOGE(context_->GetNodeName(), "Get brcNddmaAdvanceTilingData from GE context failed"),
+                        return ge::GRAPH_FAILED);
+        } else {
+            brcBaseTilingData = context_->GetTilingData<BroadcastBaseTilingData<OpDag>>();
+            OP_CHECK_IF((brcBaseTilingData == nullptr),
+                        OP_LOGE(context_->GetNodeName(), "Get brcBaseTilingData from GE context failed"),
+                        return ge::GRAPH_FAILED);
+        }
+
         int64_t bufferNum = GetBufferNum(isUbBroadcast);
-        OP_LOGI(context_->GetNodeName(), "Broadcast DoBroadcastOpTiling. isUbBroadcast: %d bufferNum: %ld ",
-                isUbBroadcast, bufferNum);
+        OP_LOGI(context_->GetNodeName(),
+                "Broadcast DoBroadcastOpTiling. isUbBroadcast: %d isNddmaAdvance: %d bufferNum: %ld ", isUbBroadcast,
+                isNddmaAdvance, bufferNum);
 
         BroadcastComputeParams params;
         params.maxDtypeBits = OpDag::MaxDtypeBytes * BROADCAST_BITS_NUM;
@@ -665,16 +770,30 @@ private:
             return ge::GRAPH_FAILED;
         }
 
-        SetSchMode(isUbBroadcast);
+        SetSchMode(isUbBroadcast, isNddmaAdvance);
         // adapt
-        AdaptBroadcastBaseTilingData();
-
-        SetInputNddmaParams<0>();
-        SetInputUbBrcParams<0>();
-        SetInputParams();
-
-        // set block dim
-        context_->SetBlockDim(brcBaseTilingData->blockNum);
+        if (!isNddmaAdvance) {
+            AdaptBroadcastBaseTilingData(brcBaseTilingData);
+            SetInputNddmaParams<0>();
+            SetInputUbBrcParams<0>();
+            OP_CHECK_IF((SetInputParams(brcBaseTilingData) != ge::GRAPH_SUCCESS),
+                        OP_LOGE(context_->GetNodeName(), "SetInputParams failed"), return ge::GRAPH_FAILED);
+            // set block dim
+            context_->SetBlockDim(brcBaseTilingData->blockNum);
+        } else {
+            // blockNum字段为uint8，截断前校验切分结果，防切分逻辑或核数变化产生静默回绕
+            OP_CHECK_IF((tilingData.blockNum > static_cast<int64_t>(UINT8_MAX)),
+                        OP_LOGE(context_->GetNodeName(), "advance blockNum %ld exceeds uint8 capacity after split.",
+                                tilingData.blockNum),
+                        return ge::GRAPH_FAILED);
+            AdaptBroadcastBaseTilingData(brcNddmaAdvanceTilingData);
+            SetInputNddmaParamsAdvance<0>();
+            SetInputUbBrcParamsAdvance<0>();
+            OP_CHECK_IF((SetInputParams(brcNddmaAdvanceTilingData) != ge::GRAPH_SUCCESS),
+                        OP_LOGE(context_->GetNodeName(), "SetInputParams failed"), return ge::GRAPH_FAILED);
+            // set block dim
+            context_->SetBlockDim(brcNddmaAdvanceTilingData->blockNum);
+        }
 
         return ge::GRAPH_SUCCESS;
     }
@@ -911,10 +1030,11 @@ private:
                       SCH_MODE_NON_CONTIGUOUS_NDDMA_WITH_LOOP_CACHE_BRC :
                       SCH_MODE_NON_CONTIGUOUS_NDDMA_WITHOUT_LOOP_CACHE_BRC;
 
-        AdaptBroadcastBaseTilingData();
+        AdaptBroadcastBaseTilingData(brcBaseTilingData);
         SetInputNddmaParams<0>();
         SetInputUbBrcParams<0>();
-        SetInputParams();
+        OP_CHECK_IF((SetInputParams(brcBaseTilingData) != ge::GRAPH_SUCCESS),
+                    OP_LOGE(context_->GetNodeName(), "SetInputParams failed"), return ge::GRAPH_FAILED);
 
         context_->SetBlockDim(brcBaseTilingData->blockNum);
 
@@ -1032,6 +1152,11 @@ private:
         int64_t ubFormerByte = actualUbSize / aliveNum;
         int64_t ubFormerByteFloorAlign = (ubFormerByte / CACHE_LINE) * CACHE_LINE;
         brcOneDimTilingData->ubFormer = ubFormerByteFloorAlign / dTypeSize;
+        // 静态编址后无InitBuffer分配失败兜底，乘回校验切分公式：上游ubSize/aliveNum计算改动破坏时fail-loud
+        OP_CHECK_IF((static_cast<int64_t>(brcOneDimTilingData->ubFormer) * dTypeSize * aliveNum > actualUbSize),
+                    OP_LOGE(context_->GetNodeName(), "ubFormer %d exceeds ub capacity, check ub size or aliveNum",
+                            brcOneDimTilingData->ubFormer),
+                    return ge::GRAPH_FAILED);
         OP_CHECK_IF((brcOneDimTilingData->ubFormer == 0),
                     OP_LOGE(context_->GetNodeName(),
                             "ub size or CACHE_LINE check failed. actualUbSize: %ld CACHE_LINE: %ld dTypeSize: %u",
@@ -1087,8 +1212,8 @@ private:
             // 若对齐后不足 CACHE_LINE_512(512B)，用 512B 下限，由实际能填满的核数分配
             // ubFormer 取 min(原UB容量限制值, 满核每核量)，避免超过 UB 容量
             int64_t dimPerCore = (dimLength + coreNum - 1) / coreNum;
-            int64_t alignDimPerCore =
-                ((((dimPerCore * dTypeSize) + CACHE_LINE - 1) / CACHE_LINE) * CACHE_LINE) / dTypeSize;
+            int64_t alignDimPerCore = ((((dimPerCore * dTypeSize) + CACHE_LINE - 1) / CACHE_LINE) * CACHE_LINE) /
+                                      dTypeSize;
             int64_t lowerLimitElems = CACHE_LINE_512 / dTypeSize;
             if (alignDimPerCore < lowerLimitElems) {
                 alignDimPerCore = lowerLimitElems;
@@ -1105,10 +1230,10 @@ private:
             // 如果blockNum小于核数一半，则尝试分配到核数的一半
             if (static_cast<uint64_t>(blockNum) < (coreNum / HALF_CORE_NUM_DIVIDE) &&
                 (ubFormer * dTypeSize * aliveNum) > PER_CORE_MIN_UB_BYTE) {
-                int64_t dimPerCore = dimLength * 2 / coreNum;  // 1/2 的coreNum进行分配
+                int64_t dimPerCore = dimLength * 2 / coreNum; // 1/2 的coreNum进行分配
                 // 向上对齐到128Byte，理论上不会超过原来计算的ubFormer
-                int64_t alignDimPerCore =
-                    ((((dimPerCore * dTypeSize) + CACHE_LINE - 1) / CACHE_LINE) * CACHE_LINE) / dTypeSize;
+                int64_t alignDimPerCore = ((((dimPerCore * dTypeSize) + CACHE_LINE - 1) / CACHE_LINE) * CACHE_LINE) /
+                                          dTypeSize;
                 ubFormer = (ubFormer > alignDimPerCore) ? alignDimPerCore : ubFormer;
 
                 // 如果分配到核数一半后，小于8k(开DB后)，则直接按照 8k
@@ -1292,7 +1417,7 @@ private:
     gert::TilingContext* context_{nullptr};
     uint64_t coreNum{0};
     uint64_t ubSize{0};
-    bool isAscend960_{false};  // 目标芯片平台标志，由 GetPlatformInfo() 运行时设置
+    bool isAscend960_{false}; // 目标芯片平台标志，由 GetPlatformInfo() 运行时设置
     std::vector<gert::Shape> inShapes;
     std::vector<bool> inputIsContiguous;
     std::vector<gert::Stride> inStrides;
@@ -1307,6 +1432,7 @@ private:
     char scalarData[BROADCAST_MAX_SCALAR_BYTES] = {0};
 
     BroadcastBaseTilingData<OpDag>* brcBaseTilingData = nullptr;
+    BroadcastNddmaAdvanceTilingData<OpDag>* brcNddmaAdvanceTilingData = nullptr;
     BroadcastOneDimTilingData* brcOneDimTilingData = nullptr;
     BroadcastOneDimTilingDataAdvance* brcOneDimTilingDataAdvance = nullptr;
     BroadcastLastTransposeTilingData<OpDag>* brcLastTransposeTilingData = nullptr;

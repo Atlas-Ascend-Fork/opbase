@@ -53,6 +53,12 @@ public:
             BroadcastNddmaSch<BrcDag, true> sch(&tilingData); // 获取Schedule
             sch.Init(&pipe, args...);
             sch.Process();
+        } else if constexpr (schMode == 3) {
+            GET_TILING_DATA_WITH_STRUCT(BroadcastNddmaAdvanceTilingData<BrcDag>, tilingData, tiling);
+            TPipe pipe;
+            BroadcastNddmaSch<BrcDag, false, BroadcastNddmaAdvanceTilingData<BrcDag>> sch(&tilingData);
+            sch.Init(&pipe, args...);
+            sch.Process();
         } else if constexpr (schMode == 101) {
             GET_TILING_DATA_WITH_STRUCT(BroadcastBaseTilingData<BrcDag>, tilingData, tiling);
             TPipe pipe;
@@ -85,9 +91,9 @@ public:
             sch.Process();
         } else if constexpr (schMode == 201) {
             GET_TILING_DATA_WITH_STRUCT(BroadcastOneDimTilingData, tilingData, tiling);
-            TPipe pipe;
+            AscendC::InitSocState();
             BroadcastOneDimSch<BrcDag> sch(&tilingData); // 获取Schedule
-            sch.Init(&pipe, args...);
+            sch.Init(args...);
             sch.Process();
         } else if constexpr (schMode == 202) {
             GET_TILING_DATA_PTR_WITH_STRUCT(BroadcastOneDimTilingDataAdvance, tilingDataPtr, tiling);

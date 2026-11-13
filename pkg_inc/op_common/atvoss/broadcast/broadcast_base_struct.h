@@ -21,6 +21,7 @@
 namespace Ops {
 namespace Base {
 constexpr uint64_t BROADCAST_MAX_DIMS_NUM = 8;
+constexpr uint64_t BROADCAST_NDDMA_ADVANCE_MAX_DIMS_NUM = 5;
 constexpr uint64_t BROADCAST_NON_CONTIGIOUS_MAX_DIMS_NUM = 4;
 constexpr int64_t BROADCAST_BITS_NUM = 8;
 constexpr uint64_t BROADCAST_MAX_COPYIN_NUM = 8;
@@ -50,6 +51,32 @@ struct BroadcastOneDimTilingDataAdvance {
     int32_t tileNum;
     int16_t blockNum;
     int16_t scalarFlag;
+};
+
+// 相比large结构缺席inputBrcDims/inputVecBrcDims：NDDMA仅消费strides，dims读取方均在large或非连续自有结构
+template <class BrcDag>
+struct BroadcastNddmaAdvanceTilingData {
+    uint8_t scheMode;
+    uint8_t shapeLen;
+    uint8_t ubSplitAxis;
+    uint8_t blockNum;
+    int32_t ubFormer;
+    int32_t ubTail;
+    int32_t elemNum;
+    int64_t ubOuter;
+    int64_t blockFormer;
+    int64_t blockTail;
+    int64_t dimProductBeforeUbInner;
+    uint32_t outputDims[BROADCAST_NDDMA_ADVANCE_MAX_DIMS_NUM];
+    uint32_t outputStrides[BROADCAST_NDDMA_ADVANCE_MAX_DIMS_NUM];
+    uint32_t inputDims[BrcDag::InputSize][2]; // 整块 + 尾块
+    uint32_t inputStrides[BrcDag::InputSize][BROADCAST_NDDMA_ADVANCE_MAX_DIMS_NUM];
+    uint32_t inputBrcStrides[BrcDag::CopyBrcSize][BROADCAST_NDDMA_ADVANCE_MAX_DIMS_NUM];
+    uint32_t inputVecBrcStrides[BrcDag::VecBrcSize];
+    // uint32数组区长度随DAG参数可变（可落4-mod-8），alignas仅保证scalarData基址8字节对齐；
+    // offset由host/kernel两侧对称的sizeof推进决定（不按alignof补齐），当前调用方均为同宽
+    // float序列；新增超过4字节的标量类型前需在两侧同步引入alignof对齐补齐
+    alignas(8) char scalarData[BROADCAST_MAX_SCALAR_BYTES];
 };
 
 template <class BrcDag>
@@ -138,9 +165,9 @@ struct BroadcastNlastTransposeTilingData {
 };
 
 #define BRC_NDDMA_SCH_MODE_KEY_DECL(schMode) \
-    ASCENDC_TPL_UINT_DECL(schMode, 16, ASCENDC_TPL_UI_LIST, 1, 2, 201, 202, 301, 303, 304, 305, 999)
+    ASCENDC_TPL_UINT_DECL(schMode, 16, ASCENDC_TPL_UI_LIST, 1, 2, 3, 201, 202, 301, 303, 304, 305, 999)
 #define BRC_NDDMA_SCH_MODE_KEY_SEL(schMode) \
-    ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, 1, 2, 201, 202, 301, 303, 304, 305)
+    ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, 1, 2, 3, 201, 202, 301, 303, 304, 305)
 #define BRC_NDDMA_SCH_CUSTOM_MODE_KEY_SEL(schMode) ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, 999)
 #define BRC_VEC_SCH_CUSTOM_MODE_KEY_DECL(schMode)                                                                  \
     ASCENDC_TPL_UINT_DECL(schMode, 16, ASCENDC_TPL_UI_LIST, 101, 102, 103, 104, 109, 201, 202, 301, 302, 303, 304, \
@@ -148,11 +175,12 @@ struct BroadcastNlastTransposeTilingData {
 #define BRC_VEC_SCH_MODE_KEY_SEL(schMode) \
     ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, 101, 102, 103, 104, 109, 201, 202, 301, 302, 303, 304, 305)
 #define BRC_VEC_SCH_CUSTOM_MODE_KEY_SEL(schMode) ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, 999)
-#define BRC_TEMP_SCH_MODE_KEY_DECL(schMode)                                                                         \
-    ASCENDC_TPL_UINT_DECL(schMode, 16, ASCENDC_TPL_UI_LIST, 1, 2, 101, 102, 103, 104, 109, 201, 202, 301, 302, 303, \
+#define BRC_TEMP_SCH_MODE_KEY_DECL(schMode)                                                                            \
+    ASCENDC_TPL_UINT_DECL(schMode, 16, ASCENDC_TPL_UI_LIST, 1, 2, 3, 101, 102, 103, 104, 109, 201, 202, 301, 302, 303, \
                           304, 305, 999)
-#define BRC_TEMP_SCH_MODE_KEY_SEL(schMode) \
-    ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, 1, 2, 101, 102, 103, 104, 109, 201, 202, 301, 302, 303, 304, 305)
+#define BRC_TEMP_SCH_MODE_KEY_SEL(schMode)                                                                             \
+    ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, 1, 2, 3, 101, 102, 103, 104, 109, 201, 202, 301, 302, 303, 304, \
+                         305)
 #define BRC_TEMP_SCH_CUSTOM_MODE_KEY_SEL(schMode) ASCENDC_TPL_UINT_SEL(schMode, ASCENDC_TPL_UI_LIST, 999)
 } // namespace Base
 } // namespace Ops
