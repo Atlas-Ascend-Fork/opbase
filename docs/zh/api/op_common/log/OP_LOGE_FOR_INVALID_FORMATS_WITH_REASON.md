@@ -29,7 +29,7 @@ OP_LOGE_FOR_INVALID_FORMATS_WITH_REASON(entityName, paramNames, incorrectFormats
 
 ## 调用示例
 
-关键代码示例如下，仅供参考，不支持直接拷贝运行。
+关键代码示例如下，仅供参考，不支持直接拷贝运行：
 
 ```cpp
 // 预期输出：Parameters x and y of OperatorName have incorrect formats ND and NCHW.

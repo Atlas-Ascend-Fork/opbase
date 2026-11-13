@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-获取平台UB（Unified Buffer的简写）的block单元大小，单位为字节（Byte）。
+获取平台UB（Unified Buffer的简写）的Block单元大小，单位为字节（Byte）。
 
 ## 函数原型
 
@@ -19,7 +19,7 @@ uint32_t GetUbBlockSize([[maybe_unused]] const T *context)
 
 ## 返回值说明
 
-uint32\_t：返回平台UB的block单元大小（当前为32字节（Byte））。
+uint32\_t：返回平台UB的Block单元大小（当前为32字节（Byte））。
 
 ## 约束说明
 

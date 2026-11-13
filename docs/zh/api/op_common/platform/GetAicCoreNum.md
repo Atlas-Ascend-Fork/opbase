@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-获取平台AI Cube的核数。
+获取平台AI Core的核数。
 
 ## 函数原型
 
@@ -19,7 +19,7 @@ uint32_t GetAicCoreNum(const T *context)
 
 ## 返回值说明
 
-返回平台AI Cube的核数，uint32\_t类型，返回0代表获取失败。
+返回平台AI Core的核数，uint32\_t类型，返回0代表获取失败。
 
 ## 约束说明
 

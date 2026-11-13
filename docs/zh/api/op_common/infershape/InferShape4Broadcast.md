@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-图模式场景下，broadcast类算子的InferShape方法（用于推导输出张量的形状shape）。不带inputNum的重载固定使用前两个输入；另一重载使用inputNum指定输入个数。
+图模式场景下，broadcast类算子的InferShape方法（用于推导输出张量的形状）。不带inputNum的重载固定使用前两个输入；另一重载使用inputNum指定输入个数。
 
 ## 函数原型
 

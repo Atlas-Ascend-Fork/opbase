@@ -1,4 +1,4 @@
-# infershape
+# InferShape
 
 - **[SetUnknownRank](SetUnknownRank.md)**  
 

@@ -31,7 +31,7 @@ OP_LOGE_WITH_INVALID_INPUT_SHAPESIZE(entityName, index, incorrectSize, correctSi
 
 ## 调用示例
 
-关键代码示例如下，仅供参考，不支持直接拷贝运行。
+关键代码示例如下，仅供参考，不支持直接拷贝运行：
 
 ```cpp
 // 预期输出: The 0th input of MyOp has incorrect shape size 1024. It should be 2048.

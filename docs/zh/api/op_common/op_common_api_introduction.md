@@ -1,6 +1,6 @@
 # op\_common接口列表
 
-针对CANN算子开发或调用场景（无论是内置或自定义算子），其开发和调用过程会依赖opbase库提供的公共能力，包括日志获取、算子Tiling/InferShape开发依赖的接口等。
+针对CANN算子开发或调用场景（无论是内置还是自定义算子），其开发和调用过程会依赖opbase库提供的公共能力，包括日志获取、算子Tiling/InferShape开发依赖的接口等。
 
 - **关键接口分类**：
 
@@ -9,11 +9,12 @@
   - platform：算子执行平台信息相关接口。
   - infershape：算子shape处理相关接口。
   - op_host：算子注册AI Core配置相关接口。
+  - op_graph：Aclnn接口在图场景的通用执行接口。
 
 - **接口说明**：
 
   - 接口定位：提供详细参数说明的接口为正式接口，支持版本向后兼容；未提供详细参数说明的接口为预留接口，您可以暂时不关注。
-  - 头文件路径：调用本章接口时，请按实际情况include依赖的头文件，一般定义在`${INSTALL_DIR}/include`目录。其中\$\{INSTALL\_DIR\}表示为CANN软件安装后的路径，以root安装举例，安装后路径为`/usr/local/Ascend/cann`。
+  - 头文件路径：调用本章接口时，请按实际情况include依赖的头文件，一般定义在`${INSTALL_DIR}/include`目录。其中\$\{INSTALL\_DIR\}表示为CANN软件安装后的路径，以root安装为例，安装后路径为`/usr/local/Ascend/cann`。
 
 **表 1** op\_common接口列表
 
@@ -291,7 +292,7 @@
   </tr>
   <tr>
      <td><a href='infershape/InferShape4Broadcast.md'>InferShape4Broadcast</a></td>
-    <td>broadcast类算子的infershape方法。</td>
+    <td>broadcast类算子的InferShape方法。</td>
     <td rowspan="2">op_common/op_host/infershape_broadcast_util.h</td>
   </tr>
   <tr>
@@ -300,12 +301,12 @@
   </tr>
   <tr>
      <td><a href='infershape/InferShape4Elewise.md'>InferShape4Elewise</a></td>
-    <td>elewise类算子的infershape方法。</td>
+    <td>elewise类算子的InferShape方法。</td>
     <td rowspan="1">op_common/op_host/infershape_elewise_util.h</td>
   </tr>
   <tr>
      <td><a href='infershape/InferShape4Reduce.md'>InferShape4Reduce</a></td>
-    <td>reduce类算子的infershape方法。</td>
+    <td>reduce类算子的InferShape方法。</td>
     <td rowspan="1">op_common/op_host/infershape_reduce_util.h</td>
   </tr>
   <tr>

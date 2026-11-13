@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-图模式场景下，reduce类算子的InferShape方法（用于推导输出张量的形状shape）。
+图模式场景下，Reduce类算子的InferShape方法（用于推导输出张量的形状）。
 
 ## 函数原型
 
@@ -31,7 +31,7 @@ ge::graphStatus InferShape4Reduce(gert::InferShapeContext *context)
 
 ## 调用示例
 
-关键代码示例如下，仅供参考，不支持直接拷贝运行。
+关键代码示例如下，仅供参考，不支持直接拷贝运行：
 
 ```cpp
 // ReduceSum的输入为x、axes，第0个属性为keep_dims时，可复用Reduce形状推导。

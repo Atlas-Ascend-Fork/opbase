@@ -1,6 +1,6 @@
 # 预留接口
 
-本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
+本文档汇总非对外承诺的接口清单，逐项说明各接口的名称与功能；这些接口后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
 **表 1** 接口列表
 
@@ -33,7 +33,7 @@
 | ToString(ge::Format format) | 获取Format对应的字符串表示。 |
 | ToString(const gert::Shape\& shape) | 获取Shape对应的字符串表示。 |
 | ToString(const std::vector\<const gert::Shape\*\>\& v) | 获取Shape指针列表对应的字符串表示。 |
-| ViewErrorCode | 错误码枚举，用于infershape等场景的错误上报。 |
+| ViewErrorCode | 错误码枚举，用于InferShape等场景的错误上报。 |
 | LastPow2(uint64_t n) | 获取不超过n的最大的2的幂次值。 |
 | MurmurHash(const void \*src, uint32_t srcLen, uint32_t seed) | Murmur哈希算法，用于计算数据的哈希值。 |
 | SplitResult | 均分结果结构体，包含splitCount、splitFactor、splitTailFactor。 |
@@ -46,7 +46,7 @@
 | IsRegbaseSocVersion(const gert::TilingParseContext\* context) | 判断当前平台是否为Regbase SoC版本。 |
 | IsRegbaseSocVersion(const gert::TilingContext\* context) | 判断当前平台是否为Regbase SoC版本。 |
 | EnsureNotScalar(const gert::Shape\& inShape) | 确保Shape不是标量（scalar），若为标量则返回一维Shape。 |
-| AiCoreParams | AiCore参数结构体，包含ubSize、numBlocks、aicNum、l1Size、l0aSize、l0bSize、l0cSize。 |
+| AiCoreParams | AI Core参数结构体，包含ubSize、numBlocks、aicNum、l1Size、l0aSize、l0bSize、l0cSize。 |
 | CompileInfoCommon | 编译信息公共结构体，包含aivNum、aicNum、ubSize、l1Size等平台信息。 |
 | TilingBaseClass(gert::TilingContext\* context) | Tiling基类构造函数，接收TilingContext。 |
 | DoTiling() | Tiling执行框架入口，依次调用各Tiling阶段。 |
@@ -78,7 +78,7 @@
 | StoreOneTensorForDtypeT\<T\>(\_\_local_mem\_\_ T \*output, MicroAPI::RegTensor\<float\> \&src, MicroAPI::MaskReg \&preg, uint32_t offset) | 将float32寄存器数据存储到UB中，支持bfloat16/float16/float32/int32/int16/int8/uint8类型输出。 |
 | LoadUnAlignOneTensor\<T\>(\_\_local_mem\_\_ T \*&input, MicroAPI::RegTensor\<float\> \&dst, MicroAPI::UnalignReg \&uSrc, MicroAPI::MaskReg \&preg, uint32_t postUpdateStride) | 从UB加载一个非对齐的Tensor到float32寄存器中。 |
 | StoreUnAlignOneTensor\<T\>(\_\_local_mem\_\_ T \*&output, MicroAPI::RegTensor\<float\> \&src, MicroAPI::UnalignReg \&uValue, MicroAPI::MaskReg \&preg, uint32_t postUpdateStride) | 将float32寄存器数据非对齐存储到UB中。 |
-| CeilDiv\<T\>(T a, T b) | kernel侧向上取整除法。 |
+| CeilDiv\<T\>(T a, T b) | Kernel侧向上取整除法。 |
 | FloorDiv\<T\>(T a, T b) | kernel侧向下取整除法。 |
 | CeilAlign\<T\>(T a, T b) | kernel侧向上对齐。 |
 | FloorAlign\<T\>(T a, T b) | kernel侧向下对齐。 |
@@ -111,7 +111,7 @@
 | GetOpApiLibHandler(const char \*libName) | 加载指定动态库并返回句柄。 |
 | GetAclnnAddrByApiName(const char \*apiName) | 遍历opapi领域库查找函数地址。 |
 | GetOpApiFuncAddr(const char \*apiName) | 依次从cust\_opapi库、opapi库、领域库中查找函数地址。 |
-| GetConvertType(const gert::Tensor \*ge\_tensor) | 将ge数据类型转换为acl数据类型。 |
+| GetConvertType(const gert::Tensor \*ge\_tensor) | 将GE数据类型转换为acl数据类型。 |
 | ConvertType(const gert::Tensor \*ge\_tensor) | 将ge Tensor转换为acl Tensor。 |
 | ConvertType(std::vector\<const gert::Tensor \*\>\& ge\_tensorList) | 将ge Tensor列表转换为acl TensorList。 |
 | ConvertType(T value) | 通用类型转换模板，非Tensor类型原样返回。 |

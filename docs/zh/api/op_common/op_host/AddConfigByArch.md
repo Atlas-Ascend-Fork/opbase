@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-按NPU架构（NpuArch）批量注册算子的AI Core配置，位于`opbase`命名空间下`ArchConfigHelper`类的静态成员函数。
+按NPU架构（NpuArch）批量注册算子的AI Core定义，位于`opbase`命名空间下`ArchConfigHelper`类的静态成员函数。
 
 一次调用即可完成该架构对应的所有SoC版本的注册，无需逐个SoC调用`AddConfig`。接口内部维护架构与SoC版本的映射表（一对多），当前映射关系如下：
 

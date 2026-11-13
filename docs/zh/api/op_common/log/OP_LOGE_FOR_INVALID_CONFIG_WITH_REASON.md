@@ -30,7 +30,7 @@ OP_LOGE_FOR_INVALID_CONFIG_WITH_REASON(opName, configFile, item, value, reason)
 
 ## 调用示例
 
-关键代码示例如下，仅供参考，不支持直接拷贝运行。
+关键代码示例如下，仅供参考，不支持直接拷贝运行：
 
 ```cpp
 if (!IsValidConfig(value)) {

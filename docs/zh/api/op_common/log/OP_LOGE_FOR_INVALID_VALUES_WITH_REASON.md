@@ -29,7 +29,7 @@ OP_LOGE_FOR_INVALID_VALUES_WITH_REASON(entityName, paramNames, incorrectValues, 
 
 ## 调用示例
 
-关键代码示例如下，仅供参考，不支持直接拷贝运行。
+关键代码示例如下，仅供参考，不支持直接拷贝运行：
 
 ```cpp
 // 预期输出：Parameters align_corners and half_pixel_centers of ResizeNearestNeighborV2Grad have
