@@ -44,6 +44,9 @@ stages:
         container:
           image: swr.cn-north-4.myhuaweicloud.com/ci_cann/ubuntu20.04.05_x86:k8s_v1.1006
       JOB_pre:
+        permissions:
+          repository: read
+          id-token: write
         name: Test_PreBuild
         uses: cann/.gitcode/.gitcode/workflows/pre_action.yml@master
     pre:
@@ -53,12 +56,18 @@ stages:
     name: Compile
     jobs:
       JOB_codecheck:
+        permissions:
+          repository: read
+          id-token: write
         name: CodeCheck
         uses: cann/.gitcode/.gitcode/workflows/codecheck_action.yml@master
         with:
           precommit_image_version: ${{ jobs.JOB_image.outputs.precommit }}
           codecheck_image_version: ${{ jobs.JOB_image.outputs.codecheck }}
       JOB_x86_compile_ubuntu24:
+        permissions:
+          repository: read
+          id-token: write
         name: Compile_x86_ubuntu24
         uses: .gitcode/workflows/compile_action.yml
         with:
@@ -66,6 +75,9 @@ stages:
           image_version: ${{ jobs.JOB_image.outputs.Compile_Ascend_X86_ubuntu24 }}
           arch: 'x64'
       JOB_arm_compile_ubuntu24:
+        permissions:
+          repository: read
+          id-token: write
         name: Compile_arm_ubuntu24
         uses: .gitcode/workflows/compile_action.yml
         with:
@@ -73,6 +85,9 @@ stages:
           image_version: ${{ jobs.JOB_image.outputs.Compile_Ascend_ARM_ubuntu24 }}
           arch: 'arm64'
       JOB_staticcheck_md_check:
+        permissions:
+          repository: read
+          id-token: write
         name: staticcheck_md_check
         uses: .gitcode/workflows/staticcheck_action.yml
         with:
@@ -101,6 +116,9 @@ stages:
         container:
           image: swr.cn-north-4.myhuaweicloud.com/ci_cann/${{ jobs.JOB_image.outputs.API_Check }}
       JOB_UT_Test:
+        permissions:
+          repository: read
+          id-token: write
         name: UT_Test
         uses: .gitcode/workflows/ut_action.yml
         with:
