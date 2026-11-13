@@ -31,7 +31,7 @@ aclnnStatus aclGetViewOffset(const aclTensor *tensor, int64_t *offset)
 
 ## 调用示例
 
-假设已有aclTensor对象（xTensor），获取其数据类型、数据排布格式、维度、步长、偏移等属性，再根据这些属性创建一个新的aclTensor对象（yTensor ）。
+假设已有aclTensor对象（xTensor），获取其数据类型、数据排布格式、维度、步长、偏移等属性，再根据这些属性创建一个新的aclTensor对象（yTensor）。
 
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 

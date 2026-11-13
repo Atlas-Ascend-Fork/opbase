@@ -4,7 +4,7 @@
 
 单算子API执行框架中aclnnXxx接口的去初始化函数，在进程退出前必须先释放进程内aclnn相关资源，否则会导致系统内部出错，影响业务正常运行。
 
-> **说明**： 
+> **说明**：
 >调用aclnnFinalize或aclFinalize接口，均能实现资源去初始化，二者区别在于aclnnFinalize仅完成aclnn相关资源释放，而aclFinalize完成acl接口中各种资源（包含aclnn）的释放。因此aclnnFinalize相对于aclFinalize更轻量一些。若两个接口都调用，也不返回失败。
 
 ## 函数原型

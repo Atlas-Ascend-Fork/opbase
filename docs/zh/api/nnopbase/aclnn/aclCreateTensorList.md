@@ -16,7 +16,7 @@ aclTensorList *aclCreateTensorList(const aclTensor *const *value, uint64_t size)
 
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| value | 输入 | aclTensor类型的指针数组，其指向的值会赋给TensorList。 |
+| value | 输入 | aclTensor类型的指针数组，其指向的值会赋给aclTensorList。 |
 | size | 输入 | 张量列表的长度，取值为非负整数；为0时创建空列表。 |
 
 ## 返回值说明
@@ -28,7 +28,7 @@ aclTensorList *aclCreateTensorList(const aclTensor *const *value, uint64_t size)
 - 调用本接口前，需提前调用[aclCreateTensor](aclCreateTensor.md)接口创建aclTensor。
 - 本接口需与[aclDestroyTensorList](aclDestroyTensorList.md)接口配套使用，分别完成aclTensorList的创建与销毁。
 - 调用[aclGetTensorListSize](aclGetTensorListSize.md)接口可以获取aclTensorList的大小。
-- 调用如下接口可刷新输入/输出aclTensorList中记录的Device内存地址。
+- 调用如下接口可刷新输入/输出aclTensorList中记录的Device内存地址：
   - [aclSetDynamicInputTensorAddr](aclSetDynamicInputTensorAddr.md)
   - [aclSetDynamicOutputTensorAddr](aclSetDynamicOutputTensorAddr.md)
   - [aclSetDynamicTensorAddr](aclSetDynamicTensorAddr.md)

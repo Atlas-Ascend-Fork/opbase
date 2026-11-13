@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-开启aclOpExecutor为可复用状态。当用户想复用已有的aclOpExecutor时，必须在一阶段接口aclxxXxxGetWorkspaceSize运行完成后，立即使用该接口开启复用，后续可多次调用第二段接口aclxxXxx进行算子执行。
+开启aclOpExecutor为可复用状态。当用户想复用已有的aclOpExecutor时，必须在第一段接口aclxxXxxGetWorkspaceSize运行完成后，立即使用该接口开启复用，后续可多次调用第二段接口aclxxXxx进行算子执行。
 
 aclOpExecutor是框架定义的算子执行器，用于执行算子计算的容器，开发者无需关注其内部实现。
 

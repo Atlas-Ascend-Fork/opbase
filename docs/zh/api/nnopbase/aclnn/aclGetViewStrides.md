@@ -24,7 +24,7 @@ aclnnStatus aclGetViewStrides(const aclTensor *tensor, int64_t **stridesValue, u
 
 可能失败的原因：
 
-- 返回161001：参数tensor或stridesValue或stridesNum空指针。
+- 返回161001：参数tensor或stridesValue或stridesNum为空指针。
 
 ## 约束说明
 
@@ -32,7 +32,7 @@ aclnnStatus aclGetViewStrides(const aclTensor *tensor, int64_t **stridesValue, u
 
 ## 调用示例
 
-假设已有aclTensor对象（xTensor），获取其数据类型、数据排布格式、维度、步长、偏移等属性，再根据这些属性创建一个新的aclTensor对象（yTensor ）。
+假设已有aclTensor对象（xTensor），获取其数据类型、数据排布格式、维度、步长、偏移等属性，再根据这些属性创建一个新的aclTensor对象（yTensor）。
 
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 

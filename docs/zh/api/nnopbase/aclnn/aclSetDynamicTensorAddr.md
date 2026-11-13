@@ -28,7 +28,7 @@ aclnnStatus aclSetDynamicTensorAddr(aclOpExecutor *executor, size_t irIndex, con
 
 - 返回561103：executor或tensors是空指针。
 - 返回161002：
-  - relativeIndex\>=tensors里tensor的个数。
+  - relativeIndex\>=tensors中aclTensor的个数。
   - irIndex\>=算子原型输入/输出参数的个数。
   <!-- npu="950" id1 -->
   - Ascend 950PR&950DT系列产品：在该产品型号下若开启PCIe through功能，新Device存储地址与原Device存储地址分属不同地址空间时（PCIe地址与非PCIe地址互相刷新），刷新会被拦截。

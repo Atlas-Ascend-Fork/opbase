@@ -60,7 +60,7 @@ aclTensor *aclCreateTensor(const int64_t *viewDims, uint64_t viewDimsNum, aclDat
 
 aclTensor的定义与[torch.Tensor](https://pytorch.org/docs/stable/tensors.html)相似，由一块连续或非连续的内存地址和一系列描述信息（如stride、offset等）组成。Tensor根据shape、stride、offset信息，可自由取出内存中的数据，也可获得非连续的内存（如图中y）。
 
-**图 1**  tensor逻辑结构
+**图 1** tensor逻辑结构
 
 ![tensor逻辑结构](../../../figures/aclTensor.png "tensor逻辑结构")
 

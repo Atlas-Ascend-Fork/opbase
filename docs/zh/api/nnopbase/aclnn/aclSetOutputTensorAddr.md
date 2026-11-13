@@ -15,7 +15,7 @@ aclnnStatus aclSetOutputTensorAddr(aclOpExecutor *executor, const size_t index, 
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | executor | 输入 | 设置为复用状态的aclOpExecutor。 |
-| index | 输入 | 待刷新的输出aclTensor的索引，取值范围是[0, 所有输出tensor的总数-1]。 |
+| index | 输入 | 待刷新的输出aclTensor的索引，取值范围是[0, 所有输出Tensor的总数-1]。 |
 | tensor | 输入 | 待刷新的aclTensor指针。 |
 | addr | 输入 | 需要刷新到指定aclTensor中记录的Device存储地址，该地址必须32字节对齐，否则可能会出现未定义错误。 |
 

@@ -16,8 +16,8 @@ aclnnStatus aclGetViewShape(const aclTensor *tensor, int64_t **viewDims, uint64_
 
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| tensor | 输入 | 输入的aclTensor。需提前调用[aclCreateTensor](aclCreateTensor.md)接口创建aclTensor。 |
-| viewDims | 输出 | 返回的viewShape的维度值。 |
+| tensor | 输入 | 输入的aclTensor，需提前调用[aclCreateTensor](aclCreateTensor.md)接口创建aclTensor。 |
+| viewDims | 输出 | 返回的ViewShape的维度值。 |
 | viewDimsNum | 输出 | 返回的viewShape的维度数。 |
 
 ## 返回值说明
@@ -26,15 +26,15 @@ aclnnStatus aclGetViewShape(const aclTensor *tensor, int64_t **viewDims, uint64_
 
 可能失败的原因：
 
-- 返回161001：参数tensor或viewDims或viewDimsNum空指针。
+- 返回161001：参数tensor或viewDims或viewDimsNum为空指针。
 
 ## 约束说明
 
-参数viewDims内存是本接口内部申请，使用完后必须使用`delete[]`手动释放。
+参数viewDims内存由本接口内部申请，使用完后必须使用`delete[]`手动释放。
 
 ## 调用示例
 
-假设已有aclTensor对象（xTensor），获取其数据类型、数据排布格式、维度、步长、偏移等属性，再根据这些属性创建一个新的aclTensor对象（yTensor ）。
+假设已有aclTensor对象（xTensor），获取其数据类型、数据排布格式、维度、步长、偏移等属性，再根据这些属性创建一个新的aclTensor对象（yTensor）。
 
 关键代码示例如下，仅供参考，不支持直接拷贝运行。
 
