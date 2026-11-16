@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-获取aclTensor的ViewStrides，即ViewShape对应的stride，aclTensor由[aclCreateTensor](aclCreateTensor.md)接口创建。
+获取aclTensor的ViewStrides，即ViewShape对应的步长，aclTensor由[aclCreateTensor](aclCreateTensor.md)接口创建。
 
 ## 函数原型
 
@@ -16,7 +16,7 @@ aclnnStatus aclGetViewStrides(const aclTensor *tensor, int64_t **stridesValue, u
 | --- | --- | --- |
 | tensor | 输入 | 输入的aclTensor。需提前调用[aclCreateTensor](aclCreateTensor.md)接口创建aclTensor。 |
 | stridesValue | 输出 | 返回的ViewStrides值。 |
-| stridesNum | 输出 | 返回的ViewStrides的stride值个数。 |
+| stridesNum | 输出 | 返回的ViewStrides的步长值个数。 |
 
 ## 返回值说明
 
@@ -28,7 +28,7 @@ aclnnStatus aclGetViewStrides(const aclTensor *tensor, int64_t **stridesValue, u
 
 ## 约束说明
 
-参数stridesValue内存是本接口内部申请，使用完后必须使用`delete[]`手动释放。
+参数stridesValue内存由本接口内部申请，使用完后必须使用`delete[]`手动释放。
 
 ## 调用示例
 

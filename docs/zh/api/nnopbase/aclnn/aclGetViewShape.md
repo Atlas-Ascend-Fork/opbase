@@ -16,9 +16,9 @@ aclnnStatus aclGetViewShape(const aclTensor *tensor, int64_t **viewDims, uint64_
 
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| tensor | 输入 | 输入的aclTensor，需提前调用[aclCreateTensor](aclCreateTensor.md)接口创建aclTensor。 |
+| tensor | 输入 | 输入的aclTensor。需提前调用[aclCreateTensor](aclCreateTensor.md)接口创建aclTensor。 |
 | viewDims | 输出 | 返回的ViewShape的维度值。 |
-| viewDimsNum | 输出 | 返回的viewShape的维度数。 |
+| viewDimsNum | 输出 | 返回的ViewShape的维度数。 |
 
 ## 返回值说明
 

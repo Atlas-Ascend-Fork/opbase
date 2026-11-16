@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-获取aclTensor的DataType，aclTensor由[aclCreateTensor](aclCreateTensor.md)接口创建。
+获取aclTensor的数据类型，aclTensor由[aclCreateTensor](aclCreateTensor.md)接口创建。
 
 ## 函数原型
 

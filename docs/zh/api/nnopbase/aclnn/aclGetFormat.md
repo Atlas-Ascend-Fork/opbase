@@ -15,7 +15,7 @@ aclnnStatus aclGetFormat(const aclTensor *tensor, aclFormat *format)
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | tensor | 输入 | 输入的aclTensor。 |
-| format | 输出 | 返回的aclTensor的数据格式。 |
+| format | 输出 | 返回的aclTensor的数据排布格式。 |
 
 ## 返回值说明
 
