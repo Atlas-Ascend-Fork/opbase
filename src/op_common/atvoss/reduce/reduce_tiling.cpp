@@ -25,6 +25,7 @@ using namespace ReduceOpTmpl;
 // log2(Ro)支持最大取值为32
 constexpr static int32_t MAX_INNER_A = 512; // 单位字节
 constexpr static int32_t A_STEP_LEN = 4;
+constexpr static uint64_t NDDMA_TAIL_BYTES_ASCEND960 = 32UL; // Ascend960 尾轴 NDDMA 判定阈值（字节）
 /**
  * Ensure that the returned shape is non-scalar.
  * When the dim num of shape is 0, this shape is considered to express a scalar.
@@ -414,6 +415,12 @@ ge::graphStatus ReduceOpTiling::PreProcessOptionalParam()
                                                       std::to_string(compileInfo_->vRegSize).c_str(),
                                                       "The value of vReg size must be greater than 0"),
                 return ge::GRAPH_FAILED);
+    // 部分 NDDMA 判定按芯片区分：Ascend960 尾轴 <= 32B 时走 NDDMA
+    auto platformInfo = context_->GetPlatformInfo();
+    if (platformInfo != nullptr) {
+        auto npuArch = platform_ascendc::PlatformAscendC(platformInfo).GetCurNpuArch();
+        isAscend960_ = (npuArch == NpuArch::DAV_9201 || npuArch == NpuArch::DAV_9202);
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -1137,7 +1144,7 @@ void ReduceOpTiling::SetTilingData(const uint64_t* shape)
     tilingData_->basicBlock = basicBlock_;
     tilingData_->resultBlock = resultBlock_;
     tilingData_->coreNum = static_cast<int32_t>(compileInfo_->vectorCoreNum);
-    tilingData_->useNddma = IsUseNddma<Pattern>(shape);
+    tilingData_->useNddma = isAscend960_ ? IsUseNddmaAscend960<Pattern>(shape) : IsUseNddma<Pattern>(shape);
     ComputeStride<Pattern>(shape);
     uint32_t realCore = CeilDiv(unitA_.outer, factorACntPerCore) * CeilDiv(unitR_.outer, factorRCntPerCore);
     tilingData_->realCoreNum = realCore;
@@ -1182,6 +1189,19 @@ int32_t ReduceOpTiling::IsUseNddma(const uint64_t* shape)
         }
     }
     return 1;
+}
+
+template <class Pattern>
+int32_t ReduceOpTiling::IsUseNddmaAscend960(const uint64_t* shape)
+{
+    if (viewStride_[Pattern::Dim - 1] != 1UL) {
+        // 尾轴非连续, 做NDDMA
+        return 1;
+    }
+    uint64_t dSize = ge::GetSizeByDataType(opInput_.inputDtype);
+    uint64_t tailAxisBytes = shape[Pattern::Dim - 1] * dSize;
+    // Ascend960: 尾轴 <= 32B 时走 NDDMA, 否则不走
+    return tailAxisBytes <= NDDMA_TAIL_BYTES_ASCEND960 ? 1 : 0;
 }
 
 template <class Pattern>

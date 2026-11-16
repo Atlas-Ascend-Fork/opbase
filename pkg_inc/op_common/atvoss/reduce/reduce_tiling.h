@@ -32,8 +32,8 @@ using namespace ReduceOpTmpl;
 using namespace optiling;
 
 constexpr uint64_t BASIC_BLOCK = 64 * 1024UL;
-constexpr uint64_t POST_BUF_SIZE = 8 * 1024UL;        // post reduce size for ub reduce
-constexpr uint64_t CACHE_BUF_SIZE = 16 * 1024UL;      // cache for binary reduce
+constexpr uint64_t POST_BUF_SIZE = 8 * 1024UL;   // post reduce size for ub reduce
+constexpr uint64_t CACHE_BUF_SIZE = 16 * 1024UL; // cache for binary reduce
 
 struct ReduceTilingUnit {
     int32_t idx = -1;   // ub cut axis
@@ -278,7 +278,7 @@ public:
      */
     ReduceOpTiling(gert::TilingContext* context, ReduceOpCompileInfo* compileInfo = nullptr,
                    ReduceOpTilingData* tilingData = nullptr)
-        : context_(context), compileInfo_(compileInfo), tilingData_(tilingData){};
+        : context_(context), compileInfo_(compileInfo), tilingData_(tilingData) {};
 
     virtual ~ReduceOpTiling() {}
     /*
@@ -308,7 +308,7 @@ public:
     }
 
 protected:
-    virtual void CalcUserBasicBlock([[maybe_unused]] bool patternA){};
+    virtual void CalcUserBasicBlock([[maybe_unused]] bool patternA) {};
 
     virtual void CalcUserWorkSpace();
 
@@ -421,6 +421,9 @@ protected:
     int32_t IsUseNddma(const uint64_t* shape);
 
     template <class Pattern>
+    int32_t IsUseNddmaAscend960(const uint64_t* shape);
+
+    template <class Pattern>
     void SetTilingData(const uint64_t* shape);
 
     ge::graphStatus DoTilingMatchPattern(uint64_t* shape, int32_t shapeSize);
@@ -448,6 +451,7 @@ protected:
     int32_t dimNum_{0};
     bool needReserveA_ = 0;
     bool isContiguous_ = true;
+    bool isAscend960_{false}; // Ascend960（DAV_9201/DAV_9202）平台标志，由 PreProcessOptionalParam() 运行时设置
     size_t workSpaceSize_{0};
     CacheLineBlock cBlock_;
     ReduceTilingUnit unitA_;
@@ -459,7 +463,7 @@ protected:
     uint64_t sliceNum_[MAX_DIM] = {0};    // 每个轴slice切片的个数
     uint64_t sliceShape_[MAX_DIM] = {0};  // 每个轴slice切片后的shape大小
     uint64_t sliceStride_[MAX_DIM] = {0}; // 每个轴slice切片后的stride长度
-};                                        // class ReduceOpTiling
+}; // class ReduceOpTiling
 
 /*
  * \brief reduce template tiling interface
