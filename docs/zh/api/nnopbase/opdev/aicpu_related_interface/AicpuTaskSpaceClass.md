@@ -14,8 +14,12 @@ public:
         : opType_(opType), unknownType_(unknownType), isTf_(isTf) {}
     AicpuTask *FindTask(aclOpExecutor *executor, op::OpArgContext *args,
                         const FVector<const aclTensor *> &inputs);
+    AicpuTask* FindTaskImpl(aclOpExecutor* executor, op::OpArgContext* args, const FVector<const aclTensor*>& inputs,
+                            bool hasWorkspaceInfo);
     AicpuTask *GetOrCreateTask(aclOpExecutor *executor, const FVector<std::string> &attrNames,
                                op::OpArgContext *args);
+    AicpuTask* GetOrCreateTaskImpl(aclOpExecutor* executor, const FVector<std::string>& attrNames,
+                                   op::OpArgContext* args, bool hasWorkspaceInfo);
     void SetRef(const size_t index, const bool isInput = true);
     bool IsRef(const size_t index, const bool isInput = true) const;
     uint64_t CalcHostInputDataSize(const FVector<const aclTensor *> &inputs, size_t alignBytes) const;

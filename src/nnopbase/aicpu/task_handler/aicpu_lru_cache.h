@@ -98,6 +98,7 @@ struct TaskSpaceCtx {
     const ge::UnknowShapeOpType unknownType;
     const std::string& opType;
     bool (*isIdle)(const AicpuTask*);
+    bool hasWorkspaceInfo = false;
 };
 
 bool AicpuCreateTaskUnlocked(const TaskSpaceCtx& taskCache, aclOpExecutor* executor,

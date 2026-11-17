@@ -6,6 +6,7 @@
 
 | 接口定义 | 功能说明 |
 | --- | --- |
+| bool RegisterAicpuWorkspaceTilingByName(const char* opName, AicpuWorkspaceTilingFunc tiling) | 按算子类型名称注册workspace大小计算回调，位于op::internal命名空间，是[REGISTER_AICPU_WORKSPACE_TILING](../common_macros_and_classes/REGISTER_AICPU_WORKSPACE_TILING.md)的底层注册入口，算子开发者通过该宏注册即可。opName须为非空字符串，且与创建AICPU执行任务时使用的算子类型名称一致；tiling须为非空的AicpuWorkspaceTilingFunc回调。<br>成功返回true；同名重复注册保留首次回调并返回true。参数无效或捕获到内存分配失败时返回false。本函数不执行回调、不申请设备内存；须在首次创建该算子的执行任务前完成注册。 |
 | PrintAicpuAllTimeStampInfo(const char *opType) | 打印AI CPU task执行时的系统时间戳。 |
 | AppendTensor(aclOpExecutor *executor, const aclTensor*arg, V &l) | 将aclTensor指针塞入到容器中的模板函数。 |
 | AppendTensor(aclOpExecutor *executor, const aclScalar*arg, V &l) | 将aclScalar指针塞入到容器中的模板函数。 |
@@ -39,6 +40,7 @@
 | AicpuTask(const std::string &opType, const ge::UnknowShapeOpType unknownType) | AicpuTask类的构造函数(带入参)。 |
 | AicpuTfTask(const std::string &opType, const ge::UnknowShapeOpType unknownType) | AI CPU tensorflow算子框架task构造函数。 |
 | aclnnStatus Init(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs) | 算子框架task初始化函数。 |
+| aclnnStatus InitImpl(const FVector\<const aclTensor*\>& inputs, const FVector\<aclTensor*\>& outputs, const AicpuAttrs& attrs, bool hasWorkspaceInfo) | AicpuCCTask的初始化方法。AicpuCCTask::Init调用本方法时hasWorkspaceInfo为false。hasWorkspaceInfo为true时添加workspace拓展记录，为false时保持原有记录布局。<br>成功返回ACLNN_SUCCESS，失败返回错误码。该方法不执行tiling回调或分配workspace。 |
 | aclnnStatus Run(aclOpExecutor *executor, aclrtStream stream) | 算子框架task执行函数。 |
 | AicpuTask(const std::string &opType, const ge::UnknowShapeOpType unknownType) | AI CPU task构造函数。 |
 | AicpuCCTask(const std::string &opType, const ge::UnknowShapeOpType unknownType) | AI CPU CANN算子框架task构造函数。 |
@@ -47,7 +49,9 @@
 | void SetVisit(bool visit) | 设置task是否被占用。 |
 | AicpuTaskSpace(const std::string &opType,  const ge::UnknowShapeOpType unknownType = ge::DEPEND_IN_SHAPE,  const bool isTf = false) | AI CPU task容器构造函数。 |
 | AicpuTask *FindTask(aclOpExecutor*executor, op::OpArgContext *args, const FVector<const aclTensor*> &inputs) | 查找是否可复用的task。 |
+| AicpuTask* FindTaskImpl(aclOpExecutor* executor, op::OpArgContext* args, const FVector\<const aclTensor*\>& inputs, bool hasWorkspaceInfo) | AicpuTaskSpace的方法，查找键匹配且未被占用的可复用task。hasWorkspaceInfo表示是否包含workspace拓展记录，需与创建时一致。<br>命中时将task标记为占用并返回，未命中返回nullptr。 |
 | AicpuTask *GetOrCreateTask(aclOpExecutor*executor, const FVector\<std::string\> &attrNames, op::OpArgContext *args) | 获取新建或者复用的task。 |
+| AicpuTask* GetOrCreateTaskImpl(aclOpExecutor* executor, const FVector\<std::string\>& attrNames, op::OpArgContext* args, bool hasWorkspaceInfo) | AicpuTaskSpace的方法，获取可复用task或创建task。hasWorkspaceInfo为true时用于带workspace拓展记录的CANN算子task，调用方应在args中提供对应workspace参数。<br>成功返回task，失败返回nullptr。创建时预留记录，执行前由SetIoTensors更新地址和原始字节数。 |
 | void SetRef(const size_t index, const bool isInput = true) | 设置指定索引为引用类型输入。 |
 | bool IsRef(const size_t index, const bool isInput = true) const | 获取指定索引是否为引用类型输入。 |
 | uint64_t CalcHostInputDataSize(const FVector<const aclTensor *> &inputs, size_t alignBytes) const | 获取输入为host侧数据的总大小。 |

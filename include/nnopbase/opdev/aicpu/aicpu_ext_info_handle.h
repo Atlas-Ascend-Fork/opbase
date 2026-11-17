@@ -56,6 +56,10 @@ public:
                                           aclrtStream stream, const aclOpExecutor* executor,
                                           const uint64_t deviceExtMemSize, uint64_t& deviceCacheOffset);
     aclnnStatus UpdateKernelId();
+    // Whether Parse found a workspace extension record in this task.
+    bool HasWorkspaceInfo() const { return workspace_ != nullptr; }
+    // Update an existing record with a positive byte length and a nonzero address before CopyH2D/Run.
+    aclnnStatus UpdateWorkspaceInfo(uint64_t size, uint64_t addr);
 
     void SetSpace(void* space) { space_ = space; }
 

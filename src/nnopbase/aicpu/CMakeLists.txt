@@ -25,5 +25,9 @@ set(AICPU_PROTO_INCLUDING_PATH
     ${TOP_DIR}/runtime/pkg_inc/aicpu_sched/common
 )
 
-target_sources(nnopbase PRIVATE ${aicpu_files} ${PROTO_HDRS} ${CPU_PROTO_HDRS})
-target_include_directories(nnopbase PRIVATE ${AICPU_PROTO_INCLUDING_PATH})
+target_sources(nnopbase PRIVATE ${aicpu_files} ${PROTO_HDRS} ${CPU_PROTO_HDRS}
+    ${AICPU_PATH}/tiling/aicpu_workspace_tiling.cpp
+)
+target_include_directories(nnopbase PRIVATE ${AICPU_PROTO_INCLUDING_PATH}
+    ${AICPU_PATH}/tiling
+)

@@ -109,6 +109,20 @@ public:
     static uint32_t GetCPUNum(const CpuKernelContext& ctx);
 
     /*
+     * Get the workspace assigned to the current kernel invocation.
+     * The caller owns the workspace. The kernel may use it only during the current Compute call.
+     * Both values are zero when no workspace was assigned.
+     * @param ctx: context info of kernel
+     * @param workspace_size: workspace size in bytes
+     * @param workspace_addr: device workspace address
+     */
+    static void GetWorkspaceInfo(const CpuKernelContext& ctx, uint64_t& workspace_size, uint64_t& workspace_addr)
+    {
+        workspace_size = ctx.workspace_size_;
+        workspace_addr = ctx.workspace_addr_;
+    }
+
+    /*
      * UpdateCustWorkSpaceInfo
      * @param ctx: context info of kernel
      * @param workspace_size: size of  workspace

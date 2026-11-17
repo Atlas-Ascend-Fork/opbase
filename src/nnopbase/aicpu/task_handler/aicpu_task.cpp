@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <limits>
 #include <memory>
 
 #include "opdev/aicpu/aicpu_task.h"
@@ -19,6 +20,8 @@
 #include "op_dfx_internal.h"
 #include "opdev/op_dfx.h"
 #include "aicpu_json_load_manager.h"
+#include "aicpu_workspace_tiling.h"
+#include "kernel_utils.h"
 #include "runtime/rt_external.h"
 
 namespace op {
@@ -63,6 +66,18 @@ void GetValidInputVec(const op::FVector<const aclTensor*>& in, op::FVector<const
         }
         out.emplace_back(t);
     }
+}
+
+aclnnStatus AppendWorkspaceInfo(std::string& taskExtInfo)
+{
+    const size_t len = sizeof(AicpuExtInfo) + sizeof(aicpu::FWKAdapter::WorkSpaceInfo);
+    std::string record(len, '\0');
+    auto* info = PtrToPtr<char, AicpuExtInfo>(record.data());
+    AICPU_ASSERT_NOTNULL_RETVAL(info);
+    info->infoType = aicpu::FWKAdapter::FWK_ADPT_EXT_WORKSPACE_INFO;
+    info->infoLen = sizeof(aicpu::FWKAdapter::WorkSpaceInfo);
+    taskExtInfo.append(record);
+    return OK;
 }
 
 class AiCpuOneShotKernelLauncher : public KernelLauncher {
@@ -262,6 +277,12 @@ aclnnStatus AicpuCCTask::GetKernelNameAndSoName(std::string& kernelSoName)
 aclnnStatus AicpuCCTask::Init(const FVector<const aclTensor*>& inputs, const FVector<aclTensor*>& outputs,
                               const AicpuAttrs& attrs)
 {
+    return InitImpl(inputs, outputs, attrs, false);
+}
+
+aclnnStatus AicpuCCTask::InitImpl(const FVector<const aclTensor*>& inputs, const FVector<aclTensor*>& outputs,
+                                  const AicpuAttrs& attrs, bool hasWorkspaceInfo)
+{
     OP_LOGI("Start AicpuCCTask::Init, opType[%s]", opType_.c_str());
     // Only check if custom operators exist; If present, parse it. if not, continue with the original process
     // unaffected.
@@ -274,6 +295,9 @@ aclnnStatus AicpuCCTask::Init(const FVector<const aclTensor*>& inputs, const FVe
     AICPU_ASSERT_NOTNULL_RETVAL(extInfoHandle_);
     std::string extInfo;
     AICPU_ASSERT_OK_RETVAL(extInfoHandle_->GenCCExtBuffer(inputs, outputs, extInfo));
+    if (hasWorkspaceInfo) {
+        AICPU_ASSERT_OK_RETVAL(AppendWorkspaceInfo(extInfo));
+    }
 
     const bool needDeviceExt = (unknownType_ == ge::DEPEND_SHAPE_RANGE) ? true : false;
     if (needDeviceExt) {
@@ -287,13 +311,11 @@ aclnnStatus AicpuCCTask::Init(const FVector<const aclTensor*>& inputs, const FVe
     AICPU_ASSERT_OK_RETVAL(cc_argsHandle->GenCCArgs(inputs, outputs, attrs, taskInfo));
     AICPU_ASSERT_OK_RETVAL(JsonLoadManger::SetSupportedNewLaunchFlag());
 
-    // 这个需要传递进来
     std::string kernelSoName = kDefaultKernelSo;
     AICPU_ASSERT_OK_RETVAL(GetKernelNameAndSoName(kernelSoName));
     AICPU_ASSERT_OK_RETVAL(cc_argsHandle->BuildCCArgs(taskInfo, functionName_, kernelSoName, extInfo.size()));
     uint8_t* hostExtAddr = cc_argsHandle->GetExtInfoAddr();
-    // 解析extend info 并且填充AicpuExtInfoHandler的结构体应该没啥必要, 应该只需要input/output shape
-    extInfoHandle_->Parse(extInfo, hostExtAddr);
+    AICPU_ASSERT_OK_RETVAL(extInfoHandle_->Parse(extInfo, hostExtAddr));
     argsHandle_ = std::move(cc_argsHandle);
     OP_LOGI("Finish AicpuCCTask::Init, opType[%s]", opType_.c_str());
     return OK;
@@ -385,8 +407,29 @@ aclnnStatus AicpuCCTask::Run(aclOpExecutor* executor, aclrtStream stream)
 aclnnStatus CreatAicpuKernelLauncher(uint32_t opType, op::internal::AicpuTaskSpace& space, aclOpExecutor* executor,
                                      const FVector<std::string>& attrNames, op::OpArgContext* args)
 {
+    std::unique_ptr<op::OpArgContext, decltype(&op::DestroyOpArgContext)> argsGuard(args, &op::DestroyOpArgContext);
     CHECK_RET(args != nullptr, ACLNN_ERR_PARAM_INVALID);
-    auto task = space.GetOrCreateTask(executor, attrNames, args);
+    CHECK_RET(executor != nullptr, ACLNN_ERR_PARAM_NULLPTR);
+    CHECK_RET(opType != 0U && opType < MAX_OP_TYPE_COUNT, ACLNN_ERR_PARAM_INVALID);
+    const auto tiling = AicpuWorkspaceTilingRegistry::GetInstance().Find(opType);
+    if (tiling != nullptr && !args->ContainsOpArgType(op::OP_WORKSPACE_ARG)) {
+        uint64_t workspaceSize = 0U;
+        auto ret = tiling(*args->GetOpArg(op::OP_INPUT_ARG), *args->GetOpArg(op::OP_OUTPUT_ARG),
+                          *args->GetOpArg(op::OP_ATTR_ARG), workspaceSize);
+        CHECK_RET(ret == ACLNN_SUCCESS, ret);
+        if (workspaceSize > 0U) {
+            CHECK_RET(workspaceSize <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()),
+                      ACLNN_ERR_PARAM_INVALID);
+            auto* workspace = executor->AllocTensor(op::Shape({static_cast<int64_t>(workspaceSize)}),
+                                                    op::DataType::DT_UINT8);
+            CHECK_RET(workspace != nullptr, ACLNN_ERR_INNER);
+            auto* workspaces = executor->AllocTensorList(&workspace, 1U);
+            CHECK_RET(workspaces != nullptr, ACLNN_ERR_INNER);
+            args->AppendOpWorkspaceArg(workspaces);
+        }
+    }
+    auto task = space.GetOrCreateTaskImpl(executor, attrNames, args,
+                                          tiling != nullptr && args->ContainsOpArgType(op::OP_WORKSPACE_ARG));
     CHECK_RET(task != nullptr, ACLNN_ERR_INNER);
     op::internal::ProfilingInfoId profilingInfoId;
     auto overflowTask = TakePendingOverflowTask(task);
@@ -399,6 +442,7 @@ aclnnStatus CreatAicpuKernelLauncher(uint32_t opType, op::internal::AicpuTaskSpa
         executor->AbandonCache();
         launcher = new op::internal::AiCpuKernelLauncher{opType, op::AI_CPU, executor, profilingInfoId, task, args};
     }
+    (void)argsGuard.release();
     executor->AddToKernelLauncherList(launcher);
     op::internal::BuildGraph(executor->GetGraph(), opType, *args->GetOpArg(op::OP_INPUT_ARG),
                              *args->GetOpArg(op::OP_OUTPUT_ARG), *args->GetOpArg(op::OP_WORKSPACE_ARG));

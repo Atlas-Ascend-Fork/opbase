@@ -213,6 +213,7 @@ aclnnStatus AicpuExtInfoHandler::Parse(const std::string& extInfo, uint8_t* host
 
     inputShapeAndType_.clear();
     outputShapeAndType_.clear();
+    workspace_ = nullptr;
 
     const auto extInfoData = extInfo_;
     size_t offset = 0UL;
@@ -231,6 +232,10 @@ aclnnStatus AicpuExtInfoHandler::Parse(const std::string& extInfo, uint8_t* host
                 outputShape_.resize(outputNum_);
                 AICPU_ASSERT_OK_RETVAL(ParseExtOutputShape(aicpuExtInfo));
                 break;
+            case aicpu::FWKAdapter::FWK_ADPT_EXT_WORKSPACE_INFO:
+                AICPU_ASSERT_TRUE_RETVAL(aicpuExtInfo.infoLen == sizeof(aicpu::FWKAdapter::WorkSpaceInfo));
+                workspace_ = aicpuExtInfo.infoMsg;
+                break;
             default:
                 OP_LOGD("Node[%s] ignore infoType=%d, infoLen=%u.", nodeName_.c_str(), aicpuExtInfo.infoType,
                         aicpuExtInfo.infoLen);
@@ -241,6 +246,16 @@ aclnnStatus AicpuExtInfoHandler::Parse(const std::string& extInfo, uint8_t* host
     }
 
     AICPU_ASSERT_TRUE_RETVAL(offset == extInfoLen_);
+    return OK;
+}
+
+aclnnStatus AicpuExtInfoHandler::UpdateWorkspaceInfo(uint64_t size, uint64_t addr)
+{
+    AICPU_ASSERT_NOTNULL_RETVAL(workspace_);
+    AICPU_ASSERT_TRUE_RETVAL(size > 0U && addr != 0U);
+    auto* info = static_cast<aicpu::FWKAdapter::WorkSpaceInfo*>(workspace_);
+    info->size = size;
+    info->addr = addr;
     return OK;
 }
 

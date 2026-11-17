@@ -11,6 +11,7 @@
 #ifndef OP_API_COMMON_INC_OPDEV_AICPU_AICPU_TASK_H_
 #define OP_API_COMMON_INC_OPDEV_AICPU_AICPU_TASK_H_
 
+#include <cstdint>
 #include <cstring>
 #include <map>
 #include <set>
@@ -26,6 +27,12 @@
 
 namespace op {
 namespace internal {
+// The callback reports the raw workspace length in bytes; allocation belongs to the executor.
+// Register before creating the first task and keep the callback's library loaded while it can be used.
+using AicpuWorkspaceTilingFunc = aclnnStatus (*)(OpArgList& inputs, OpArgList& outputs, OpArgList& attrs,
+                                                 uint64_t& workspaceSize);
+bool RegisterAicpuWorkspaceTilingByName(const char* opName, AicpuWorkspaceTilingFunc tiling);
+
 static constexpr size_t kAicpuKeyBufLen = 1024U;
 const std::string kDefaultFunctionName = "RunCpuKernel";
 void PrintAicpuAllTimeStampInfo(const char* opType);
@@ -303,6 +310,9 @@ public:
     AicpuCCTask(const std::string& opType, const ge::UnknowShapeOpType unknownType) : AicpuTask(opType, unknownType) {}
     aclnnStatus Init(const FVector<const aclTensor*>& inputs, const FVector<aclTensor*>& outputs,
                      const AicpuAttrs& attrs);
+    // Reserve the workspace extension record when requested; SetIoTensors assigns its values before Run.
+    aclnnStatus InitImpl(const FVector<const aclTensor*>& inputs, const FVector<aclTensor*>& outputs,
+                         const AicpuAttrs& attrs, bool hasWorkspaceInfo);
     aclnnStatus Run(aclOpExecutor* executor, aclrtStream stream);
 
 private:
@@ -324,7 +334,13 @@ public:
     {}
 
     AicpuTask* FindTask(aclOpExecutor* executor, op::OpArgContext* args, const FVector<const aclTensor*>& inputs);
+    // Match the extension-record layout as part of the task cache key.
+    AicpuTask* FindTaskImpl(aclOpExecutor* executor, op::OpArgContext* args, const FVector<const aclTensor*>& inputs,
+                            bool hasWorkspaceInfo);
     AicpuTask* GetOrCreateTask(aclOpExecutor* executor, const FVector<std::string>& attrNames, op::OpArgContext* args);
+    // For CC tasks, true requires the node workspace argument used later by SetIoTensors.
+    AicpuTask* GetOrCreateTaskImpl(aclOpExecutor* executor, const FVector<std::string>& attrNames,
+                                   op::OpArgContext* args, bool hasWorkspaceInfo);
     void SetRef(const size_t index, const bool isInput = true);
     bool IsRef(const size_t index, const bool isInput = true) const;
     uint64_t CalcHostInputDataSize(const FVector<const aclTensor*>& inputs, size_t alignBytes) const;
@@ -354,6 +370,12 @@ void aclnnAicpuFinalize();
 
 aclnnStatus CreatAicpuKernelLauncher(uint32_t opType, op::internal::AicpuTaskSpace& space, aclOpExecutor* executor,
                                      const FVector<std::string>& attrNames, op::OpArgContext* args);
+// Register at namespace scope; OP_NAME must match the AICPU operator type name.
+#define REGISTER_AICPU_WORKSPACE_TILING(OP_NAME, tilingFunc)                                                    \
+    [[maybe_unused]] static const bool                                                                          \
+        OP_NAME##_aicpuWorkspaceTilingRegistered = ::op::internal::RegisterAicpuWorkspaceTilingByName(#OP_NAME, \
+                                                                                                      tilingFunc)
+
 // log profiling
 #define ADD_TO_LAUNCHER_LIST_AICPU(KERNEL_NAME, attrNames, opArgs...)                                                 \
     ({                                                                                                                \

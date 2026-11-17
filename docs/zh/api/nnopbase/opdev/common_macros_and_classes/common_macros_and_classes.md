@@ -40,6 +40,8 @@
 
 - **[OP\_WORKSPACE](OP_WORKSPACE.md)**  
 
+- **[REGISTER\_AICPU\_WORKSPACE\_TILING](REGISTER_AICPU_WORKSPACE_TILING.md)**
+
 - **[OpImplMode](OpImplMode.md)**  
 
 - **[OpExecMode](OpExecMode.md)**  

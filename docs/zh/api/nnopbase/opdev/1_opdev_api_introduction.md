@@ -81,6 +81,7 @@
 | [ADD_TO_LAUNCHER_LIST_AICORE](common_macros_and_classes/ADD_TO_LAUNCHER_LIST_AICORE.md) | 创建某个AI Core算子的执行任务，并置入aclOpExecutor的执行队列，在二阶段时执行。 | aclnn/opdev/make_op_executor.h |
 | [OP_ATTR_NAMES](common_macros_and_classes/OP_ATTR_NAMES.md) | String类型的vector，打包AI CPU算子的字符类型属性。 | aclnn/opdev/aicpu/aicpu_task.h |
 | [ADD_TO_LAUNCHER_LIST_AICPU](common_macros_and_classes/ADD_TO_LAUNCHER_LIST_AICPU.md) | 创建某个AI CPU算子的执行任务，并置入aclOpExecutor的执行队列，在二阶段时执行。 | aclnn/opdev/aicpu/aicpu_task.h |
+| [REGISTER_AICPU_WORKSPACE_TILING](common_macros_and_classes/REGISTER_AICPU_WORKSPACE_TILING.md) | 注册AICPU算子的Tiling函数，提前计算kernel中间计算所需的workspace大小，供框架规划并传递预分配的workspace。 | aclnn/opdev/aicpu/aicpu_task.h |
 
 **表 3**  常用class和struct表  <a id="table3"></a>
 

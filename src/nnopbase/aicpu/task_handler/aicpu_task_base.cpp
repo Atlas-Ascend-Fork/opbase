@@ -13,6 +13,7 @@
 #include <array>
 #include <exception>
 #include <list>
+#include <limits>
 #include <memory>
 #include <unordered_map>
 
@@ -345,10 +346,11 @@ uint64_t AicpuTaskSpace::CalcDeviceCacheSize(const FVector<const aclTensor*>& in
     return cacheSize;
 }
 
-size_t AicpuTaskSpace::GenTaskKey(uint8_t inputKey[], size_t& keyLen, op::OpArgContext* args,
-                                  const FVector<const aclTensor*>& inputs) const
+namespace {
+size_t BuildTaskKey(uint8_t inputKey[], op::OpArgContext* args, const FVector<const aclTensor*>& inputs,
+                    bool hasWorkspaceInfo)
 {
-    keyLen = 0U;
+    size_t keyLen = 0U;
     uint8_t* key = &inputKey[0];
     AppendAttrForKey(GetTid(), key, keyLen);
     for (size_t i = 0U; i < inputs.size(); ++i) {
@@ -360,21 +362,34 @@ size_t AicpuTaskSpace::GenTaskKey(uint8_t inputKey[], size_t& keyLen, op::OpArgC
         key = Append1Byte(key, static_cast<uint8_t>(inputs[i]->GetViewFormat()));
         ++keyLen;
     }
-    key = Append1Byte(key, static_cast<uint8_t>('/'));
+    key = Append1Byte(key, static_cast<uint8_t>(hasWorkspaceInfo ? 'W' : '/'));
     ++keyLen;
     GenKeyByAttrs(*args->GetOpArg(op::OP_ATTR_ARG), key, keyLen);
-    auto seed = GenHashBinary(&inputKey[0], keyLen);
-    return seed;
+    return keyLen;
+}
+} // namespace
+
+size_t AicpuTaskSpace::GenTaskKey(uint8_t inputKey[], size_t& keyLen, op::OpArgContext* args,
+                                  const FVector<const aclTensor*>& inputs) const
+{
+    keyLen = BuildTaskKey(inputKey, args, inputs, false);
+    return GenHashBinary(&inputKey[0], keyLen);
 }
 
 AicpuTask* AicpuTaskSpace::FindTask(aclOpExecutor* executor, op::OpArgContext* args,
                                     const FVector<const aclTensor*>& inputs)
 {
+    return FindTaskImpl(executor, args, inputs, false);
+}
+
+AicpuTask* AicpuTaskSpace::FindTaskImpl(aclOpExecutor* executor, op::OpArgContext* args,
+                                        const FVector<const aclTensor*>& inputs, bool hasWorkspaceInfo)
+{
     const std::lock_guard<std::mutex> lk(mutex_);
     RecordAicpuTime(kFindTaskStart);
     uint8_t inputKey[kAicpuKeyBufLen];
-    size_t keyLen = 0;
-    auto seed = GenTaskKey(inputKey, keyLen, args, inputs);
+    size_t keyLen = BuildTaskKey(inputKey, args, inputs, hasWorkspaceInfo);
+    auto seed = GenHashBinary(&inputKey[0], keyLen);
     const auto& iter = hashMap_.find(seed);
     AicpuTask* task = nullptr;
     if (iter != hashMap_.end()) {
@@ -428,7 +443,10 @@ bool AicpuCreateTaskUnlocked(const TaskSpaceCtx& taskCache, aclOpExecutor* execu
     CreateAicpuAttrs(*args->GetOpArg(op::OP_ATTR_ARG), attrNames, attrs);
     FVector<aclTensor*> outputs;
     CreateTensorList(executor, *args->GetOpArg(op::OP_OUTPUT_ARG), outputs);
-    if (task->Init(inputs, outputs, attrs) != OK) {
+    const auto initRet = taskCache.isTf ? task->Init(inputs, outputs, attrs) :
+                                          static_cast<AicpuCCTask*>(task.get())
+                                              ->InitImpl(inputs, outputs, attrs, taskCache.hasWorkspaceInfo);
+    if (initRet != OK) {
         OP_LOGE(ACLNN_ERR_INNER, "Aicpu task init failed!.");
         return false;
     }
@@ -530,21 +548,33 @@ AicpuTask* AicpuCommitTask(const TaskSpaceCtx& taskCache, std::unique_ptr<AicpuT
 AicpuTask* AicpuTaskSpace::GetOrCreateTask(aclOpExecutor* executor, const FVector<std::string>& attrNames,
                                            op::OpArgContext* args)
 {
+    return GetOrCreateTaskImpl(executor, attrNames, args, false);
+}
+
+AicpuTask* AicpuTaskSpace::GetOrCreateTaskImpl(aclOpExecutor* executor, const FVector<std::string>& attrNames,
+                                               op::OpArgContext* args, bool hasWorkspaceInfo)
+{
     gAicpuTimeStamp.isEnable = EnableAicpuTimeStamp();
     FVector<const aclTensor*> inputs;
     CreateTensorList(executor, *args->GetOpArg(op::OP_INPUT_ARG), inputs);
-    auto task = FindTask(executor, args, inputs);
+    auto task = FindTaskImpl(executor, args, inputs, hasWorkspaceInfo);
     if (task != nullptr) {
         return task;
     }
     OP_LOGI("Start to create %s task!", opType_.c_str());
     uint8_t inputKey[kAicpuKeyBufLen];
-    size_t keyLen = 0;
-    size_t seed = 0;
+    const size_t keyLen = BuildTaskKey(inputKey, args, inputs, hasWorkspaceInfo);
+    const size_t seed = GenHashBinary(&inputKey[0], keyLen);
     std::unique_ptr<AicpuTask> newTask;
-    TaskSpaceCtx taskCache{this,  hashMap_,     mutex_,  hasInit_,
-                           isTf_, unknownType_, opType_, [](const AicpuTask* t) { return !t->isVisit_; }};
-    seed = GenTaskKey(inputKey, keyLen, args, inputs);
+    TaskSpaceCtx taskCache{this,
+                           hashMap_,
+                           mutex_,
+                           hasInit_,
+                           isTf_,
+                           unknownType_,
+                           opType_,
+                           [](const AicpuTask* t) { return !t->isVisit_; },
+                           hasWorkspaceInfo};
     if (!AicpuCreateTaskUnlocked(taskCache, executor, attrNames, args, inputs, newTask)) {
         return nullptr;
     }
@@ -568,6 +598,32 @@ aclnnStatus AicpuTask::SetIoTensors(aclOpExecutor* executor, op::OpArgContext* a
     outputs_.clear();
     CreateTensorList(executor, *args->GetOpArg(op::OP_INPUT_ARG), inputs_);
     CreateTensorList(executor, *args->GetOpArg(op::OP_OUTPUT_ARG), outputs_);
+    if (extInfoHandle_->HasWorkspaceInfo()) {
+        auto* workspaceArgs = args->GetOpArg(op::OP_WORKSPACE_ARG);
+        AICPU_ASSERT_NOTNULL_RETVAL(workspaceArgs);
+        AICPU_ASSERT_TRUE_RETVAL(workspaceArgs->count == 1U &&
+                                 (*workspaceArgs)[0].type == OpArgType::OPARG_ACLTENSOR_LIST);
+        auto* workspaces = static_cast<const aclTensorList*>((*workspaceArgs)[0]->pointer);
+        AICPU_ASSERT_TRUE_RETVAL(workspaces != nullptr && workspaces->Size() == 1U);
+        const aclTensor* workspace = (*workspaces)[0];
+        AICPU_ASSERT_NOTNULL_RETVAL(workspace);
+        AICPU_ASSERT_TRUE_RETVAL(workspace->IsFromWorkspace() && workspace->GetDataType() == op::DataType::DT_UINT8);
+        const int64_t size = workspace->Size();
+        const uint64_t offset = workspace->GetWorkspaceOffset();
+        AICPU_ASSERT_TRUE_RETVAL(size > 0 && offset <= executor->workspaceDeviceAicpuTaskOffset_ &&
+                                 static_cast<uint64_t>(size) <= executor->workspaceDeviceAicpuTaskOffset_ - offset);
+        AICPU_ASSERT_TRUE_RETVAL(offset <= executor->GetWorkspaceSize() &&
+                                 static_cast<uint64_t>(size) <= executor->GetWorkspaceSize() - offset);
+        const uint64_t base = op::internal::PtrToValue(executor->GetWorkspaceAddr());
+        AICPU_ASSERT_TRUE_RETVAL(base != 0U && offset <= std::numeric_limits<uint64_t>::max() - base);
+        const uint64_t addr = op::internal::PtrToValue(workspace->GetData());
+        const uint64_t expectedAddr = base + offset;
+        AICPU_ASSERT_TRUE_RETVAL(static_cast<uint64_t>(size) <= std::numeric_limits<uint64_t>::max() - expectedAddr);
+        AICPU_ASSERT_TRUE_RETVAL(addr == expectedAddr);
+        AICPU_ASSERT_OK_RETVAL(extInfoHandle_->UpdateWorkspaceInfo(static_cast<uint64_t>(size), addr));
+        OP_LOGI("AICPU_WORKSPACE_HOST op[%s], addr[%lu], size[%lu].", opType_.c_str(), addr,
+                static_cast<uint64_t>(size));
+    }
     return extInfoHandle_->UpdateInputAndOutputShape(inputs_, outputs_, executor->GetStream(), executor,
                                                      deviceExtMemSize_, deviceCacheOffset_);
 }

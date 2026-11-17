@@ -82,6 +82,7 @@ set(NNOPBASE_TEST_HEADER_FILES
     ${OPS_BASE_PATH}/src/nnopbase/individual_op/api
     ${OPS_BASE_PATH}/src/nnopbase/individual_op/utils
     ${OPS_BASE_PATH}/src/nnopbase/aicpu/task_handler/
+    ${OPS_BASE_PATH}/src/nnopbase/aicpu/tiling/
     ${OPS_BASE_PATH}/include/
     ${OPS_BASE_PATH}/include/nnopbase/
     ${OPS_BASE_PATH}/include/nnopbase/opdev/
@@ -154,6 +155,7 @@ file(GLOB_RECURSE NNOPBASE_TEST_COMMON_SRC_FILES CONFIGURE_DEPENDS
 # 创建utest执行对象
 add_executable(nnopbase_utest
     ${NNOPBASE_UT_DIR}/main.cpp
+    ${OPS_BASE_PATH}/src/nnopbase/aicpu/tiling/aicpu_workspace_tiling.cpp
     ${NNOPBASE_SRC_FILES}
     ${NNOPBASE_TEST_COMMON_CASE_SRC_FILES}
     ${NNOPBASE_TEST_COMMON_SRC_FILES}

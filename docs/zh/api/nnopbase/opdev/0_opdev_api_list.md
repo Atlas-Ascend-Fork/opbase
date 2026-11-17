@@ -23,6 +23,7 @@
     - [OP\_OPTION](common_macros_and_classes/OP_OPTION.md)
     - [OP\_TYPE\_REGISTER](common_macros_and_classes/OP_TYPE_REGISTER.md)
     - [OP\_WORKSPACE](common_macros_and_classes/OP_WORKSPACE.md)
+    - [REGISTER\_AICPU\_WORKSPACE\_TILING](common_macros_and_classes/REGISTER_AICPU_WORKSPACE_TILING.md)
     - [OpImplMode](common_macros_and_classes/OpImplMode.md)
     - [OpExecMode](common_macros_and_classes/OpExecMode.md)
 

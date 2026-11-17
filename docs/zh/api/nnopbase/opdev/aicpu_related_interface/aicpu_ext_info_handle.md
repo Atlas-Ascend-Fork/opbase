@@ -24,6 +24,8 @@
 | GenerateKernelId() | 生成kernel id。 |
 | UpdateOutputShapeFromExtInfo(const FVector<aclTensor *> &outputs, aclrtStream stream) | 从device侧获取输出shape信息更新到host侧。 |
 | UpdateInputAndOutputShape(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, aclrtStream stream, const aclOpExecutor *executor, const uint64_t deviceExtMemSize, uint64_t &deviceCacheOffset) | 二阶段执行前，刷新真实的输入、输出shape信息更新到device侧。 |
+| bool HasWorkspaceInfo() const | 查询Parse解析的拓展参数中是否包含workspace记录。返回true表示记录存在，返回false表示不存在；记录存在不代表workspace地址已经更新。 |
+| aclnnStatus UpdateWorkspaceInfo(uint64_t size, uint64_t addr) | 更新host侧已有workspace记录。size为当前算子所需的原始字节数且大于0，addr为该workspace的实际设备地址且非0。<br>成功返回ACLNN_SUCCESS；无记录、size为0或addr为0时返回错误码。调用方负责保证地址和长度有效，更新后由现有参数下发流程传至device。 |
 | SetSpace(void *space) | 设置使用的task空间。 |
 | ParseExtShapeType(AicpuExtInfo &aicpuExtInfo) | 解析拓展参数中的shape和数据类型信息。 |
 | ParseExtInputShape(AicpuExtInfo &aicpuExtInfo) | 解析拓展参数中的输入shape。 |
