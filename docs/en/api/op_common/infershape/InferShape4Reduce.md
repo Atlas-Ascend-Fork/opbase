@@ -10,7 +10,7 @@ Infers an output tensor's shape. It is the `InferShape` for `Reduce` operators i
 ge::graphStatus InferShape4Reduce(gert::InferShapeContext *context)
 ```
 
-Parameters
+## Parameters
 
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
