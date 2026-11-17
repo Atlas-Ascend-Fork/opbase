@@ -48,4 +48,5 @@ bash build.sh --help
 | --make_clean    | 可选    | 执行完全清理操作（删除所有编译相关文件），执行后脚本退出。                              |
 | --cann_3rd_lib_path | 可选    | 离线编译场景下第三方库存放的目录。                            |
 | --pkg               | 可选    | 生成安装包。                           |
+| --pkg-type=`<TYPE>` | 可选    | 指定安装包类型。可选类型：run/rpm/deb/all，默认为run。 |
 | --asan              | 可选    | 开启host侧ASAN（AddressSanitizer）内存检测功能。                            |
