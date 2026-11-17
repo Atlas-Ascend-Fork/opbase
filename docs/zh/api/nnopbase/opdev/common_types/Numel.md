@@ -7,7 +7,7 @@
 ## 函数原型
 
 ```cpp
-int64_t Numel()
+int64_t Numel() const
 ```
 
 ## 参数说明

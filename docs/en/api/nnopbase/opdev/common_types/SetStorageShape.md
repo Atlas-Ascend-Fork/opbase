@@ -9,7 +9,7 @@ StorageShape indicates the actual layout of the aclTensor in the memory, that is
 ## Prototype
 
 ```cpp
-void SetStorageShape(const op::Shape &shape)
+void SetStorageShape(const op::Shape &shape) const
 ```
 
 ## Parameters

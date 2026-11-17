@@ -7,7 +7,7 @@
 ## 函数原型
 
 ```cpp
-op::Format GetViewFormat()
+op::Format GetViewFormat() const
 ```
 
 ## 参数说明

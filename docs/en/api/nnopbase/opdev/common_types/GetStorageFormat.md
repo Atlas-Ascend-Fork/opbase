@@ -9,7 +9,7 @@ Obtains `StorageFormat` of an `aclTensor`.
 ## Prototype
 
 ```cpp
-op::Format GetStorageFormat()
+op::Format GetStorageFormat() const
 ```
 
 ## Parameters

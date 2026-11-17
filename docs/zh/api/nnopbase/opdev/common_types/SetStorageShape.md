@@ -9,7 +9,7 @@ StorageShape表示aclTensor在内存上的实际排布，即OriginShape实际运
 ## 函数原型
 
 ```cpp
-void SetStorageShape(const op::Shape &shape)
+void SetStorageShape(const op::Shape &shape) const
 ```
 
 ## 参数说明

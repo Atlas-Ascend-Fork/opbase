@@ -7,7 +7,7 @@ Checks if an `aclTensor` is an empty tensor.
 ## Prototype
 
 ```cpp
-bool IsEmpty()
+bool IsEmpty() const
 ```
 
 ## Parameters

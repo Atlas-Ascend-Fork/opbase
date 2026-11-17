@@ -7,7 +7,7 @@ Obtains the total number of elements in an `aclTensor`.
 ## Prototype
 
 ```cpp
-int64_t Numel()
+int64_t Numel() const
 ```
 
 ## Parameters

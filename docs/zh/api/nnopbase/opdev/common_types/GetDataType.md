@@ -7,7 +7,7 @@
 ## 函数原型
 
 ```cpp
-op::DataType GetDataType()
+op::DataType GetDataType() const
 ```
 
 ## 参数说明

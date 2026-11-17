@@ -7,7 +7,7 @@
 ## 函数原型
 
 ```cpp
-template<typename to> bool CheckOverflows()
+template<typename to> bool CheckOverflows() const
 ```
 
 ## 参数说明

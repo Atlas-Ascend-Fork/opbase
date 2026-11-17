@@ -9,7 +9,7 @@ StorageFormat表示aclTensor在内存中的排布格式，例如NCHW、ND等。
 ## 函数原型
 
 ```cpp
-op::Format GetStorageFormat()
+op::Format GetStorageFormat() const
 ```
 
 ## 参数说明

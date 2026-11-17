@@ -9,7 +9,7 @@ OriginFormat一般表示aclTensor在经历transdata节点前（如果存在该�
 ## 函数原型
 
 ```cpp
-op::Format GetOriginalFormat()
+op::Format GetOriginalFormat() const
 ```
 
 ## 参数说明

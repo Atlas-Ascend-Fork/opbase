@@ -7,7 +7,7 @@ Obtains the ViewFormat of an aclTensor. ViewFormat is the logical format of the 
 ## Prototype
 
 ```cpp
-op::Format GetViewFormat()
+op::Format GetViewFormat() const
 ```
 
 ## Parameters

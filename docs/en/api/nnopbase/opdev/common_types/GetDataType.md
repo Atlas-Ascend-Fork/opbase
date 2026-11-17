@@ -7,7 +7,7 @@ Obtains the data type of an aclTensor.
 ## Prototype
 
 ```cpp
-op::DataType GetDataType()
+op::DataType GetDataType() const
 ```
 
 ## Parameters

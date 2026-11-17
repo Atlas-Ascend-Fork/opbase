@@ -7,7 +7,7 @@ Checks whether overflow occurs in the scalar stored in aclScalar.
 ## Prototype
 
 ```cpp
-template<typename to> bool CheckOverflows()
+template<typename to> bool CheckOverflows() const
 ```
 
 ## Parameters

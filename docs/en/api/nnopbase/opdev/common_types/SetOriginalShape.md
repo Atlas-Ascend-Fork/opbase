@@ -9,7 +9,7 @@ Sets the OriginShape attribute of an aclTensor.
 ## Prototype
 
 ```cpp
-void SetOriginalShape(const op::Shape &shape)
+void SetOriginalShape(const op::Shape &shape) const
 ```
 
 ## Parameters

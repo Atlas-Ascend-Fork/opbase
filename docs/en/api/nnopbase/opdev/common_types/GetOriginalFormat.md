@@ -9,7 +9,7 @@ Obtains `OriginFormat` of an `aclTensor`.
 ## Prototype
 
 ```cpp
-op::Format GetOriginalFormat()
+op::Format GetOriginalFormat() const
 ```
 
 ## Parameters

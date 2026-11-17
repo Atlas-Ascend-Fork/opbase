@@ -9,7 +9,7 @@ OriginShape表示aclTensor在经历transdata节点前（如果存在该节点）
 ## 函数原型
 
 ```cpp
-void SetOriginalShape(const op::Shape &shape)
+void SetOriginalShape(const op::Shape &shape) const
 ```
 
 ## 参数说明

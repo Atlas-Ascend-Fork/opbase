@@ -7,7 +7,7 @@
 ## 函数原型
 
 ```cpp
-bool IsEmpty()
+bool IsEmpty() const
 ```
 
 ## 参数说明
