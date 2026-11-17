@@ -2,7 +2,7 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -11,7 +11,7 @@
 | nodeName_(nodeName) | 预留参数，当前同算子名称。 |
 | ioNum_(ioNum) | 算子的输入和输出个数之和。 |
 | needDeviceExt_(needDeviceExt) | 标识是否需要分配额外device侧内存。 |
-| args_({}) | 与Runtime运行时交互的参数的对象，用于计算任务下发。 |
+| args_({}) | 与Runtime运行时交互的参数对象，用于计算任务下发。 |
 | GetIoAddr() | 获取args内存中存放input/output地址的内存指针。 |
 | get() | 获取智能指针管理的内存的首地址。 |
 | GetExtInfoAddr() | 获取args中存放拓展参数的内存指针。 |
@@ -36,8 +36,8 @@
 | BuildCCArgs(const std::string &argData, const std::string &kernelName, const std::string &soName, const size_t extInfoSize) | 封装CANN算子args中参数。 |
 | SetHostArgs(const std::string &argData, const size_t extInfoSize) | 设置args中内存的地址和长度信息。 |
 | SetOffsetArgs() | 设置args中偏移值。 |
-| AicpuTfArgsHandler(const std::string &opType, const std::string &nodeName, const uint32_t ioNum, const bool needDeviceExt) | AI CPU Tensorflow算子框架参数管理类。 |
+| AicpuTfArgsHandler(const std::string &opType, const std::string &nodeName, const uint32_t ioNum, const bool needDeviceExt) | AI CPU TensorFlow算子框架参数管理类。 |
 | GenTfArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, STR_FWK_OP_KERNEL &fwkOpKernel, std::string &taskInfo) | 生成CANN算子args中nodedef及head信息。 |
 | BuildTfArgs(STR_FWK_OP_KERNEL &fwkOpKernel, const std::string &taskInfo, const size_t extInfoSize) | 封装Tensorflow算子args中参数。 |
 | GenNodeDef(const FVector<const aclTensor *> &inputs, const AicpuAttrs &attrs, ge::Buffer &nodeDefBytes) | 生成算子的描述符信息，包含输入、输出shape及属性等信息。 |
-| UpdateKernelId() | 更新args中的Kernel字段，用于匹配Device侧的Kernel Cache。 |
+| UpdateKernelId() | 更新args中的Kernel字段，用于匹配device侧的Kernel Cache。 |

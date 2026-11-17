@@ -2,7 +2,7 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -11,9 +11,9 @@
 | inputNum_(inputNum) | 算子的输入个数。 |
 | outputNum_(outputNum) | 算子的输出个数。 |
 | unknownType_(unknownType) | 标识算子是什么类型的算子。 |
-| AicpuExtInfoHandler() | AI CPU拓展参数管理类构造函数。 |
-| GenTfExtBuffer(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, std::string &taskExtInfo) | 生成Tensorflow算子框架的拓展参数。 |
-| GenCCExtBuffer( const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, std::string &taskExtInfo) | 生成CANN算子框架的拓展参数。 |
+| AicpuExtInfoHandler() | AI CPU拓展参数管理类的默认构造函数，用于创建未指定算子的空实例。 |
+| GenTfExtBuffer(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, std::string &taskExtInfo) | 生成TensorFlow算子框架的拓展参数。 |
+| GenCCExtBuffer(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, std::string &taskExtInfo) | 生成CANN算子框架的拓展参数。 |
 | Parse(const std::string &extInfo, uint8_t *hostAddr) | 解析拓展参数的函数。 |
 | UpdateInputShape(const uint32_t inputIndex, const gert::Shape &inputShape) | 更新拓展参数中的输入shape信息。 |
 | UpdateOutputShape(const uint32_t outputIndex, const gert::Shape &outputShape) | 更新拓展参数中的输出shape信息。 |

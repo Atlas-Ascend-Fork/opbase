@@ -6,7 +6,7 @@
 
 - **框架能力接口**：
 
-  提供实现aclnn API的基础能力接口，比如算子执行器（opExecutor）处理、数据类型/格式/shape等操作，具体如[表1](#table1)所示；还包括常用类和宏，具体参见[表2](#table2)、[表3](#table3)。
+  提供实现aclnn API的基础能力接口，比如算子执行器（OpExecutor）处理、数据类型/format/shape等操作，具体如[表1](#table1)所示；还包括常用类和宏，具体参见[表2](#table2)、[表3](#table3)。
 
 - **基础张量操作接口**：
 
@@ -16,7 +16,7 @@
 
 **头文件说明**：调用本章接口时，请按实际情况include依赖的头文件，一般定义在`${INSTALL_DIR}/include`目录。其中\$\{INSTALL\_DIR\}表示为CANN软件安装后的路径，以root安装举例，安装后路径为`/usr/local/Ascend/cann`。
 
-**表 1**  接口列表 <a id="table1"></a>
+**表 1** 接口列表 <a id="table1"></a>
 
 | 接口分类 | 说明 | 所属头文件 |
 | --- | --- | --- |
@@ -35,7 +35,7 @@
 | [float8_e8m0](float8_e8m0/float8_e8m0.md) | 详细介绍了Float8E8M0数据类型在CPU侧的实现类。 | aclnn/opdev/float8_e8m0.h |
 | [hifloat4](hifloat4/hifloat4.md) | 详细介绍了HiFloat4数据类型在CPU侧的实现类。 | aclnn/opdev/hifloat4.h |
 | [hifloat8](hifloat8/hifloat8.md) | 详细介绍了HiFloat8数据类型在CPU侧的实现类。 | aclnn/opdev/hifloat8.h |
-| [framework_op](framework_op/framework_op.md) | 详细介绍了框架对外提供的从host侧到device侧拷贝能力。 | aclnn/opdev/framework_op.h |
+| [framework_op](framework_op/framework_op.md) | 详细介绍了框架对外提供的从Host侧到device侧拷贝能力。 | aclnn/opdev/framework_op.h |
 | make_op_executor | 对外提供初始化aclOpExecutor的宏声明。<br>**说明：该头文件定义的接口均为预留接口，开发者无需关注。** | aclnn/opdev/make_op_executor.h |
 | [object](object/object.md) | 详细介绍了aclnn中aclTensor等基础数据结构的基类Object类，用于重载实现new、delete方法。 | aclnn/opdev/object.h |
 | [op_arg_def](op_arg_def/op_arg_def.md) | 详细介绍了OpArgContext类，并对外提供OP_INPUT等宏声明。 | aclnn/opdev/op_arg_def.h |
@@ -58,7 +58,7 @@
 | [aicpu_task](aicpu_related_interface/aicpu_task.md) | 提供了AI CPU任务设置、下发等逻辑，例如设置调用哪个AI CPU算子，设置算子输入、输出等接口。 | aclnn/opdev/aicpu/aicpu_task.h |
 | [aicpu_utils](aicpu_related_interface/aicpu_utils.md) | AI CPU任务需要的一些公共接口。 | aclnn/opdev/aicpu/aicpu_utils.h |
 
-**表 2**  常用宏表  <a id="table2"></a>
+**表 2** 常用宏表  <a id="table2"></a>
 
 | 宏名称 | 说明 | 所属头文件 |
 | --- | --- | --- |
@@ -83,7 +83,7 @@
 | [ADD_TO_LAUNCHER_LIST_AICPU](common_macros_and_classes/ADD_TO_LAUNCHER_LIST_AICPU.md) | 创建某个AI CPU算子的执行任务，并置入aclOpExecutor的执行队列，在二阶段时执行。 | aclnn/opdev/aicpu/aicpu_task.h |
 | [REGISTER_AICPU_WORKSPACE_TILING](common_macros_and_classes/REGISTER_AICPU_WORKSPACE_TILING.md) | 注册AICPU算子的Tiling函数，提前计算kernel中间计算所需的workspace大小，供框架规划并传递预分配的workspace。 | aclnn/opdev/aicpu/aicpu_task.h |
 
-**表 3**  常用class和struct表  <a id="table3"></a>
+**表 3** 常用class和struct表  <a id="table3"></a>
 
 | class/struct名称 | 说明 | 所属头文件 |
 | --- | --- | --- |
@@ -130,13 +130,13 @@
 >   }
 >   ```
 
-## 基础张量操作接口  <a id="table4"></a>
+## 基础张量操作接口 <a id="table4"></a>
 
-**表 4**  接口列表
+**表 4** 接口列表
 
 | 接口名 | 说明 | 所属头文件 |
 | --- | --- | --- |
-| [Cast](L0/Cast.md) | 将输入tensor转换为指定的数据类型。 | aclnn_kernels/cast.h |
+| [Cast](L0/Cast.md) | 将输入Tensor转换为指定的数据类型。 | aclnn_kernels/cast.h |
 | [Contiguous](L0/Contiguous.md) | 将非连续tensor转换为连续tensor。 | aclnn_kernels/contiguous.h |
 | [ViewCopy](L0/ViewCopy.md) | 将连续tensor搬运到连续或非连续tensor上。 | aclnn_kernels/contiguous.h |
 | [Pad](L0/Pad.md) | 将输入tensor按照paddings的大小对各个维度进行填充，填充值为0。 | aclnn_kernels/pad.h |
@@ -150,7 +150,7 @@
 
 ## 基本概念
 
-- **Level0层接口**  <a id="l0"></a>
+- **Level0层接口** <a id="l0"></a>
 
     简称L0层接口，表示调用单Kernel的Host侧API，提供了细颗粒API（单Kernel下发）和算子API开发的基础结构体（如Tensor定义等）和公共基础能力（如workspace复用、引擎调度等），上层应用或者L2层接口可通过L0接口的快速组装实现高性能计算。
 
@@ -168,7 +168,7 @@
     l0op::MatMulNzFp162Fp16                   //MatMul算子输入输出均按NZ格式计算，并且2代表“To”，表示输入与输出都是fp16
     ```
 
-- **Level2层接口**  <a id="l2"></a>
+- **Level2层接口** <a id="l2"></a>
 
     简称L2层接口，是对L0层接口的高层级封装（内部通过调用单个或多个L0接口实现更灵活功能），表示更上层的Host侧API。该类接口提供单算子直调方式，屏蔽了算子内部实现逻辑，用户直接调用L2接口即可实现调用算子。
 
@@ -182,7 +182,7 @@
   - aclnnXxxGetWorkspaceSize最后两个参数固定为\(uint64\_t \*workspaceSize, aclOpExecutor \*\*executor\)，名称和类型均不可变。
   - aclnnXxx接口参数固定为\(void \*workspace, uint64\_t workspaceSize, aclOpExecutor \*executor, aclrtStream stream\)。
 
-    其中aclnnXxxGetWorkspaceSize为第一段接口，主要用于计算本次API调用过程中需要多少workspace内存，获取到本次计算所需的workspaceSize后，按照workspaceSize申请NPU内存，然后调用第二段接口aclnnXxx执行计算_。_“Xxx”表示对应的算子类型，如Add算子_。_
+    其中aclnnXxxGetWorkspaceSize为第一段接口，主要用于计算本次API调用过程中需要多少workspace内存，获取到本次计算所需的workspaceSize后，按照workspaceSize申请NPU内存，然后调用第二段接口aclnnXxx执行计算。“Xxx”表示对应的算子类型，如Add算子。
 
     > **说明：**
     > - workspace是指除输入/输出外，API在AI处理器上完成计算所需要的临时内存，workspaceSize是指workspace内存大小。

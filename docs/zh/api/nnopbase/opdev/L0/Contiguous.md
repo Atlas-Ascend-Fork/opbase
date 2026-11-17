@@ -48,7 +48,7 @@ const aclTensor *Contiguous(const aclTensor *x, aclOpExecutor *executor)
 
 ## 约束说明
 
-要求输入tensor是合法的tensor，Shape和Stride所表示的数据在Storage大小范围内。例如：shape=\(2, 3\), stride = \(10, 30\), storageSize=8，数据实际空间超过了Storage大小8，该Tensor为非法，Contiguous接口返回nullptr。
+要求输入tensor是合法的tensor，Shape和Stride所表示的数据在Storage大小范围内。例如：shape=\(2, 3\), stride = \(10, 30\), storageSize=8，数据实际空间超过了Storage大小8，该tensor为非法，Contiguous接口返回nullptr。
 
 ## 调用示例
 

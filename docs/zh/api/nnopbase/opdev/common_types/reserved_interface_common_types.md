@@ -2,12 +2,12 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口名称 | 功能说明 |
 | --- | --- |
 | InitTensor(const int64_t \*viewDims, uint64_t viewDimsNum, aclDataType dataType, const int64_t \*stride, int64_t offset, aclFormat format, const int64_t \*storageDims, uint64_t storageDimsNum, void \*tensorDataAddr) | 重置一个aclTensor的各项属性。 |
-| ToString(op::DataType dataType) | 获取数据类型对应字符串表示。 |
+| ToString(op::DataType dataType) | 获取数据类型对应的字符串表示。 |
 | TypeSize(DataType dataType) | 获取数据类型位宽。 |
 | ToContiguousStrides(const op::Shape &shape, op::Strides &strides) | 根据shape推导连续tensor的stride。 |
 | aclStorage() | aclStorage的构造函数，aclStorage用于描述一块片上内存空间。 |

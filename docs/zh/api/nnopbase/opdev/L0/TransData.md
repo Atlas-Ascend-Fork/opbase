@@ -25,7 +25,7 @@
 
 该函数不改变tensor数据的值，实现对tensor数据格式的转换。
 
-具体功能是将用户输入tensor的format转换为指定的dstPrimaryFormat。
+具体功能是将用户输入tensor的数据格式转换为指定的dstPrimaryFormat。
 
 ## 函数原型
 

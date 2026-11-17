@@ -16,7 +16,7 @@ int64_t GetBlockSize()
 
 ## 返回值说明
 
-返回int64\_t。
+返回`int64_t`。
 
 ## 约束说明
 

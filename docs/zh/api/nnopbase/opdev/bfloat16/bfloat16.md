@@ -2,7 +2,7 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -14,7 +14,7 @@
 | bfloat16(const complex64 &val) | struct bfloat16的构造函数。 |
 | bfloat16(const complex128 &val) | struct bfloat16的构造函数。 |
 | bfloat16(const T &val) | struct bfloat16的构造函数。 |
-| float() | 将结构体struct bfloat16成员变量value从uint16_t型转为float型。 |
+| float() | 将bfloat16成员变量value从uint16_t型转换为float型。 |
 | bool() | 判断当前bfloat16数值的绝对值是否大于float数据类型的epsilon值。 |
 | epsilon() | 返回bfloat16数据类型的epsilon值。 |
 | short() | 将当前bfloat16数值转换为short类型。 |
@@ -31,7 +31,7 @@
 | IsZero() | 判断当前bfloat16数值是不是0。 |
 | float_isnan(const float &x) | 判断float类型数值x是不是非数（NaN）。 |
 | isinf(const bfloat16 &a) | 判断给定的bfloat16数值a是不是无穷大。 |
-| isnan(const bfloat16 &a) | 判断给定的bfloat16数值a是否不是一个数。 |
+| isnan(const bfloat16 &a) | 判断给定的bfloat16数值a是否为非数（NaN）。 |
 | isfinite(const bfloat16 &a) | 判断给定的bfloat16数值a是否为有限值。 |
 | exp(const bfloat16 &a) | 计算e的a次幂。 |
 | log(const bfloat16 &a) | 计算a的自然对数。 |
@@ -44,7 +44,7 @@
 | tanh(const bfloat16 &a) | 计算a角度的双曲正切值。 |
 | floor(const bfloat16 &a) | 返回不大于bfloat16数值a的最大整数值。 |
 | ceil(const bfloat16 &a) | 返回不小于bfloat16数值a的最小整数值。 |
-| min() | 返回bfloat16数据类型最小的正数正常值。 |
+| min() | 返回bfloat16数据类型的最小值。 |
 | max() | 返回bfloat16数据类型的最大值。 |
 | round_error() | 最大舍入误差的量。 |
 | infinity() | 返回bfloat16数据类型的无穷大值。 |

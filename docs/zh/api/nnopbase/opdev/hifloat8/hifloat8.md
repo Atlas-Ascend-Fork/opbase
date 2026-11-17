@@ -2,7 +2,7 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -14,7 +14,7 @@
 | IsNaN() | 判断当前HiFloat8数值是否为NaN。 |
 | IsInf() | 判断当前HiFloat8数值是否为无穷大。 |
 | IsZero() | 判断当前HiFloat8数值是否为零。 |
-| BitsFromFp32(uint32_t f32) | 将FP32位模式转换为HiFloat8位模式。 |
+| BitsFromFP32(uint32_t f32) | 将FP32位模式转换为HiFloat8位模式。 |
 | isinf(const HiFloat8 &a) | 判断给定的HiFloat8数值a是否为无穷大。 |
 | isnan(const HiFloat8 &a) | 判断给定的HiFloat8数值a是否为NaN。 |
 | isfinite(const HiFloat8 &a) | 判断给定的HiFloat8数值a是否为有限值。 |

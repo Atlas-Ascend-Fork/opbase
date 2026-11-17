@@ -15,7 +15,7 @@ CANN_OPS_OPB_SYN_EXEC_ACLNN(ctx, aclnnApi, ...)
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | ctx | 输入 | 算子执行上下文(OpExecuteContext)，用于分配Workspace和获取Stream。 |
-| aclnnApi | 输入 | 待回调执行的ACLNN算子API名称，如aclnnScatterList。 |
+| aclnnApi | 输入 | 待回调执行的Aclnn算子API名称，如aclnnScatterList。 |
 | ... | 输入 | 算子输入、输出及属性参数，支持gert::Tensor、gert::Tensor列表、标量、属性等类型。 |
 
 ## 返回值说明

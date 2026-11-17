@@ -2,7 +2,7 @@
 
 ## 宏功能
 
-用于L2一阶段接口aclnn_Xxx_GetWorkspaceSize时延统计及入参打印，必须在一阶段接口最前方调用。
+用于L2一阶段接口aclnnXxxGetWorkspaceSize时延统计及入参打印，必须在一阶段接口最前方调用。
 
 ## 宏原型
 
@@ -23,7 +23,7 @@ L2_DFX_PHASE_1(APIName, IN, OUT)
 - 必须在L2一阶段接口的入口处调用，否则可能导致时延统计出现误差。传入参数必须与L2接口的参数列表严格一致。
 - 如下接口是上述宏定义会调用到的关联接口。
 
-    ```text
+    ```cpp
     #define DFX_IN(...) std::make_tuple(__VA_ARGS__)
     #define DFX_OUT(...) std::make_tuple(__VA_ARGS__)
     ```

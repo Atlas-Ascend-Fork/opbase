@@ -2,7 +2,7 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -33,10 +33,10 @@
 | toInt32() | 将fp16_t转换为int32_t。 |
 | toUInt32() | 将fp16_t转换为uint32_t。 |
 | ExtractFP16(const uint16_t &val, uint16_t *s, int16_t*e, uint16_t *m) | 提取fp16_t对象的符号、指数和尾数。 |
-| ReverseMan(bool negative, T *man) | 当符号位是负数，计算尾数的补码。 |
-| MinMan(const int16_t &ea, T *ma, const int16_t &eb, T*mb) | 选择指数小于另一个指数的尾数右移。 |
+| ReverseMan(bool negative, T *man) | 当符号位为负时，计算尾数的补码。 |
+| MinMan(const int16_t &ea, T *ma, const int16_t &eb, T *mb) | 选择指数小于另一个指数的尾数并将其右移。 |
 | RightShift(T man, int16_t shift) | 尾数右移shift位。 |
 | GetManSum(int16_t ea, const T &ma, int16_t eb, const T &mb) | 获取两个fp16_t数的尾数和，T支持类型：uint16_t/uint32_t/uint64_t。 |
-| ManRoundToNearest(bool bit0, bool bit1, bool bitLeft, T man, uint16_t shift = 0) | 将fp16_t或float尾数舍入为最接近的值。 |
+| ManRoundToNearest(bool bit0, bool bit1, bool bitLeft, T man, uint16_t shift = 0) | 将fp16_t或float的尾数舍入为最接近的值。 |
 | GetManBitLength(T man) | 获取浮点数尾数的位长度。 |
-| isnan(op::fp16_t value) | 判断数值是不是无法表示(Not a Number)。 |
+| isnan(op::fp16_t value) | 判断数值是不是非数值(Not a Number)。 |

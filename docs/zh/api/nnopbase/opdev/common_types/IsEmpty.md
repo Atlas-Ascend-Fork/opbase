@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-判断aclTensor是否为空tensor。
+判断aclTensor是否为空Tensor。
 
 ## 函数原型
 
@@ -16,7 +16,7 @@ bool IsEmpty()
 
 ## 返回值说明
 
-如果aclTensor为空tensor，返回true，否则为false。
+如果aclTensor为空Tensor，返回true，否则为false。
 
 ## 约束说明
 

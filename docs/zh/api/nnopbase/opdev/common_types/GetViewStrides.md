@@ -16,7 +16,7 @@ const op::Strides& GetViewStrides() const
 
 ## 返回值说明
 
-返回const op::Strides&，引用tensor持有的view strides。返回引用不会延长tensor的生命周期；示例按值复制得到独立对象。
+返回const op::Strides&，引用Tensor持有的view strides。返回引用不会延长Tensor的生命周期；示例按值复制得到独立对象。
 
 ## 约束说明
 

@@ -1,8 +1,8 @@
-# op\_def
+# 算子定义接口（op\_def）
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -19,4 +19,4 @@
 | ReadDirBySuffix(const std::string &dir, const std::string &suffix, std::vector\<std::string\> &paths) | 获取dir目录下所有后缀为suffix的文件。 |
 | ToIndex(OpImplMode implMode) | 获取OpImplMode的index。 |
 | ToIndexChar(OpImplMode implMode) | 获取OpImplMode字符形式的index。 |
-| GetOpConfigJsonFileName(uint32_t opType) | 根据算子id获取Config Json文件名。 |
+| GetOpConfigJsonFileName(uint32_t opType) | 根据算子id获取算子json文件名。 |

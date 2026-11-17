@@ -1,53 +1,53 @@
 # common\_types
 
-- **[GetStorageShape](GetStorageShape.md)**  
+- **[GetStorageShape](GetStorageShape.md)**
 
-- **[SetStorageShape](SetStorageShape.md)**  
+- **[SetStorageShape](SetStorageShape.md)**
 
-- **[GetOriginalShape](GetOriginalShape.md)**  
+- **[GetOriginalShape](GetOriginalShape.md)**
 
-- **[SetOriginalShape](SetOriginalShape.md)**  
+- **[SetOriginalShape](SetOriginalShape.md)**
 
-- **[GetViewShape](GetViewShape.md)**  
+- **[GetViewShape](GetViewShape.md)**
 
-- **[SetViewShape](SetViewShape.md)**  
+- **[SetViewShape](SetViewShape.md)**
 
-- **[GetStorageFormat](GetStorageFormat.md)**  
+- **[GetStorageFormat](GetStorageFormat.md)**
 
-- **[SetStorageFormat](SetStorageFormat.md)**  
+- **[SetStorageFormat](SetStorageFormat.md)**
 
-- **[GetOriginalFormat](GetOriginalFormat.md)**  
+- **[GetOriginalFormat](GetOriginalFormat.md)**
 
-- **[SetOriginalFormat](SetOriginalFormat.md)**  
+- **[SetOriginalFormat](SetOriginalFormat.md)**
 
-- **[GetViewFormat](GetViewFormat.md)**  
+- **[GetViewFormat](GetViewFormat.md)**
 
-- **[SetViewFormat](SetViewFormat.md)**  
+- **[SetViewFormat](SetViewFormat.md)**
 
-- **[GetViewStrides](GetViewStrides.md)**  
+- **[GetViewStrides](GetViewStrides.md)**
 
-- **[SetViewStrides](SetViewStrides.md)**  
+- **[SetViewStrides](SetViewStrides.md)**
 
-- **[Numel](Numel.md)**  
+- **[Numel](Numel.md)**
 
-- **[GetDataType](GetDataType.md)**  
+- **[GetDataType](GetDataType.md)**
 
-- **[IsEmpty](IsEmpty.md)**  
+- **[IsEmpty](IsEmpty.md)**
 
-- **[SetData](SetData.md)**  
+- **[SetData](SetData.md)**
 
-- **[SetDataType](SetDataType.md)**  
+- **[SetDataType](SetDataType.md)**
 
-- **[SetBoolData](SetBoolData.md)**  
+- **[SetBoolData](SetBoolData.md)**
 
-- **[SetIntData](SetIntData.md)**  
+- **[SetIntData](SetIntData.md)**
 
-- **[SetFloatData](SetFloatData.md)**  
+- **[SetFloatData](SetFloatData.md)**
 
-- **[SetFp16Data](SetFp16Data.md)**  
+- **[SetFp16Data](SetFp16Data.md)**
 
-- **[SetBf16Data](SetBf16Data.md)**  
+- **[SetBf16Data](SetBf16Data.md)**
 
-- **[CheckOverflows](CheckOverflows.md)**  
+- **[CheckOverflows](CheckOverflows.md)**
 
-- **[预留接口](reserved_interface_common_types.md)**  
+- **[预留接口](reserved_interface_common_types.md)**

@@ -1,13 +1,13 @@
 # shape\_utils
 
-- **[ToShape](ToShape.md)**  
+- **[ToShape](ToShape.md)**
 
-- **[ToShapeVector](ToShapeVector.md)**  
+- **[ToShapeVector](ToShapeVector.md)**
 
-- **[ToContiguousStrides](ToContiguousStrides.md)**  
+- **[ToContiguousStrides](ToContiguousStrides.md)**
 
-- **[CheckBroadcastShape](CheckBroadcastShape.md)**  
+- **[CheckBroadcastShape](CheckBroadcastShape.md)**
 
-- **[BroadcastInferShape](BroadcastInferShape.md)**  
+- **[BroadcastInferShape](BroadcastInferShape.md)**
 
-- **[预留接口](reserved_interface_shape_utils.md)**  
+- **[预留接口](reserved_interface_shape_utils.md)**

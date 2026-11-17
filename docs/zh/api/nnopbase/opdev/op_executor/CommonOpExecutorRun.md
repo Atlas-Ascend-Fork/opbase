@@ -14,7 +14,7 @@ aclnnStatus CommonOpExecutorRun(void *workspace, uint64_t workspaceSize, aclOpEx
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| workspace | 输入 | 根据L2一阶段接口计算出的workspaceSize，在device侧申请的片上内存指针。 |
+| workspace | 输入 | 根据L2一阶段接口计算出的workspaceSize，在device侧申请的workspace内存指针。 |
 | workspaceSize | 输入 | L2一阶段接口计算出的workspaceSize。 |
 | executor | 输入 | L2一阶段接口调用后生成的op执行器对象。 |
 | stream | 输入 | 指定流执行executor中的算子任务。 |

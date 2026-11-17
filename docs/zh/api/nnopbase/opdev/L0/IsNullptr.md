@@ -23,7 +23,7 @@
 
 ## 功能说明
 
-判断输入的指针是否为空。若为空指针返回true、并打印错误日志，否则返回false。
+判断输入的指针是否为空。若为空指针返回true，并打印错误日志，否则返回false。
 
 ## 函数原型
 
@@ -55,12 +55,12 @@ static inline bool IsNullptr(const aclFloatArray *floatArr, const char *name)
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| tensor | 输入 | 需要被检查的指针，支持aclTensor*、aclTensorList*、aclScalar*、aclIntArray*、aclBoolArray*、aclFloatArray*类型。 |
+| tensor | 输入 | 需要被检查的指针，支持aclTensor *、aclTensorList *、aclScalar *、aclIntArray *、aclBoolArray *、aclFloatArray *类型。 |
 | name | 输入 | 被检查的指针的一个标识，如果被检查指针为空，则打印的错误日志里会输出此标识（name）。 |
 
 ## 返回值说明
 
-返回bool类型，如果指针被判断为nullptr，返回true，否则返回false。
+返回bool类型，如果指针被判断为空指针，返回true，否则返回false。
 
 ## 约束说明
 

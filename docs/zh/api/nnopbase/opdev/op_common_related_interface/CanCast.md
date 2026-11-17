@@ -1,6 +1,6 @@
 # CanCast
 
-**须知：该接口后续版本会废弃，请使用最新[CanCast](../data_type_utils/CanCast.md)接口**
+**须知：该接口后续版本会废弃，请使用最新[CanCast](../data_type_utils/CanCast.md)接口。**
 
 ## 功能说明
 

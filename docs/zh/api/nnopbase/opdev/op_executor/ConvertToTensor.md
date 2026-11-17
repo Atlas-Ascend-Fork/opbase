@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-将不同数据类型的host侧数据，转为一个host侧aclTensor对象。
+将不同数据类型的Host侧数据，转为一个Host侧aclTensor对象。
 
 ## 函数原型
 
@@ -39,13 +39,13 @@ const aclTensor *ConvertToTensor(const T *value, uint64_t size, DataType dataTyp
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| value | 输入 | host侧源数据。 |
+| value | 输入 | Host侧源数据。 |
 | size | 输入 | 源数据的元素个数。 |
 | dataType | 输入 | 将源数据转换为指定数据类型后，写入aclTensor。 |
 
 ## 返回值说明
 
-返回转换后的host侧tensor。
+返回转换后的host侧aclTensor。
 
 ## 约束说明
 
@@ -53,49 +53,49 @@ const aclTensor *ConvertToTensor(const T *value, uint64_t size, DataType dataTyp
 
 ### 各接口参数数据类型约束
 
-#### 接口1: `ConvertToTensor(const aclIntArray *value, DataType dataType)`
+#### 接口1： ConvertToTensor(const aclIntArray *value, DataType dataType)
 
 | 参数 | 数据类型约束 |
 | --- | --- |
 | value | aclIntArray类型，内部存储int64_t数据 |
 | dataType | 支持的数据类型：DT_FLOAT、DT_FLOAT16、DT_BF16、DT_INT8、DT_INT16、DT_UINT16、DT_UINT8、DT_INT32、DT_INT64、DT_UINT32、DT_UINT64、DT_BOOL、DT_DOUBLE |
 
-#### 接口2: `ConvertToTensor(const aclBoolArray *value, DataType dataType)`
+#### 接口2： ConvertToTensor(const aclBoolArray *value, DataType dataType)
 
 | 参数 | 数据类型约束 |
 | --- | --- |
 | value | aclBoolArray类型，内部存储bool数据 |
 | dataType | 支持的数据类型：DT_FLOAT、DT_FLOAT16、DT_BF16、DT_INT8、DT_INT16、DT_UINT16、DT_UINT8、DT_INT32、DT_INT64、DT_UINT32、DT_UINT64、DT_BOOL、DT_DOUBLE |
 
-#### 接口3: `ConvertToTensor(const aclFloatArray *value, DataType dataType)`
+#### 接口3： ConvertToTensor(const aclFloatArray *value, DataType dataType)
 
 | 参数 | 数据类型约束 |
 | --- | --- |
 | value | aclFloatArray类型，内部存储float数据 |
 | dataType | 支持的数据类型：DT_FLOAT、DT_FLOAT16、DT_BF16、DT_INT8、DT_INT16、DT_UINT16、DT_UINT8、DT_INT32、DT_INT64、DT_UINT32、DT_UINT64、DT_BOOL、DT_DOUBLE |
 
-#### 接口4: `ConvertToTensor(const aclFp16Array *value, DataType dataType)`
+#### 接口4： ConvertToTensor(const aclFp16Array *value, DataType dataType)
 
 | 参数 | 数据类型约束 |
 | --- | --- |
 | value | aclFp16Array类型，内部存储fp16_t数据 |
 | dataType | 支持的数据类型：DT_FLOAT、DT_FLOAT16、DT_BF16、DT_INT8、DT_INT16、DT_UINT16、DT_UINT8、DT_INT32、DT_INT64、DT_UINT32、DT_UINT64、DT_BOOL、DT_DOUBLE |
 
-#### 接口5: `ConvertToTensor(const aclBf16Array *value, DataType dataType)`
+#### 接口5： ConvertToTensor(const aclBf16Array *value, DataType dataType)
 
 | 参数 | 数据类型约束 |
 | --- | --- |
 | value | aclBf16Array类型，内部存储bfloat16数据 |
 | dataType | 支持的数据类型：DT_FLOAT、DT_FLOAT16、DT_BF16、DT_INT8、DT_INT16、DT_UINT16、DT_UINT8、DT_INT32、DT_INT64、DT_UINT32、DT_UINT64、DT_BOOL、DT_DOUBLE |
 
-#### 接口6: `ConvertToTensor(const aclScalar *value, DataType dataType)`
+#### 接口6： ConvertToTensor(const aclScalar *value, DataType dataType)
 
 | 参数 | 数据类型约束 |
 | --- | --- |
 | value | aclScalar类型，支持的数据类型包括：DT_BOOL、DT_INT8、DT_UINT8、DT_INT16、DT_UINT16、DT_INT32、DT_UINT32、DT_INT64、DT_UINT64、DT_FLOAT、DT_DOUBLE、DT_FLOAT16、DT_BF16、DT_COMPLEX64、DT_COMPLEX128、DT_FLOAT8_E5M2、DT_FLOAT8_E4M3FN、DT_FLOAT8_E8M0、DT_FLOAT6_E3M2、DT_FLOAT6_E2M3、DT_FLOAT4_E2M1、DT_FLOAT4_E1M2、DT_HIFLOAT8、DT_HIFLOAT4 |
 | dataType | 支持的数据类型：DT_BOOL、DT_INT8、DT_UINT8、DT_INT16、DT_UINT16、DT_INT32、DT_UINT32、DT_INT64、DT_UINT64、DT_FLOAT、DT_DOUBLE、DT_FLOAT16、DT_BF16、DT_COMPLEX64、DT_COMPLEX128、DT_FLOAT8_E5M2、DT_FLOAT8_E4M3FN、DT_FLOAT8_E8M0、DT_FLOAT6_E3M2、DT_FLOAT6_E2M3、DT_FLOAT4_E2M1、DT_FLOAT4_E1M2、DT_HIFLOAT8、DT_HIFLOAT4 |
 
-#### 接口7: `ConvertToTensor(const T *value, uint64_t size, DataType dataType)`
+#### 接口7： ConvertToTensor(const T *value, uint64_t size, DataType dataType)
 
 | 参数 | 数据类型约束 |
 | --- | --- |

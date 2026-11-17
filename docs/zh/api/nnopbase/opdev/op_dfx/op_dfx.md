@@ -2,21 +2,21 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
 | ToString(const std::string &str) | 将std::string转换为ge::AscendString。 |
-| OpDfxGuard(const char *file, int line, OpLevel level, const char*funcName, const char *paramNamesIn, const char*paramNamesOut, const INPUT_TUPLE &&in, const OUTPUT_TUPLE &&out) | DFX统计guard的构造函数。 |
+| OpDfxGuard(const char *file, int line, OpLevel level, const char*funcName, const char *paramNamesIn, const char *paramNamesOut, const INPUT_TUPLE &&in, const OUTPUT_TUPLE &&out) | DFX统计guard的构造函数。 |
 | OpDfxGuard(const char *file, int line, OpLevel level, const char*funcName) | DFX统计guard的构造函数。 |
 | OpDfxGuard(uint32_t id, const char *file, int line, OpLevel level, const char*funcName, const char *paramNames, const std::tuple<Args...> &t) | DFX统计guard的构造函数。 |
 | OpDfxGuard(uint64_t id, DfxProfilingType type) | DFX统计guard的构造函数。 |
 | OpDfxGuard() | DFX统计guard的构造函数。 |
-| ValidDfxName([[maybe_unused]]char const *a, [[maybe_unused]]char const*b) | 判断a == b？ |
+| ValidDfxName([[maybe_unused]]char const *a, [[maybe_unused]]char const*b) | 判断a与b是否相等。 |
 | OpGetLogSequence() | 获取日志序号。 |
 | GenSummaryItemId(const char *l2Name, const char*l0Name) | 用L2和L0的接口名生成一个唯一的统计id。 |
 | GenSummaryItemId(const char *l2Name, const char*l0Name, const char *opType) | 用L2和L0的接口名以及算子类型名生成一个唯一的统计id。 |
-| GenKernelLauncherId(const char *l0Name) | 用L0接口名生成kernel launch的统计id。 |
+| GenKernelLauncherId(const char *l0Name) | 用L0接口名生成Kernel Launch的统计id。 |
 | OpProfilingSwitch() | OpProfilingSwitch构造函数。 |
 | OpLogInfo() | OpLogInfo构造函数。 |
 | OpLogInfo(const OpLogInfo &rhs) | OpLogInfo拷贝构造函数。 |

@@ -2,7 +2,7 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -14,7 +14,7 @@
 | OpArgBase() | OpArgBase构造函数。 |
 | Size() | 获取OpArgBase的元素个数。 |
 | VisitBy(const F &func) | 遍历OpArgBase的所有元素，调用func。 |
-| VisitTupleElem(func, arg_) | 遍历OpArgBase的所有元素，调用func。 |
+| VisitTupleElem(const F &func, const std::tuple<Ts...> &arg_) | 遍历OpArgBase的所有元素，调用func。 |
 | VisitByNoReturn(const F &func) | 遍历OpArgBase的所有元素，调用func。 |
 | VisitAt(size_t idx, const F &func) | 对OpArgBase给定idx的元素，调用func。 |
 | OpArgTypeStr(int argType) | 将argType转换为字符串。 |
@@ -54,7 +54,7 @@
 | OpArgList(OpArg *args\_, size_t count_) | 用给定的args创建OpArgList。 |
 | OpArgContext() | OpArgContext的构造函数。 |
 | GetOpArg(OpArgDef type) | 用给定的type获取OpArgList。 |
-| ContainsOpArgType(OpArgDef type) | 判断OpArgContext是否包含执行类型的OpArgList。 |
+| ContainsOpArgType(OpArgDef type) | 判断OpArgContext是否包含指定类型的OpArgList。 |
 | AppendOpWorkspaceArg(aclTensorList *tensorList) | 将给定的TensorList作为workspace参数加入OpArgContext中。 |
 | AppendOpArg([[maybe_unused]] size_t idx, const aclTensor *tensor, OpArg*&currArg) | 将给定的const aclTensor类型参数加入OpArgList中。 |
 | AppendOpArg([[maybe_unused]] size_t idx, aclTensor *tensor, OpArg*&currArg) | 将给定的aclTensor类型参数加入OpArgList中。 |

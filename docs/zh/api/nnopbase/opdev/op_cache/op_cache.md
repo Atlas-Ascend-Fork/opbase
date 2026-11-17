@@ -2,7 +2,7 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -31,7 +31,7 @@
 | InitExecutorCacheThreadLocal() | 初始化aclnn cache相关的线程变量。 |
 | GetFromCache(aclOpExecutor **executor, uint64_t *workspaceSize) | 尝试获取匹配上的aclnn cache。 |
 | CalculateHashKey(const std::tuple<Args...> &t) | 根据输入输出计算aclnn cache的hashkey。 |
-| GetFromCache(aclOpExecutor **executor, uint64_t *workspaceSize, const char*api, const INPUT_TUPLE &in, const OUTPUT_TUPLE &out) | 尝试获取与指定输入输出匹配的aclnn cache。 |
+| GetFromCache(aclOpExecutor **executor, uint64_t *workspaceSize, const char *api, const INPUT_TUPLE &in, const OUTPUT_TUPLE &out) | 尝试获取与指定输入输出匹配的aclnn cache。 |
 | OpCacheKey() | OpCacheKey为aclnn cache的key数据结构，该函数为其构造函数。 |
 | OpCacheKey(uint8_t *buf\_, size_t len_) | OpCacheKey为aclnn cache的key数据结构，该函数为其构造函数。 |
 | OpCacheKey(const OpCacheKey &key) | OpCacheKey为aclnn cache的key数据结构，该函数为其构造函数。 |
@@ -48,12 +48,12 @@
 | AddLaunchData(size_t dataLen) | 在aclnn cache所在的内存上，申请一块指定大小的空间，用于填写cache内容。 |
 | SetCacheBuf(void *buf) | 设置aclnn cache所用的临时内存。 |
 | UpdateTensorAddr(void *workspaceAddr, const std::vector<void*> &tensors) | 在使用aclnn cache时，首先将当前host侧API的实际输入地址刷新到cache中。 |
-| SetBlockDim(uint32_t blockDim) | 在生成aclnn cache的过程中，记录cache对象使用的核数。(即将废弃，请使用SetNumBlocks(uint32_t numBlocks)) |
+| SetBlockDim(uint32_t blockDim) | 在生成aclnn cache的过程中，记录cache对象使用的核数。（即将废弃，请使用SetNumBlocks(uint32_t numBlocks)）。 |
 | SetNumBlocks(uint32_t numBlocks) | 在生成aclnn cache的过程中，记录cache对象使用的核数。 |
 | SetCacheTensorInfo(void *infoLists) | 为了使aclnn cache支持profiling上报，收集aclTensor的属性信息。 |
 | GetCacheTensorInfo(int index) | 为了使aclnn cache支持profiling上报，获取aclTensor的属性信息。 |
-| AddTensorRelation(const aclTensor *tensorOut, const aclTensor*tensorMiddle) | 在aclnn cache中，记录两块aclTensor的内存等价关系。 |
-| NewLaunchCache(size_t *offset, size_t*cap, R runner) | 生成一块新的cache内存。 |
+| AddTensorRelation(const aclTensor *tensorOut, const aclTensor *tensorMiddle) | 在aclnn cache中，记录两块aclTensor的内存等价关系。 |
+| NewLaunchCache(size_t *offset, size_t *cap, R runner) | 生成一块新的cache内存。 |
 | OldCacheClear() | 清理被淘汰的cache。 |
 | Finalize() | 完成aclnn cache的生成工作，将可用标记位置位。 |
 | SetWorkspaceSize(uint64_t val) | 在生成aclnn cache的过程中，记录cache对象使用的workspace大小。 |

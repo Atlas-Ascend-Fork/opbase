@@ -23,7 +23,7 @@
 
 ## 功能说明
 
-从输入tensor中提取所需的切片。
+从输入Tensor中提取所需的切片。
 
 ## 函数原型
 
@@ -47,7 +47,7 @@ const aclTensor *Slice(const aclTensor *x, const aclIntArray *offsets, const acl
 | executor | 输入 | op执行器，包含了算子计算流程。 |
 
 <!-- npu="A3,910b" id7 -->
-> **说明**：BFLOAT16仅适用于如下产品
+> **说明**：BFLOAT16仅适用于如下产品：
 >
 > - Atlas A2系列产品
 > - Atlas A3系列产品

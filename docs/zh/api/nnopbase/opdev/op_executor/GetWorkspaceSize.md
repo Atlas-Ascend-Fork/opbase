@@ -16,7 +16,7 @@ uint64_t GetWorkspaceSize()
 
 ## 返回值说明
 
-返回L2接口在运行中需要的workspace大小。
+返回L2一阶段接口在运行中需要的workspace大小。
 
 ## 约束说明
 

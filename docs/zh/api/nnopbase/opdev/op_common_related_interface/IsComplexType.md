@@ -4,7 +4,7 @@
 
 ## 功能说明
 
-判断输入的数据类型是否为复数类，包括Complex128、Complex64、Complex32。
+判断输入的数据类型是否为复数类型，包括Complex128、Complex64、Complex32。
 
 ## 函数原型
 

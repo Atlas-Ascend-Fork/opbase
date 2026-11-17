@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-创建一个device侧到device侧的数据拷贝任务，并放入executor的任务队列中。
+创建一个Device侧到Device侧的数据拷贝任务，并放入executor的任务队列中。
 
 ## 函数原型
 
@@ -14,7 +14,7 @@ aclnnStatus CopyNpuToNpu(const aclTensor *src, const aclTensor *dst, aclOpExecut
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| src | 输入 | 拷贝的源tensor。 |
+| src | 输入 | 拷贝的源Tensor。 |
 | dst | 输入 | 拷贝的目的tensor。 |
 | executor | 输入 | L2接口中一阶段接口声明的算子执行器对象。 |
 

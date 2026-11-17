@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-针对通过AllocHostTensor申请得到的host侧tensor，用一块float类型的内存初始化tensor数据。
+针对通过AllocHostTensor申请得到的Host侧Tensor，用一块float类型的内存初始化Tensor数据。
 
 ## 函数原型
 

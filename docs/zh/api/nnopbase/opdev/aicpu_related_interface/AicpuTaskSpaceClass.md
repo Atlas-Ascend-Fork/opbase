@@ -49,7 +49,7 @@ private:
 
 类成员属性的详细介绍请参考下表。
 
-**表 1**  AicpuTaskSpace类成员说明
+**表 1** AicpuTaskSpace类成员说明
 
 | 属性名 | 属性类型 | 默认值 | 属性说明 |
 | --- | --- | --- | --- |
@@ -61,4 +61,4 @@ private:
 | inputRefIndexes_ | uint64_t | 0 | 标识输入是否为ref类。 |
 | outputRefIndexes_ | void* | null | 标识输出是否为ref类。 |
 | mutex_ | FVector<const aclTensor *> | null | task map的锁。 |
-| hashMap_ | FVector<const aclTensor *> | null | 存储task的hash表。 |
+| hashMap_ | FVector<const aclTensor *> | null | 存储task的哈希表。 |

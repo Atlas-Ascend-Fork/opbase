@@ -2,7 +2,7 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -17,7 +17,7 @@
 | SmallVector(const size_type count, const allocator_type &alloc = Alloc()) | SmallVector构造函数，带有count个初始元素。 |
 | SmallVector(InputIt first, const InputIt last, const allocator_type &alloc = Alloc()) | SmallVector构造函数，利用迭代器范围初始化元素。 |
 | SmallVector(const SmallVector &other) | SmallVector拷贝构造函数，深拷贝，复制other中元素并存储在新的内存中。 |
-| SmallVector(SmallVector &&other) | SmallVector移动构造函数，将已存在的vector对象资源移动到新创建的vector中。 |
+| SmallVector(SmallVector &&other) | SmallVector移动构造函数，将已存在的SmallVector对象资源移动到新创建的SmallVector中。 |
 | SmallVector(const std::initializer_list\<T\> init, const allocator_type &alloc = Alloc()) | SmallVector构造函数。 |
 | clear() | 清空整个SmallVector。 |
 | ClearElements() | 清空整个SmallVector，并返回迭代器初始地址。 |
@@ -31,7 +31,7 @@
 | GetPointer() | 返回指向第一个元素的指针。 |
 | cbegin() | 返回一个const_iterator，指向SmallVector容器第一个元素。 |
 | cend() | 返回一个const_iterator，指向SmallVector容器最后一个元素的下一个元素。 |
-| crbegin() | 返回一个const_iterator，指向SmallVector容器中最后一个元素。 |
+| crbegin() | 返回一个const反向迭代器，指向SmallVector容器中最后一个元素。 |
 | rend() | 返回一个反向迭代器，指向SmallVector容器中第一个元素之前的元素，该元素被视为其反向结束。 |
 | crend() | 返回一个const反向迭代器，指向SmallVector容器中第一个元素之前的元素，该元素被视为其反向结束。 |
 | size() | 返回SmallVector容器中元素的个数。 |
@@ -55,10 +55,10 @@
 | GetPointer(const size_type idx = 0UL) | 返回指定位置的地址。 |
 | InitStorage(const size_type size) | 初始化整个容器内存，若size小于当前容量，初始化当前容量大小的内存，若size大于当前容量，resize容器到size大小，再初始化内存。 |
 | CopyRange(T *iter, InputIt first, const InputIt last) | 拷贝[first, last)范围内存到迭代器iter位置。 |
-| MoveFrom(SmallVector &other) | 从other容器拷贝内存到当前容器。 |
+| MoveFrom(SmallVector &other) | 从other容器移动内存到当前容器。 |
 | CheckOutOfRange(const size_type index) | 检查index是否超出容器范围。 |
 | ExpandCap(const size_type range_begin, const size_type range_len) | 将容器容量扩至原容量2倍与当前元素数加range_len的较大值，并在range_begin位置腾出range_len大小的插入空间，不改变已有元素个数，返回指向range_begin位置的迭代器。 |
-| ExpandSize(const size_type range_begin, const size_type range_len) | 在SmallVector容器中，range_begin的位置，拓展range_len大小的内存。 |
+| ExpandSize(const size_type range_begin, const size_type range_len) | 在SmallVector容器中，在range_begin的位置拓展range_len大小的内存。 |
 | Expand(const size_type range_begin, const size_type range_len) | 拓展SmallVector容器内存，若拓展后大于容器最大容量，按ExpandCap方式拓展，否则按ExpandSize方式拓展。 |
 | Shrink(const size_type range_begin, const size_type range_end) | 在SmallVector容器中，删掉从range_begin到range_end之间的内存。 |
 | swap(op::internal::SmallVector<T, N, Alloc> &sv1, op::internal::SmallVector<T, N, Alloc> &sv2) | 交换两个SmallVector容器sv1和sv2的元素。 |

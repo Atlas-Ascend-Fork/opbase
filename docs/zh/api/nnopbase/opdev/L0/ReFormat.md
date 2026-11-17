@@ -23,7 +23,7 @@
 
 ## 功能说明
 
-该函数不改变tensor数据的值，在指定format和输入x的维度相同时，将输入数据格式设置为目标format。
+该函数不改变Tensor数据的值，在指定format和输入x的维度相同时，将输入数据格式设置为目标format。
 
 具体功能是将用户输入tensor的viewFormat、originalFormat、storageFormat统一为指定的format。
 
@@ -43,11 +43,11 @@ const aclTensor *ReFormat(const aclTensor *x, const op::Format &format, aclOpExe
 
 ## 返回值说明
 
-返回数据格式为目标format后的tensor。
+返回数据格式转换为目标format后的tensor。
 
 ## 约束说明
 
-输入tensor的数据的维度需要与指定format的维度相同。
+输入tensor的维度需要与指定format的维度相同。
 
 ## 调用示例
 

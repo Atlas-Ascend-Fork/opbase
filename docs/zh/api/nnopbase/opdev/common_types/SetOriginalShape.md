@@ -4,7 +4,7 @@
 
 设置aclTensor的OriginShape。
 
-OriginShape表示aclTensor在经历transdata节点前（如果存在该节点）的原始shape信息，即tensor的shape数学描述。
+OriginShape表示aclTensor在经历transdata节点前（如果存在该节点）的原始shape信息，即Tensor的shape数学描述。
 
 ## 函数原型
 

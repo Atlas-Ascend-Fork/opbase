@@ -2,7 +2,7 @@
 
 本章接口为预留接口，后续有可能变更或废弃，不建议开发者使用，开发者无需关注。
 
-**表 1**  接口列表
+**表 1** 接口列表
 
 | 接口定义 | 功能说明 |
 | --- | --- |
@@ -12,20 +12,20 @@
 | AppendTensor(aclOpExecutor *executor, const aclScalar*arg, V &l) | 将aclScalar指针塞入到容器中的模板函数。 |
 | AppendTensor(aclOpExecutor *executor, const aclIntArray*arg, V &l) | 将aclIntArray指针塞入到容器中的模板函数。 |
 | AppendTensor(aclOpExecutor *executor, const aclTensorList*arg, V &l) | 将aclTensorList指针塞入到容器中的模板函数。 |
-| CreateTensorListImpl(aclOpExecutor *executor, OpArg &arg, TensorList &l) | 从输入的args中创建Tensor列表模板函数。 |
+| CreateTensorListImpl(aclOpExecutor *executor, OpArg &arg, TensorList &l) | 从输入的args中创建Tensor列表的模板函数。 |
 | CreateTensorList(aclOpExecutor *executor, OpArgList &t, TensorList &l) | 创建Tensor列表。 |
-| Append1Byte(uint8_t *buf, uint8_t src) | 向指定的buffer后再拼接一个字节。 |
+| Append1Byte(uint8_t *buf, uint8_t src) | 在指定的缓冲区后再拼接一个字节。 |
 | AppendAttrForKey(const V &value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接属性信息的模板函数。 |
 | AppendAttrForKey(const std::string &value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接const string &属性信息的函数。 |
-| AppendAttrForKey(const std::string *value, uint8_t*&key, size_t &keyLen) | 向task key字段中拼接const string指针属性信息的函数。 |
-| AppendAttrForKey(std::string *value, uint8_t*&key, size_t &keyLen) | 向task key字段中拼接string 指针属性信息的函数。 |
+| AppendAttrForKey(const std::string *value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接const string指针属性信息的函数。 |
+| AppendAttrForKey(std::string *value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接string指针属性信息的函数。 |
 | AppendAttrForKey(const std::vector\<V\> &value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接vector属性信息的函数。 |
-| AppendAttrForKey(const aclIntArray *value, uint8_t*&key, size_t &keyLen) | 向task key字段中拼接const aclIntArray属性信息的函数。 |
-| AppendAttrForKey(aclIntArray *value, uint8_t*&key, size_t &keyLen) | 向task key字段中拼接aclIntArray属性信息的函数。 |
-| AppendAttrForKey(const aclFloatArray *value, uint8_t*&key, size_t &keyLen) | 向task key字段中拼接const aclFloatArray属性信息的函数。 |
-| AppendAttrForKey(aclFloatArray *value, uint8_t*&key, size_t &keyLen) | 向task key字段中拼接aclFloatArray属性信息的函数。 |
-| AppendAttrForKey(const aclBoolArray *value, uint8_t*&key, size_t &keyLen) | 向task key字段中拼接const aclBoolArray属性信息的函数。 |
-| AppendAttrForKey(aclBoolArray *value, uint8_t*&key, size_t &keyLen) | 向task key字段中拼接aclBoolArray属性信息的函数。 |
+| AppendAttrForKey(const aclIntArray *value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接const aclIntArray属性信息的函数。 |
+| AppendAttrForKey(aclIntArray *value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接aclIntArray属性信息的函数。 |
+| AppendAttrForKey(const aclFloatArray *value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接const aclFloatArray属性信息的函数。 |
+| AppendAttrForKey(aclFloatArray *value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接aclFloatArray属性信息的函数。 |
+| AppendAttrForKey(const aclBoolArray *value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接const aclBoolArray属性信息的函数。 |
+| AppendAttrForKey(aclBoolArray *value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接aclBoolArray属性信息的函数。 |
 | AddAicpuAttr(const aclIntArray *value, const std::string &attrName, AicpuAttrs &attrs) | 添加AI CPU属性字段。 |
 | AddAicpuAttr(aclIntArray *value, const std::string &attrName, AicpuAttrs &attrs) | 添加AI CPU属性字段。 |
 | AddAicpuAttr(const aclFloatArray *value, const std::string &attrName, AicpuAttrs &attrs) | 添加AI CPU属性字段。 |
@@ -35,10 +35,10 @@
 | AddAicpuAttr(const V &value, const std::string &attrName, AicpuAttrs &attrs) | 向AI CPU属性map中加入简单数据类型属性。 |
 | GetTid() | 获取当前工作的线程id。 |
 | aclnnAicpuFinalize() | AI CPU模块去初始化函数。 |
-| CreatAicpuKernelLauncher(uint32_t opType, op::internal::AicpuTaskSpace &space, aclOpExecutor *executor, const FVector\<std::string\> &attrNames, op::OpArgContext*args) | 创建AI CPU task下发对象。 |
+| CreateAicpuKernelLauncher(uint32_t opType, op::internal::AicpuTaskSpace &space, aclOpExecutor *executor, const FVector\<std::string\> &attrNames, op::OpArgContext*args) | 创建AI CPU task下发对象。 |
 | AicpuTask() | AicpuTask类默认的构造函数。 |
-| AicpuTask(const std::string &opType, const ge::UnknowShapeOpType unknownType) | AicpuTask类的构造函数(带入参)。 |
-| AicpuTfTask(const std::string &opType, const ge::UnknowShapeOpType unknownType) | AI CPU tensorflow算子框架task构造函数。 |
+| AicpuTask(const std::string &opType, const ge::UnknowShapeOpType unknownType) | AicpuTask类的构造函数（带入参）。 |
+| AicpuTfTask(const std::string &opType, const ge::UnknowShapeOpType unknownType) | AI CPU TensorFlow算子框架task构造函数。 |
 | aclnnStatus Init(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs) | 算子框架task初始化函数。 |
 | aclnnStatus InitImpl(const FVector\<const aclTensor*\>& inputs, const FVector\<aclTensor*\>& outputs, const AicpuAttrs& attrs, bool hasWorkspaceInfo) | AicpuCCTask的初始化方法。AicpuCCTask::Init调用本方法时hasWorkspaceInfo为false。hasWorkspaceInfo为true时添加workspace拓展记录，为false时保持原有记录布局。<br>成功返回ACLNN_SUCCESS，失败返回错误码。该方法不执行tiling回调或分配workspace。 |
 | aclnnStatus Run(aclOpExecutor *executor, aclrtStream stream) | 算子框架task执行函数。 |

@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-提取输入Shape对象中的维度信息到一个ShapeVector容器。
+提取输入Shape对象中的维度信息到一个FVector对象。
 
 ## 函数原型
 

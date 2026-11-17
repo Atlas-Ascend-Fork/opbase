@@ -23,7 +23,7 @@
 
 ## 功能说明
 
-将输入tensor按照paddings的大小对各个维度进行填充，填充值为0。
+将输入Tensor按照paddings的大小对各个维度进行填充，填充值为0。
 
 ## 函数原型
 
@@ -35,12 +35,12 @@ const aclTensor* Pad(const aclTensor* self, const aclTensor* paddings, aclOpExec
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| self | 输入 | 待填充的输入tensor，数据类型支持FLOAT16、FLOAT、INT16、UINT16、INT32、INT64、BFLOAT16、INT8。数据格式支持ND。 |
-| paddings | 输入 | 输入tensor每个维度被填充的大小，形状为[self.dim, 2]，数据类型支持INT32、INT64。数据格式支持ND。 |
+| self | 输入 | 待填充的输入Tensor，数据类型支持FLOAT16、FLOAT、INT16、UINT16、INT32、INT64、BFLOAT16、INT8。数据格式支持ND。 |
+| paddings | 输入 | 输入Tensor每个维度被填充的大小，形状为[self.dim, 2]，数据类型支持INT32、INT64。数据格式支持ND。 |
 | executor | 输入 | op执行器，包含了算子计算流程。 |
 
 <!-- npu="A3,910b" id7 -->
-> **说明**：BFLOAT16和INT8仅适用于如下产品
+> **说明**：BFLOAT16和INT8仅适用于如下产品：
 >
 > - Atlas A2系列产品
 > - Atlas A3系列产品
@@ -48,7 +48,7 @@ const aclTensor* Pad(const aclTensor* self, const aclTensor* paddings, aclOpExec
 
 ## 返回值说明
 
-返回被填充了0的tensor。
+返回被填充了0的Tensor。
 
 ## 约束说明
 

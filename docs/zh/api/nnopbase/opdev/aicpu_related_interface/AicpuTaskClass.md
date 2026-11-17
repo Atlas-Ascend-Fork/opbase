@@ -1,6 +1,6 @@
 # AicpuTask类
 
-AicpuTask类用于管理AI CPU task相关的一些参数和方法，包括组装task、task初始化、task下发、task执行等功能。
+AicpuTask类用于管理AI CPU任务相关的一些参数和方法，包括组装任务、任务初始化、任务下发、任务执行等功能。
 
 具体定义如下：
 
@@ -41,12 +41,12 @@ protected:
 
 类成员属性的详细介绍请参考下表。
 
-**表 1**  AicpuTask类成员说明
+**表 1** AicpuTask类成员说明
 
 | 属性名 | 属性类型 | 默认值 | 属性说明 |
 | --- | --- | --- | --- |
 | opType_ | const std::string | "" | Task对应的AI CPU算子名。 |
-| unknownType_ | const ge::UnknowShapeOpType | 0 | 标识算子shape是基类，具体类型UnknowShapeOpType。 |
+| unknownType_ | const ge::UnknowShapeOpType | 0 | 标识算子shape是否为基类，具体类型UnknowShapeOpType。 |
 | argsHandle_ | std::unique_ptr\<AicpuArgsHandler\> | null | 管理task封装参数的对象。 |
 | extInfoHandle_ | std::unique_ptr\<AicpuExtInfoHandler\> | null | 管理task封装拓展参数的对象。 |
 | launchId_ | uint64_t | 0 | 用于profiling采集的任务下发id。 |
