@@ -53,6 +53,15 @@ The APIs described in this section are reserved and may be changed or deprecated
 | aclTensor() | Describes a tensor (device-side or host-side tensor). It can describe attributes such as the shape, data type, and format and record data location.|
 | aclTensor(const T *value, uint64_t size, op::DataType dataType) | Describes a tensor (device-side or host-side tensor). It can describe attributes such as the shape, data type, and format and record data location.|
 | aclTensor(const aclScalar *value, op::DataType dataType) | Describes a tensor (device-side or host-side tensor). It can describe attributes such as the shape, data type, and format and record data location.|
+| SetFloat8E5M2Data(const op::Float8E5M2 \*value, uint64_t size, op::DataType dataType) | Sets the `float8_e5m2` data in an `aclTensor`.|
+| SetFloat8E4M3FNData(const op::Float8E4M3FN \*value, uint64_t size, op::DataType dataType) | Sets the `float8_e4m3fn` data in an `aclTensor`.|
+| SetFloat8E8M0Data(const op::Float8E8M0 \*value, uint64_t size, op::DataType dataType) | Sets the `float8_e8m0` data in an `aclTensor`.|
+| SetFloat6E3M2Data(const op::Float6E3M2 \*value, uint64_t size, op::DataType dataType) | Sets the `float6_e3m2` data in an `aclTensor`.|
+| SetFloat6E2M3Data(const op::Float6E2M3 \*value, uint64_t size, op::DataType dataType) | Sets the `float6_e2m3` data in an `aclTensor`.|
+| SetFloat4E2M1Data(const op::Float4E2M1 \*value, uint64_t size, op::DataType dataType) | Sets the `float4_e2m1` data in an `aclTensor`.|
+| SetFloat4E1M2Data(const op::Float4E1M2 \*value, uint64_t size, op::DataType dataType) | Sets the `float4_e1m2` data in an `aclTensor`.|
+| SetHiFloat4Data(const op::HiFloat4 \*value, uint64_t size, op::DataType dataType) | Sets the `hifloat4` data in an `aclTensor`.|
+| SetHiFloat8Data(const op::HiFloat8 \*value, uint64_t size, op::DataType dataType) | Sets the `hifloat8` data in an `aclTensor`.|
 | IsView() | Checks if an `aclTensor` is a view tensor.|
 | SetView(bool is_view) | Sets whether an `aclTensor` is a view tensor.|
 | aclTensorList(const aclTensor \*const \*tensors, uint64_t size) | Constructs an instance of `aclTensorList`. `aclTensorList` is an array of `aclTensor` instances.|
@@ -72,6 +81,15 @@ The APIs described in this section are reserved and may be changed or deprecated
 | ToUint64() | Converts the scalar stored in an `aclScalar` to a `uint64` value.|
 | ToFp16() | Converts the scalar stored in an `aclScalar` to a `float16` value.|
 | ToBf16() | Converts the scalar stored in an `aclScalar` to a `bfloat16` value.|
+| ToFloat8E5M2() | Converts the scalar stored in an `aclScalar` to a `float8_e5m2` value.|
+| ToFloat8E4M3FN() | Converts the scalar stored in an `aclScalar` to a `float8_e4m3fn` value.|
+| ToFloat8E8M0() | Converts the scalar stored in an `aclScalar` to a `float8_e8m0` value.|
+| ToFloat6E3M2() | Converts the scalar stored in an `aclScalar` to a `float6_e3m2` value.|
+| ToFloat6E2M3() | Converts the scalar stored in an `aclScalar` to a `float6_e2m3` value.|
+| ToFloat4E2M1() | Converts the scalar stored in an `aclScalar` to a `float4_e2m1` value.|
+| ToFloat4E1M2() | Converts the scalar stored in an `aclScalar` to a `float4_e1m2` value.|
+| ToHiFloat4() | Converts the scalar stored in an `aclScalar` to a `hifloat4` value.|
+| ToHiFloat8() | Converts the scalar stored in an `aclScalar` to a `hifloat8` value.|
 | ToComplex64() | Converts the scalar stored in an `aclScalar` to a `complex64` value.|
 | ToComplex128() | Converts the scalar stored in an `aclScalar` to a `complex128` value.|
 | aclScalar(int32_t value) | Initializes an `aclScalar` with the specified `int32` type.|
@@ -87,9 +105,19 @@ The APIs described in this section are reserved and may be changed or deprecated
 | aclScalar(op::fp16_t value) | Initializes an `aclScalar` with the specified `float16` type.|
 | aclScalar(op::bfloat16 value) | Initializes an `aclScalar` with the specified `bfloat16` type.|
 | aclScalar(bool value) | Initializes an `aclScalar` with the specified `bool` type.|
+| aclScalar(op::Float8E5M2 value) | Initializes an `aclScalar` with the specified `float8_e5m2` type.|
+| aclScalar(op::Float8E4M3FN value) | Initializes an `aclScalar` with the specified `float8_e4m3fn` type.|
+| aclScalar(op::Float8E8M0 value) | Initializes an `aclScalar` with the specified `float8_e8m0` type.|
+| aclScalar(op::Float6E3M2 value) | Initializes an `aclScalar` with the specified `float6_e3m2` type.|
+| aclScalar(op::Float6E2M3 value) | Initializes an `aclScalar` with the specified `float6_e2m3` type.|
+| aclScalar(op::Float4E2M1 value) | Initializes an `aclScalar` with the specified `float4_e2m1` type.|
+| aclScalar(op::Float4E1M2 value) | Initializes an `aclScalar` with the specified `float4_e1m2` type.|
+| aclScalar(op::HiFloat4 value) | Initializes an `aclScalar` with the specified `hifloat4` type.|
+| aclScalar(op::HiFloat8 value) | Initializes an `aclScalar` with the specified `hifloat8` type.|
 | To() | Converts the scalar stored in an `aclScalar` to the data type `T`.|
 | ToStr() | Generates a string that describes an `aclScalar`.|
 | BFloat16() | Converts the scalar stored in an `aclScalar` to a `bfloat16` value.|
+| v_t() | Default constructor of the internal union `v_t` in `aclScalar`.|
 | aclScalarList(const aclScalar \*const \*scalars, uint64_t size) | Constructs an instance of `aclScalarList`. `aclScalarList` is an array of `aclScalar` instances.|
 | aclScalarList() | Constructs an instance of `aclScalarList`. `aclScalarList` is an array of `aclScalar` instances.|
 | ToString(const aclTensor* t) | Generates a string describing an `aclTensor`. It is a printing function.|
