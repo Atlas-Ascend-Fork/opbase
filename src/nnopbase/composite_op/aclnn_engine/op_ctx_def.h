@@ -166,12 +166,10 @@ constexpr size_t LAUNCH_ARG_INIT_SIZE = 128 * 1024;
 // tiling_host_data 初始容量
 constexpr size_t TILING_HOST_DATA_INIT_SIZE = 800 * 1024;
 
-// MAX_ATTR_STRING_SIZE limit has been removed. String attr capacity is now dynamically managed.
-// The value is kept for reference only.
-constexpr size_t MAX_ATTR_STRING_SIZE = 1024; // Reference: max op attr string length (limit removed)
-// ATTR_CAPACITY is used as the initial capacity for attr storage.
-// When attr data exceeds this size, it will automatically expand (2x growth factor).
-constexpr size_t ATTR_CAPACITY = 32 * 1024; // Initial attr capacity: max total op attr data size in Bytes
+// 字符串属性超过此长度时输出告警，但不是长度上限，容量会按需动态扩容。
+constexpr size_t ATTR_STRING_LENGTH_WARN_THRESHOLD = 1024;
+// 属性区初始容量（含偏移表、属性数据与尾部输出锚点），不足时按 2 倍动态扩容。
+constexpr size_t ATTR_CAPACITY = 32 * 1024;
 // MAX_OP_ARG_NUM is used as the initial capacity for op args (inputs/outputs).
 // When arg count exceeds this value, it will automatically expand (2x growth factor).
 constexpr size_t MAX_OP_ARG_NUM = 1024; // Initial arg capacity: max op input/output arg count

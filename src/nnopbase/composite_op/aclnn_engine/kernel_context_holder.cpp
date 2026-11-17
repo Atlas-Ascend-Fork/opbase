@@ -9,6 +9,7 @@
  */
 
 #include "kernel_context_holder.h"
+#include <cstdint>
 #include "opdev/data_type_utils.h"
 #include "opdev/format_utils.h"
 #include "kernel_utils.h"
@@ -147,6 +148,12 @@ aclnnStatus KernelContextHolder::EnsureAttrCapacity(size_t requiredSize)
     const size_t oldCapacity = attrCapacity_;
     size_t newCapacity = oldCapacity;
     while (newCapacity < requiredSize) {
+        // 属性规模来自用户输入，可能接近 SIZE_MAX；翻倍一旦回绕会变小，循环将永不退出。
+        OP_CHECK(newCapacity <= SIZE_MAX / GROWTH_FACTOR,
+                 OP_LOGE(ACLNN_ERR_INNER,
+                         "Attr capacity overflow: current capacity %zu, growth candidate %zu, required %zu.",
+                         attrCapacity_, newCapacity, requiredSize),
+                 return ACLNN_ERR_INNER);
         newCapacity *= GROWTH_FACTOR;
     }
 
@@ -182,6 +189,36 @@ aclnnStatus KernelContextHolder::EnsureAttrCapacity(size_t requiredSize)
     std::free(oldInfo);
 
     OP_LOGI("Expanded attr capacity from %zu to %zu.", oldCapacity, attrCapacity_);
+    return ACLNN_SUCCESS;
+}
+
+// 按真实字节数预留属性空间，登记偏移并返回可写容量。
+aclnnStatus KernelContextHolder::PrepareAttrWrite(size_t idx, void*& attrPtr, size_t needBytes, size_t* remainBytes)
+{
+    OP_CHECK(idx < attrNum_, OP_LOGE(ACLNN_ERR_INNER, "Attr index %zu is out of range, attr num %zu.", idx, attrNum_),
+             return ACLNN_ERR_INNER);
+    const size_t usedAttrBytes = PtrOffset(attrDataStart_, attrPtr);
+    size_t offsetTableBytes = 0U;
+    size_t requiredAttrBytes = 0U;
+    if (unlikely(ge::MulOverflow(sizeof(size_t), attrNum_, offsetTableBytes) ||
+                 ge::AddOverflow(usedAttrBytes, needBytes, requiredAttrBytes) ||
+                 ge::AddOverflow(requiredAttrBytes, offsetTableBytes, requiredAttrBytes))) {
+        OP_LOGE(ACLNN_ERR_INNER, "Attr capacity overflow: used %zu bytes, current attr needs %zu bytes, attr num %zu.",
+                usedAttrBytes, needBytes, attrNum_);
+        return ACLNN_ERR_INNER;
+    }
+
+    CHECK_RET_CODE(EnsureAttrCapacity(requiredAttrBytes), "EnsureAttrCapacity failed.");
+
+    // 扩容会整块搬迁，按原偏移重定位写指针
+    attrPtr = PtrShift(attrDataStart_, usedAttrBytes);
+    attrDef_->offset[idx] = PtrOffset(attrDef_, attrPtr);
+
+    if (remainBytes != nullptr) {
+        // EnsureAttrCapacity 已保证 attrCapacity_ 不小于 usedAttrBytes + needBytes + offsetTableBytes，
+        // 因此此处减法不会下溢，且结果不小于 needBytes。
+        *remainBytes = attrCapacity_ - offsetTableBytes - usedAttrBytes;
+    }
     return ACLNN_SUCCESS;
 }
 

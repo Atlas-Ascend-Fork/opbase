@@ -12,6 +12,8 @@
 #define OP_API_OP_API_COMMON_INC_OPDEV_INTERNAL_KERNEL_CONTEXT_HOLDER_H
 #include <array>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <sstream>
 #include <vector>
 
@@ -22,6 +24,7 @@
 #include "opdev/op_errno.h"
 #include "opdev/op_dfx.h"
 #include "nnopbase_error_msg.h"
+#include "utils/extern_math_util.h"
 
 namespace op::internal {
 class KernelContextHolder {
@@ -58,6 +61,22 @@ public:
         CHECK_RET_CODE(
             attr.VisitBy([this, &attrPtr](size_t idx, OpArg& arg) { return UpdateAttrArg(idx, arg, attrPtr); }),
             "Update Attr Arg failed");
+        // 输出锚点紧随属性数据存放，需与属性区一起纳入容量核算，否则锚点写入会越过已分配区域。
+        const size_t usedAttrBytes = PtrOffset(attrDataStart_, attrPtr);
+        size_t outputAnchorBytes = 0U;
+        size_t offsetTableBytes = 0U;
+        size_t requiredAttrBytes = 0U;
+        if (unlikely(ge::MulOverflow(sizeof(AnchorInstanceInfo), irOutputNum_, outputAnchorBytes) ||
+                     ge::MulOverflow(sizeof(size_t), attrNum_, offsetTableBytes) ||
+                     ge::AddOverflow(usedAttrBytes, outputAnchorBytes, requiredAttrBytes) ||
+                     ge::AddOverflow(requiredAttrBytes, offsetTableBytes, requiredAttrBytes))) {
+            OP_LOGE(ACLNN_ERR_INNER, "Attr region size overflow: used %zu bytes, output num %zu, attr num %zu.",
+                    usedAttrBytes, irOutputNum_, attrNum_);
+            return ACLNN_ERR_INNER;
+        }
+        CHECK_RET_CODE(EnsureAttrCapacity(requiredAttrBytes), "EnsureAttrCapacity failed.");
+
+        attrPtr = PtrShift(attrDataStart_, usedAttrBytes);
         computeNodeInfo_->attr_size_ = PtrOffset(attrDef_, attrPtr);
         outputAnchorInfo_ = PtrCastTo<AnchorInstanceInfo>(attrPtr);
         UpdateOutputArgIr(output);
@@ -102,6 +121,7 @@ private:
     aclnnStatus EnsureArgCapacity(size_t requiredCapacity);
     aclnnStatus EnsureComputeNodeInfoCapacity(size_t requiredCapacity);
     aclnnStatus EnsureAttrCapacity(size_t requiredSize);
+    aclnnStatus PrepareAttrWrite(size_t idx, void*& attrPtr, size_t needBytes, size_t* remainBytes = nullptr);
 
     void UpdateAttrDefOffset(size_t inoutNum, size_t attrNum);
 
@@ -119,6 +139,7 @@ private:
     inline aclnnStatus UpdateAttrArg(size_t idx, op::DataType value, void*& attrPtr)
     {
         OP_LOGD("Update Attr DataType: [%zu], %d", idx, value);
+        CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, sizeof(int64_t)), "PrepareAttrWrite failed.");
         *static_cast<int64_t*>(attrPtr) = 0L;
         *static_cast<DataType*>(attrPtr) = value;
         attrPtr = PtrShift(attrPtr, sizeof(int64_t));
@@ -134,6 +155,7 @@ private:
 #else
         OP_LOGD("Update Attr arg Scalar: [%zu]", idx);
 #endif
+        CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, sizeof(int64_t)), "PrepareAttrWrite failed.");
         *static_cast<int64_t*>(attrPtr) = value;
         attrPtr = PtrShift(attrPtr, sizeof(uint64_t));
         return ACLNN_SUCCESS;
@@ -148,6 +170,7 @@ private:
 #else
         OP_LOGD("Update Attr arg Scalar: [%zu]", idx);
 #endif
+        CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, sizeof(double)), "PrepareAttrWrite failed.");
         *static_cast<double*>(attrPtr) = value;
         attrPtr = PtrShift(attrPtr, sizeof(double));
         return ACLNN_SUCCESS;
@@ -162,6 +185,7 @@ private:
 #else
         OP_LOGD("Update Attr arg Scalar: [%zu]", idx);
 #endif
+        CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, sizeof(int64_t)), "PrepareAttrWrite failed.");
         *static_cast<int64_t*>(attrPtr) = 0L;
         *static_cast<float*>(attrPtr) = value;
         attrPtr = PtrShift(attrPtr, sizeof(int64_t));
@@ -172,16 +196,31 @@ private:
     {
         if (value == nullptr) {
             OP_LOGW("Update Attr NULL char*: [%zu]", idx);
+            CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, sizeof(int64_t)), "PrepareAttrWrite failed.");
             *static_cast<char*>(attrPtr) = '\0';
             attrPtr = PtrShift(attrPtr, sizeof(int64_t));
         } else {
-            OP_LOGD("Update Attr char*: [%zu]. %s", idx, value);
-            size_t slen = strlen(value);
-            // Note: MAX_ATTR_STRING_SIZE limit removed, attr capacity will expand dynamically via EnsureAttrCapacity
-            OP_CHECK(memcpy_s(attrPtr, slen + 1, value, slen + 1) == EOK,
+            const size_t slen = strlen(value);
+            if (slen >= ATTR_STRING_LENGTH_WARN_THRESHOLD) {
+                OP_LOGW("Attr string at index %zu is too long: length %zu bytes, warning threshold %zu bytes.", idx,
+                        slen, ATTR_STRING_LENGTH_WARN_THRESHOLD);
+            }
+            const size_t needBytes = AlignSize(slen + 1, sizeof(size_t));
+            size_t remainBytes = 0U;
+            CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, needBytes, &remainBytes), "PrepareAttrWrite failed.");
+            OP_CHECK(memcpy_s(attrPtr, remainBytes, value, slen + 1) == EOK,
                      OP_LOGW("Failed to memcpy in update attr arg for char."),
                      ;);
-            attrPtr = PtrShift(attrPtr, AlignSize(slen + 1, sizeof(size_t)));
+            attrPtr = PtrShift(attrPtr, needBytes);
+#if defined(NNOPBASE_UT) || defined(NNOPBASE_ST)
+            OP_LOGD(
+                "Update Attr char*: [%zu], length: %zu, need bytes: %zu, remaining bytes before output anchors: %zu.",
+                idx, slen, needBytes, remainBytes - needBytes);
+#else
+            OP_LOGD("Update Attr char*: [%zu], length: %zu, need bytes: %zu, remaining bytes before output anchors: "
+                    "%zu. %s",
+                    idx, slen, needBytes, remainBytes - needBytes, value);
+#endif
         }
         return ACLNN_SUCCESS;
     }
@@ -190,92 +229,81 @@ private:
     {
         if (value == nullptr) {
             OP_LOGW("Update Attr NULL aclScalar*: [%zu]", idx);
+            CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, sizeof(int64_t)), "PrepareAttrWrite failed.");
             *static_cast<int64_t*>(attrPtr) = 0;
             attrPtr = PtrShift(attrPtr, sizeof(int64_t));
         } else {
-            OP_LOGD("Update Attr aclScalar*: [%zu]", idx);
-            OP_CHECK(memcpy_s(attrPtr, value->Size(), value->GetData(), value->Size()) == EOK,
+            const size_t scalarBytes = value->Size();
+            size_t remainBytes = 0U;
+            CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, scalarBytes, &remainBytes), "PrepareAttrWrite failed.");
+            OP_CHECK(memcpy_s(attrPtr, remainBytes, value->GetData(), scalarBytes) == EOK,
                      OP_LOGW("Failed to memcpy in update attr arg for aclScalar."),
                      ;);
-            attrPtr = PtrShift(attrPtr, value->Size());
+            attrPtr = PtrShift(attrPtr, scalarBytes);
+            OP_LOGD("Update Attr aclScalar*: [%zu], need bytes: %zu, remaining bytes before output anchors: %zu.", idx,
+                    scalarBytes, remainBytes - scalarBytes);
         }
+        return ACLNN_SUCCESS;
+    }
+
+    template <typename ArrayT>
+    aclnnStatus UpdateAttrArrayArg(size_t idx, const ArrayT* array, const char* arrayTypeName, void*& attrPtr)
+    {
+        if (array == nullptr || array->Size() == 0) {
+            OP_LOGW("Update Attr NULL %s*: [%zu]", arrayTypeName, idx);
+            CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, sizeof(gert::ContinuousVector)), "PrepareAttrWrite failed.");
+            auto* attrBlock = static_cast<gert::ContinuousVector*>(attrPtr);
+            attrBlock->Init(0);
+            attrPtr = PtrShift(attrPtr, sizeof(gert::ContinuousVector));
+            return ACLNN_SUCCESS;
+        }
+
+        const size_t elemCount = array->Size();
+        size_t dataBytes = 0U;
+        OP_CHECK(!ge::MulOverflow(elemCount, sizeof(*array->GetData()), dataBytes),
+                 OP_LOGE(ACLNN_ERR_INNER, "Attr array size overflow: [%zu], elem count %zu.", idx, elemCount),
+                 return ACLNN_ERR_INNER);
+
+        auto* attrBlock = static_cast<gert::ContinuousVector*>(attrPtr);
+        const size_t headerBytes = PtrOffset(attrBlock, attrBlock->GetData());
+        size_t needBytes = 0U;
+        OP_CHECK(!ge::AddOverflow(headerBytes, dataBytes, needBytes),
+                 OP_LOGE(ACLNN_ERR_INNER, "Attr array size overflow: [%zu].", idx), return ACLNN_ERR_INNER);
+
+        size_t remainBytes = 0U;
+        CHECK_RET_CODE(PrepareAttrWrite(idx, attrPtr, needBytes, &remainBytes), "PrepareAttrWrite failed.");
+
+        // 扩容会整块搬迁，必须重新取 attrBlock
+        attrBlock = static_cast<gert::ContinuousVector*>(attrPtr);
+        attrBlock->Init(elemCount);
+        attrBlock->SetSize(elemCount);
+        OP_CHECK(memcpy_s(attrBlock->MutableData(), remainBytes - headerBytes, array->GetData(), dataBytes) == EOK,
+                 OP_LOGW("Failed to memcpy in update attr arg for %s.", arrayTypeName),
+                 ;);
+        attrPtr = PtrShift(attrPtr, needBytes);
+        OP_LOGD("Update Attr %s*: [%zu], elem count: %zu, payload bytes: %zu, need bytes: %zu, remaining bytes before "
+                "output anchors: %zu.",
+                arrayTypeName, idx, elemCount, dataBytes, needBytes, remainBytes - needBytes);
         return ACLNN_SUCCESS;
     }
 
     aclnnStatus UpdateAttrArg(size_t idx, aclIntArray* value, void*& attrPtr)
     {
-        auto* pv = static_cast<gert::ContinuousVector*>(attrPtr);
-        if (value == nullptr || value->Size() == 0) {
-            OP_LOGW("Update Attr NULL aclIntArray*: [%zu]", idx);
-            pv->Init(0);
-            attrPtr = PtrShift(attrPtr, sizeof(gert::ContinuousVector));
-        } else {
-            auto sz = value->Size();
-            OP_LOGD("Update Attr aclIntArray*: [%zu], size: %zu", idx, sz);
-            pv->Init(sz);
-            pv->SetSize(sz);
-            auto size = sizeof(*(value->GetData())) * sz;
-            OP_CHECK(memcpy_s(pv->MutableData(), size, value->GetData(), size) == EOK,
-                     OP_LOGW("Failed to memcpy in update attr arg for aclIntArray."),
-                     ;);
-            attrPtr = PtrShift(attrPtr, PtrOffset(pv, pv->GetData()) + size);
-        }
-        return ACLNN_SUCCESS;
+        return UpdateAttrArrayArg(idx, value, "aclIntArray", attrPtr);
     }
 
     aclnnStatus UpdateAttrArg(size_t idx, aclFloatArray* fvalue, void*& attrPtr)
     {
-        auto* pv = static_cast<gert::ContinuousVector*>(attrPtr);
-        if (fvalue == nullptr || fvalue->Size() == 0) {
-            OP_LOGW("Update Attr NULL aclFloatArray*: [%zu]", idx);
-            pv->Init(0);
-            attrPtr = PtrShift(attrPtr, sizeof(gert::ContinuousVector));
-        } else {
-            auto sz = fvalue->Size();
-            OP_LOGD("Update Attr aclFloatArray*: [%zu], size: %zu", idx, sz);
-            pv->Init(sz);
-            pv->SetSize(sz);
-            auto size = sizeof(*(fvalue->GetData())) * sz;
-            OP_CHECK(memcpy_s(pv->MutableData(), size, fvalue->GetData(), size) == EOK,
-                     OP_LOGW("Failed to memcpy in update attr arg for aclFloatArray."),
-                     ;);
-            attrPtr = PtrShift(attrPtr, PtrOffset(pv, pv->GetData()) + size);
-        }
-        return ACLNN_SUCCESS;
+        return UpdateAttrArrayArg(idx, fvalue, "aclFloatArray", attrPtr);
     }
 
     aclnnStatus UpdateAttrArg(size_t idx, aclBoolArray* value, void*& attrPtr)
     {
-        auto* pv = static_cast<gert::ContinuousVector*>(attrPtr);
-        if (value == nullptr || value->Size() == 0) {
-            OP_LOGW("Update Attr NULL aclBoolArray*: [%zu]", idx);
-            pv->Init(0);
-            attrPtr = PtrShift(attrPtr, sizeof(gert::ContinuousVector));
-        } else {
-            auto sz = value->Size();
-            OP_LOGD("Update Attr aclBoolArray*: [%zu], size: %zu", idx, sz);
-            pv->Init(sz);
-            pv->SetSize(sz);
-            auto size = sizeof(*(value->GetData())) * sz;
-            OP_CHECK(memcpy_s(pv->MutableData(), size, value->GetData(), size) == EOK,
-                     OP_LOGW("Failed to memcpy in update attr arg for aclBoolArray."),
-                     ;);
-            attrPtr = PtrShift(attrPtr, PtrOffset(pv, pv->GetData()) + size);
-        }
-        return ACLNN_SUCCESS;
+        return UpdateAttrArrayArg(idx, value, "aclBoolArray", attrPtr);
     }
 
     aclnnStatus UpdateAttrArg(size_t idx, OpArg& arg, void*& attrPtr)
     {
-        // Ensure attr capacity is sufficient
-        // Calculate required size conservatively (estimate max possible attr size)
-        size_t currentOffset = PtrOffset(attrDataStart_, attrPtr);
-        size_t estimatedRequiredSize = currentOffset + 4096; // Reserve 4KB per attr for safety
-        CHECK_RET_CODE(EnsureAttrCapacity(estimatedRequiredSize), "EnsureAttrCapacity failed.");
-
-        // 重新计算attrPtr(基于可能已经更新的attrDataStart_)
-        attrPtr = PtrShift(attrDataStart_, currentOffset);
-        attrDef_->offset[idx] = PtrOffset(attrDef_, attrPtr);
         switch (arg.type) {
             case OpArgType::OPARG_DATATYPE:
                 return UpdateAttrArg(idx, static_cast<op::DataType>(arg->value), attrPtr);
