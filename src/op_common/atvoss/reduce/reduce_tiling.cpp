@@ -902,7 +902,8 @@ void ReduceOpTiling::ComputeProgressUnitA(const uint64_t* shape)
             if (iA == Pattern::Dim - 1) {
                 tmpS = CeilAlign(tmpS, ubBlockSize);
             }
-            tmpS = tmpS > sliceShape_[iA] ? FloorAlign(tmpS, sliceShape_[iA]) : tmpS; // 非连续与sliceShape对齐
+            tmpS = (!isContiguous_ && tmpS > sliceShape_[iA]) ? FloorAlign(tmpS, sliceShape_[iA]) :
+                                                                tmpS; // 非连续与sliceShape对齐
             uint64_t tmpInnerA = innerA * tmpS;
             uint64_t tmpOuterA = (tmpS >= sliceShape_[iA] ?
                                       outerA / axisLen * CeilDiv(axisLen, tmpS) :
