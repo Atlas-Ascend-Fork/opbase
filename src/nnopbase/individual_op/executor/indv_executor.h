@@ -236,8 +236,6 @@ void NnopbaseExecutorDeInit(NnopbaseExecutor* executor);
 void StreamMapClear(aclrtStream stream);
 aclnnStatus CheckSocVersionAndParam(NnopbaseExecutor* executor,
                                     NnopbaseParamCheckMode mode = NnopbaseParamCheckMode::kCheckRequiredIo);
-void NnopbaseExecutorGenDynamicKey(NnopbaseExecutor* const executor);
-aclnnStatus NnopbaseExecutorGenCustomizedDynamicKey(NnopbaseExecutor* const executor);
 bool NnopbaseExecutorGetStaticBinInfo(NnopbaseExecutor* const executor);
 NnopbaseUChar* NnopbaseExecutor8ByteCopy(const size_t totalSize, NnopbaseUChar* verKey, const NnopbaseUChar* addr);
 aclnnStatus SetTensorDataSizeToInitValue(NnopbaseExecutor* executor);

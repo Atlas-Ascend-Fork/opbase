@@ -24,7 +24,7 @@
 #include "executor/indv_bininfo.h"
 #include "executor/indv_args_pool.h"
 #include "executor/indv_cache_key_builder.h"
-#include "executor/static_kernel_helper.h"
+#include "executor/indv_kernel_lookup_helper.h"
 #include "profiling/prof_api.h"
 #include "aclnn/aclnn_base.h"
 #include "thread_local_context.h"
@@ -1110,7 +1110,7 @@ const NnopbaseChar* NnopbaseFindStaticKernel(const aclTensor* tensors[], const N
             return nullptr;
         }
     }
-    return Indv::StaticKernelHelper::FindStaticKernelPath(tensors, attrs, valueDepend, tensorNumInfo,
+    return Indv::KernelLookupHelper::FindStaticKernelPath(tensors, attrs, valueDepend, tensorNumInfo,
                                                           staticRuntimeInfo);
 }
 

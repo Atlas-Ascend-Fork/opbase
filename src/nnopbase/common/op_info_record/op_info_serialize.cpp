@@ -298,6 +298,12 @@ bool ParseResourceId(const unsigned char* const data, const size_t sectionSize, 
     return true;
 }
 
+bool ReadElfSection(const unsigned char* const bytes, const Elf64_Ehdr& header, const size_t index, Elf64_Shdr& section)
+{
+    const auto* const source = bytes + header.e_shoff + index * sizeof(section);
+    return memcpy_s(&section, sizeof(section), source, sizeof(section)) == EOK;
+}
+
 bool ReadResourceId(const void* const elfBytes, const size_t elfSize, std::string& resourceId)
 {
     Elf64_Ehdr header = {};
@@ -307,14 +313,10 @@ bool ReadResourceId(const void* const elfBytes, const size_t elfSize, std::strin
         return false;
     }
     const auto* const bytes = static_cast<const unsigned char*>(elfBytes);
-    const auto readSection = [&](const size_t index, Elf64_Shdr& section) {
-        const auto* const source = bytes + header.e_shoff + index * sizeof(section);
-        return memcpy_s(&section, sizeof(section), source, sizeof(section)) == EOK;
-    };
     std::string_view found;
     for (size_t index = 0U; index < header.e_shnum; ++index) {
         Elf64_Shdr section = {};
-        if (!readSection(index, section)) {
+        if (!ReadElfSection(bytes, header, index, section)) {
             OP_LOGW("Cannot read resource id: a section header could not be copied");
             return false;
         }

@@ -24,7 +24,7 @@
 #include "indv_mc2_aicpu.h"
 #include "opdev/data_type_utils.h"
 #include "kernel_utils.h"
-#include "static_kernel_helper.h"
+#include "indv_kernel_lookup_helper.h"
 #include "bridge_dfx.h"
 #include "acl/acl_rt.h"
 #include "version_gate.h"
@@ -822,13 +822,14 @@ aclnnStatus NnopbaseKernelRegister(NnopbaseExecutor* executor, NnopbaseBinInfo* 
                                                                   executor->args->outputs.paramDescs));
     }
     binInfo->hasReg = true;
+    OP_LOGI("Op[%s] kernel register success, binPath is %s.", executor->opType, binInfo->binPath.c_str());
     return OK;
 }
 
 bool NnopbaseExecutorGetStaticBinInfo(NnopbaseExecutor* const executor)
 {
     executor->binInfoKey.Clear();
-    auto binInfo = Indv::StaticKernelHelper::FindStaticBinInfo(executor, executor->binInfoKey);
+    auto binInfo = Indv::KernelLookupHelper::FindStaticBinInfo(executor, executor->binInfoKey);
     if (binInfo == nullptr) {
         return false;
     }

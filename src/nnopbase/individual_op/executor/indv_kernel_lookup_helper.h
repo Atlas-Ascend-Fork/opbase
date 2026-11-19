@@ -8,8 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#ifndef STATIC_KERNEL_HELPER_H_
-#define STATIC_KERNEL_HELPER_H_
+#ifndef INDV_KERNEL_LOOKUP_HELPER_H_
+#define INDV_KERNEL_LOOKUP_HELPER_H_
 
 #include "individual_op_internal.h"
 #include "indv_bininfo.h"
@@ -17,7 +17,7 @@
 
 namespace Indv {
 
-class StaticKernelHelper {
+class KernelLookupHelper {
 public:
     static const NnopbaseChar* FindStaticKernelPath(const aclTensor* tensors[], const NnopbaseAttrAddr* attrs[],
                                                     const int64_t valueDepend[],
@@ -25,6 +25,8 @@ public:
                                                     const NnopbaseStaticRuntimeInfo* const staticRuntimeInfo);
 
     static NnopbaseBinInfo* FindStaticBinInfo(NnopbaseExecutor* const executor, BinInfoKey& binInfoKey);
+
+    static bool FindDynamicBinInfo(NnopbaseExecutor* executor);
 };
 
 } // namespace Indv

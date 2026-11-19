@@ -468,6 +468,33 @@ int32_t NnopbaseCreateStubOpInfoConfig(const std::string& filePath, const std::s
     fprintf(file, (binPath + "ascend910/kernel_bninference_d_dync_main.o\"\n").c_str());
     fprintf(file, "            }\n");
     fprintf(file, "        ]\n");
+    fprintf(file, "    },\n");
+    // DtFirstHitLookupOp：包端仅提供 deterministicLevel simplifiedKey。
+    // 运行端 dt=3 时应在第一次 head 拼接时直接命中，不回退 base layout。
+    fprintf(file, "    \"DtFirstHitLookupOp\": {\n");
+    fprintf(file, "        \"dynamicRankSupport\": true,\n");
+    fprintf(file, "        \"simplifiedKeyMode\": 0,\n");
+    fprintf(file, "        \"binaryList\": [\n");
+    fprintf(file, "            {\n");
+    fprintf(file, "                \"coreType\": 0,\n");
+    fprintf(file, "                \"simplifiedKey\": [\"DtFirstHitLookupOp/d=1,p=0,dt=3/0,2/0,2/0,2/0,2\"],\n");
+    fprintf(file, (binPath + "ascend910/kernel_bninference_d_dync_main.o\"\n").c_str());
+    fprintf(file, "            }\n");
+    fprintf(file, "        ]\n");
+    fprintf(file, "    },\n");
+
+    // DtFallbackLookupOp：包端仅提供旧 base simplifiedKey。
+    // 运行端 dt=3 时 deterministicLevel layout 先 miss，再按旧逻辑命中 base layout。
+    fprintf(file, "    \"DtFallbackLookupOp\": {\n");
+    fprintf(file, "        \"dynamicRankSupport\": true,\n");
+    fprintf(file, "        \"simplifiedKeyMode\": 0,\n");
+    fprintf(file, "        \"binaryList\": [\n");
+    fprintf(file, "            {\n");
+    fprintf(file, "                \"coreType\": 0,\n");
+    fprintf(file, "                \"simplifiedKey\": [\"DtFallbackLookupOp/d=1,p=0/0,2/0,2/0,2/0,2\"],\n");
+    fprintf(file, (binPath + "ascend910/kernel_bninference_d_dync_main.o\"\n").c_str());
+    fprintf(file, "            }\n");
+    fprintf(file, "        ]\n");
     fprintf(file, "    }\n");
     fprintf(file, "}\n");
 

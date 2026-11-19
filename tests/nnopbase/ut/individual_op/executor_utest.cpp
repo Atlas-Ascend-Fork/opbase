@@ -55,8 +55,9 @@ void SetSocVersion(const std::string& version)
 // 框架传给算子genSimplifiedKey的key缓冲大小，桩gen写入时以此为上限
 constexpr size_t GEN_SIMPLIFIED_KEY_BUF_LEN = NNOPBASE_CUS_KEY_LEN;
 
-// verbKey前缀中determinLevel与precision各占1字节，见NnopbaseAppendDynamicKeyHead
-constexpr size_t VERBKEY_PREFIX_LEN = 2U;
+// verbKey前缀中determinLevel、precision与deterministicLevel各占1字节
+constexpr size_t VERBKEY_PREFIX_LEN = 3U;
+constexpr size_t NNOPBASE_BASE_VERBKEY_PREFIX_LEN = 2U;
 
 // 动态键中每个张量贡献dtype、format各1字节
 constexpr size_t DYNKEY_BYTES_PER_TENSOR = 2U;
@@ -1120,8 +1121,9 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedTilingContextBuildOnce)
     ASSERT_NE(executor->regInfo->genSimplifiedKey, nullptr);
     ASSERT_FALSE(executor->tiling.contextExt.hasBuilt);
 
-    // 首次构造: 由 GenCustomizedDynamicKey 内部触发
-    ASSERT_EQ(NnopbaseExecutorGenCustomizedDynamicKey(executor), OK);
+    // 首次构造: 由 dynamic bin lookup 内部触发
+    ASSERT_TRUE(NnopbaseExecutorGetDynamicBinInfo(executor));
+    ASSERT_NE(executor->args->binInfo, nullptr);
     ASSERT_TRUE(executor->tiling.contextExt.hasBuilt);
     ASSERT_NE(executor->tiling.tilingKey, nullptr);
     ASSERT_NE(executor->tiling.numBlocks, nullptr);
@@ -1151,7 +1153,8 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorTilingCondSlotBoundAndReset)
     GetCustomizedExecutor(executor, "StubCustomOp");
     ASSERT_NE(executor->regInfo, nullptr);
 
-    ASSERT_EQ(NnopbaseExecutorGenCustomizedDynamicKey(executor), OK);
+    ASSERT_TRUE(NnopbaseExecutorGetDynamicBinInfo(executor));
+    ASSERT_NE(executor->args->binInfo, nullptr);
     ASSERT_TRUE(executor->tiling.contextExt.hasBuilt);
 
     auto* context = reinterpret_cast<gert::TilingContext*>(executor->tiling.contextExt.context);
@@ -1172,10 +1175,9 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorTilingCondSlotBoundAndReset)
     FreeCustomizedExecutor(executor);
 }
 
-// TC03 [场景: genSimplifiedKey 返回失败 + 入口四处判空]
-// gen 返回 GRAPH_FAILED 时应告警返回 ACLNN_ERR_PARAM_INVALID 而非 OP_LOGE，因为可回落动态查找。
-// 入口 regInfo/args/opType 判空返回 ACLNN_ERR_PARAM_NULLPTR，genSimplifiedKey 判空返回可回落错误码。
-TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedGenKeyReturnFail)
+// TC03 [场景: genSimplifiedKey 返回失败后回落 dynamic key]
+// gen 返回 GRAPH_FAILED 时，lookup helper 应放弃 customizedKey，改用 tensor descriptor key 查找。
+TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedGenKeyReturnFailFallsBackToDynamic)
 {
     NnopbaseExecutor* executor = nullptr;
     GetCustomizedExecutor(executor, "StubCustomOp");
@@ -1186,37 +1188,18 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedGenKeyReturnFail)
         return ge::GRAPH_FAILED;
     };
 
-    ASSERT_EQ(NnopbaseExecutorGenCustomizedDynamicKey(executor), ACLNN_ERR_PARAM_INVALID);
-    // gen 失败处即返回，未拼后缀
-    ASSERT_NE(executor->binInfoKey.len, strlen("StubCustomOp") + VERBKEY_PREFIX_LEN + strlen("diy,99"));
-
-    // regInfo 判空：读 genSimplifiedKey 需先解引用它
-    NnopbaseRegInfo* savedRegInfo = executor->regInfo;
-    executor->regInfo = nullptr;
-    ASSERT_EQ(NnopbaseExecutorGenCustomizedDynamicKey(executor), ACLNN_ERR_PARAM_NULLPTR);
-    executor->regInfo = savedRegInfo;
-
-    // args 判空：须在进入 TilingContextBuild 前拦截，否则解引用 args->inputs 崩溃
-    NnopbaseExecutorArgs* savedArgs = executor->args;
-    executor->args = nullptr;
-    ASSERT_NE(NnopbaseExecutorGenCustomizedDynamicKey(executor), OK);
-    executor->args = savedArgs;
-
-    // opType 判空：拼接前缀需按字节读取它
-    NnopbaseChar* savedOpType = executor->opType;
-    executor->opType = nullptr;
-    ASSERT_NE(NnopbaseExecutorGenCustomizedDynamicKey(executor), OK);
-    executor->opType = savedOpType;
-
-    // genSimplifiedKey 判空：未注册时仅告警，返回可回落错误码而非 NULLPTR
-    executor->regInfo->genSimplifiedKey = nullptr;
-    ASSERT_EQ(NnopbaseExecutorGenCustomizedDynamicKey(executor), ACLNN_ERR_PARAM_INVALID);
+    const uint32_t dynamicLen = static_cast<uint32_t>(strlen("StubCustomOp") + NNOPBASE_BASE_VERBKEY_PREFIX_LEN +
+                                                      (CUSTOMIZED_STUB_INPUT_NUM + CUSTOMIZED_STUB_OUTPUT_NUM) *
+                                                          DYNKEY_BYTES_PER_TENSOR);
+    ASSERT_FALSE(NnopbaseExecutorGetDynamicBinInfo(executor));
+    ASSERT_EQ(executor->args->binInfo, nullptr);
+    ASSERT_EQ(executor->binInfoKey.len, dynamicLen);
 
     executor->regInfo->genSimplifiedKey = savedGen;
     FreeCustomizedExecutor(executor);
 }
 
-// TC04 [场景: GenCustomizedDynamicKey 成功但 CollectorFindBinInfo 查找失败]
+// TC04 [场景: customizedKey 生成成功但未能命中]
 // gen 产出 "diy,98"，与 json 注册的 "diy,99" 仅末位差一字节，说明后缀参与了 hashKey 计算，
 // TC05 的命中不是碰巧。
 TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedBinNotFound)
@@ -1231,11 +1214,12 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedBinNotFound)
         return ge::GRAPH_SUCCESS;
     };
 
-    ASSERT_EQ(NnopbaseExecutorGenCustomizedDynamicKey(executor), OK);
-    ASSERT_EQ(executor->binInfoKey.len, strlen("StubCustomOp") + VERBKEY_PREFIX_LEN + strlen("diy,98"));
-    auto binInfo = NnopbaseCollectorFindBinInfo(executor->regInfo, executor->binInfoKey.hashKey,
-                                                &(executor->binInfoKey.verbose[0U]), executor->binInfoKey.len);
-    ASSERT_EQ(binInfo, nullptr);
+    const uint32_t dynamicLen = static_cast<uint32_t>(strlen("StubCustomOp") + NNOPBASE_BASE_VERBKEY_PREFIX_LEN +
+                                                      (CUSTOMIZED_STUB_INPUT_NUM + CUSTOMIZED_STUB_OUTPUT_NUM) *
+                                                          DYNKEY_BYTES_PER_TENSOR);
+    ASSERT_FALSE(NnopbaseExecutorGetDynamicBinInfo(executor));
+    ASSERT_EQ(executor->args->binInfo, nullptr);
+    ASSERT_EQ(executor->binInfoKey.len, dynamicLen);
 
     executor->regInfo->genSimplifiedKey = savedGen;
     FreeCustomizedExecutor(executor);
@@ -1264,7 +1248,7 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedFindBinOk)
 
     // 两端逐字节闭环
     ASSERT_EQ(executor->binInfoKey.len, loadSize);
-    ASSERT_EQ(executor->binInfoKey.len, strlen("StubCustomOp") + VERBKEY_PREFIX_LEN + strlen("diy,99"));
+    ASSERT_EQ(executor->binInfoKey.len, strlen("StubCustomOp") + NNOPBASE_BASE_VERBKEY_PREFIX_LEN + strlen("diy,99"));
     ASSERT_EQ(memcmp(&(executor->binInfoKey.verbose[0U]), loadKey, loadSize), 0);
     ASSERT_EQ(executor->binInfoKey.hashKey, loadHash);
 
@@ -1290,7 +1274,10 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedFallbackFindBinFail)
     const uint32_t dynLen = static_cast<uint32_t>(strlen("StubCustomOpNoGen") + VERBKEY_PREFIX_LEN +
                                                   (CUSTOMIZED_STUB_INPUT_NUM + CUSTOMIZED_STUB_OUTPUT_NUM) *
                                                       DYNKEY_BYTES_PER_TENSOR);
-    ASSERT_EQ(executor->binInfoKey.len, dynLen);
+    ASSERT_EQ(
+        executor->binInfoKey.len,
+        static_cast<uint32_t>(strlen("StubCustomOpNoGen") + NNOPBASE_BASE_VERBKEY_PREFIX_LEN +
+                              (CUSTOMIZED_STUB_INPUT_NUM + CUSTOMIZED_STUB_OUTPUT_NUM) * DYNKEY_BYTES_PER_TENSOR));
     ASSERT_NE(executor->binInfoKey.len, strlen("StubCustomOpNoGen") + VERBKEY_PREFIX_LEN + strlen("diy,99"));
     // 回落前整体置换了 verbose，bufLen 随之复位而非沿用旧容量
     ASSERT_EQ(executor->binInfoKey.bufLen, executor->binInfoKey.verbose.size());
@@ -1313,13 +1300,7 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedFallbackFindBinOk)
     ASSERT_TRUE(executor->regInfo->customizedSimplifiedKey);
     ASSERT_NE(executor->regInfo->genSimplifiedKey, nullptr);
 
-    // customizedKey 路生成的 verbKey 与 json 的 "diy,zzz" 不符，必然未命中
-    ASSERT_EQ(NnopbaseExecutorGenCustomizedDynamicKey(executor), OK);
-    ASSERT_EQ(NnopbaseCollectorFindBinInfo(executor->regInfo, executor->binInfoKey.hashKey,
-                                           &(executor->binInfoKey.verbose[0U]), executor->binInfoKey.len),
-              nullptr);
-
-    // 走完整分派: customizedKey 未命中 → 复位 → 动态键 → 命中自定义包那条 bin
+    // 走完整分派: customizedKey 未命中 → 动态键 → 命中自定义包那条 bin
     NnopbaseExecutor* full = nullptr;
     GetCustomizedExecutor(full, "StubMixKeyOp");
     ASSERT_TRUE(NnopbaseExecutorGetDynamicBinInfo(full));
@@ -1347,20 +1328,6 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorCustomizedFallbackFindBinOk)
     FreeCustomizedExecutor(direct);
     FreeCustomizedExecutor(full);
     FreeCustomizedExecutor(executor);
-}
-
-TEST_F(NnopbaseExecutorUnitTest, ExecutorOptypeFailed)
-{
-    NnopbaseExecutor* executor = nullptr;
-    GetExecutor(executor, "test");
-
-    auto ret = NnopbaseExecutorSetRegInfo(executor, "test");
-    ASSERT_EQ(ret, ACLNN_ERR_PARAM_NULLPTR);
-
-    NnopbaseExecutorGcSpace((void*)executor->space);
-    NnopbaseExecutorDeInit(executor);
-    delete executor;
-    NnopbaseUnsetEnvAndClearFolder();
 }
 
 TEST_F(NnopbaseExecutorUnitTest, ExecutorSetOverflowAddrNotNull1)

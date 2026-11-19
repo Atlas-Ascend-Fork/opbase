@@ -735,7 +735,7 @@ aclnnStatus NnopbaseCollectorConvertCustomizedVerbKey(const NnopbaseChar* const 
             }
             case NNOPBASE_COMPILE_ARGS_INDEX: {
                 if (strKey[i] != '/') {
-                    if ((strKey[i] == '0') || (strKey[i] == '1') || (strKey[i] == '2')) {
+                    if ((strKey[i] >= '0') && (strKey[i] <= '3')) {
                         uint64_t offsetNumber = static_cast<uint64_t>(strKey[i]) - static_cast<uint64_t>('0');
                         key = NnopbaseAppend1Byte(key, static_cast<NnopbaseUChar>(offsetNumber));
                     }
@@ -779,7 +779,7 @@ aclnnStatus NnopbaseCollectorConvertDynamicVerbKey(const NnopbaseChar* const str
             }
             case NNOPBASE_COMPILE_ARGS_INDEX: {
                 if (strKey[i] != '/') {
-                    if ((strKey[i] == '0') || (strKey[i] == '1') || (strKey[i] == '2')) {
+                    if ((strKey[i] >= '0') && (strKey[i] <= '3')) {
                         key = NnopbaseAppend1Byte(key, static_cast<NnopbaseUChar>(static_cast<uint64_t>(strKey[i]) -
                                                                                   static_cast<uint64_t>('0')));
                     }
@@ -903,7 +903,7 @@ aclnnStatus NnopbaseCollectorConvertStaticVerbKey(const NnopbaseChar* const strK
                         isAppend = false;
                     }
                 }
-                if (bitNum == 16) {                           // 16 is hexadecimal
+                if (bitNum == 16) { // 16 is hexadecimal
                     if (start == -1) {
                         start = static_cast<int32_t>(i) - 15; // 15 is bitNum -1
                     }

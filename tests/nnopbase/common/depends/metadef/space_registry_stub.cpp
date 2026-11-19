@@ -153,6 +153,8 @@ void InitKernelRegistryImplFunc()
     InitOpImplFunc("custom_op2", Rt2TilingFuncStub);
     InitOpImplFunc("NonFiniteCheck", Rt2TilingFuncStub);
     InitOpImplFunc("bninference_d_kernel", TilingFuncStub);
+    InitOpImplFunc("DtFirstHitLookupOp", TilingFuncStub);
+    InitOpImplFunc("DtFallbackLookupOp", TilingFuncStub);
     InitOpImplFunc("AddCustom", EmptyTilingFuncStub);
     InitOpImplFunc("Flash", Rt2TilingFuncStub);
     InitOpImplFunc("1971_for_mix_normal", Rt2TilingFuncStub);

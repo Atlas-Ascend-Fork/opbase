@@ -8,7 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#include "static_kernel_helper.h"
+#include "indv_kernel_lookup_helper.h"
 
 #include <algorithm>
 #include <array>
@@ -19,6 +19,7 @@
 #include "indv_collector.h"
 #include "indv_executor.h"
 #include "indv_executor_utils.h"
+#include "indv_tilingcontext_builder.h"
 #include "opdev/data_type_utils.h"
 
 using namespace op::internal;
@@ -26,6 +27,8 @@ using namespace op::internal;
 namespace Indv {
 namespace {
 constexpr size_t NNOPBASE_OP_VERB_HEAD_LEN = 2U;
+constexpr size_t NNOPBASE_VERKEY_TENSOR_DESC_NUM = 2U;
+constexpr size_t NNOPBASE_VERKEY_EXT_BUF_LEN = 16U;
 constexpr size_t NNOPBASE_STATIC_BIN_VERBOSE_INIT_LEN = 4096U;
 constexpr size_t NNOPBASE_BIN_INFO_KEY_MAX_LEN = std::numeric_limits<uint32_t>::max();
 
@@ -404,7 +407,7 @@ aclnnStatus AppendExecutorStaticTensorsKey(BinInfoKey& segment, const NnopbaseTe
             const auto dtype = tensors->extTensors[i].rt2Tensor.GetDataType();
             const size_t length = tensors->extTensors[i].rt2Tensor.GetSize();
             const size_t typeSize = op::TypeSize(dtype);
-            const size_t elementNum = length / typeSize;
+            const size_t elementNum = length / typeSize; // op::TypeSize返回的typeSize值不可能为0
             for (size_t k = 0; k < elementNum; k++) {
                 NNOPBASE_ASSERT_OK_RETVAL(AppendBinInfoKeyAlignedBinary(segment, addr + typeSize * k, typeSize));
             }
@@ -477,7 +480,7 @@ aclnnStatus StaticKeySegments::InitAttr(const NnopbaseAttrs* const attrs)
 
 } // namespace
 
-const NnopbaseChar* StaticKernelHelper::FindStaticKernelPath(const aclTensor* tensors[],
+const NnopbaseChar* KernelLookupHelper::FindStaticKernelPath(const aclTensor* tensors[],
                                                              const NnopbaseAttrAddr* attrs[],
                                                              const int64_t valueDepend[],
                                                              const NnopbaseStaticTensorNumInfo* const tensorNumInfo,
@@ -524,7 +527,7 @@ const NnopbaseChar* StaticKernelHelper::FindStaticKernelPath(const aclTensor* te
     return (binInfo == nullptr) ? nullptr : binInfo->binPath.c_str();
 }
 
-NnopbaseBinInfo* StaticKernelHelper::FindStaticBinInfo(NnopbaseExecutor* const executor, BinInfoKey& binInfoKey)
+NnopbaseBinInfo* KernelLookupHelper::FindStaticBinInfo(NnopbaseExecutor* const executor, BinInfoKey& binInfoKey)
 {
     const NnopbaseTensors* const inputs = &executor->ownArgs.inputs;
     const NnopbaseAttrs* const attrs = &executor->attrs;
@@ -559,4 +562,194 @@ NnopbaseBinInfo* StaticKernelHelper::FindStaticBinInfo(NnopbaseExecutor* const e
     return binInfo;
 }
 
+namespace {
+class DynamicKeySegments {
+public:
+    enum class Id : size_t {
+        kOpHead = 0U,
+        kDeterministicLevel,
+        kTensorDescriptorKey,
+        kSimplifiedKey,
+        kMax,
+    };
+
+    explicit DynamicKeySegments(NnopbaseExecutor& executor) : executor_(executor) {}
+
+    aclnnStatus InitOpHead();
+    aclnnStatus InitDeterministicLevel();
+    aclnnStatus InitTensorDescriptorKey();
+    aclnnStatus InitCustomizedSimplifiedKey();
+    NnopbaseBinInfo* FindWithLayout(BinInfoKey& out, NnopbaseRegInfo* const regInfo,
+                                    const std::initializer_list<Id> layout) const;
+
+private:
+    static constexpr size_t ToIndex(Id id) { return static_cast<size_t>(id); }
+    BinInfoKey& Segment(Id id) { return segments_[ToIndex(id)]; }
+    const BinInfoKey& Segment(Id id) const { return segments_[ToIndex(id)]; }
+    static NnopbaseUChar* AppendTensorDescriptorKey(NnopbaseUChar* key, const NnopbaseTensors* const tensors);
+
+    NnopbaseExecutor& executor_;
+    std::array<BinInfoKey, static_cast<size_t>(Id::kMax)> segments_;
+};
+
+aclnnStatus DynamicKeySegments::InitOpHead()
+{
+    auto& segment = Segment(Id::kOpHead);
+    segment.Clear();
+    segment.verbose.resize(executor_.regInfo->key.opType.size() + NNOPBASE_OP_VERB_HEAD_LEN);
+    NnopbaseUChar* keyPtr = segment.verbose.data();
+    keyPtr = NnopbaseAppendBinary(keyPtr, segment.verbose.size(), executor_.regInfo->key.opType.data(),
+                                  executor_.regInfo->key.opType.size());
+    const uint8_t determinLevel = (executor_.deterministicLevel == 0U) ? 0U : 1U;
+    keyPtr = NnopbaseAppend1Byte(keyPtr, static_cast<NnopbaseUChar>(determinLevel));
+    keyPtr = NnopbaseAppend1Byte(keyPtr, g_nnopbaseSysCfgParams.precision);
+    segment.len = static_cast<uint32_t>(keyPtr - segment.verbose.data());
+    segment.bufLen = static_cast<uint32_t>(segment.verbose.size());
+    return OK;
+}
+
+aclnnStatus DynamicKeySegments::InitDeterministicLevel()
+{
+    auto& segment = Segment(Id::kDeterministicLevel);
+    segment.Clear();
+    segment.verbose.resize(1U);
+    NnopbaseUChar* keyPtr = segment.verbose.data();
+    keyPtr = NnopbaseAppend1Byte(keyPtr, static_cast<NnopbaseUChar>(executor_.deterministicLevel));
+    segment.len = static_cast<uint32_t>(keyPtr - segment.verbose.data());
+    segment.bufLen = static_cast<uint32_t>(segment.verbose.size());
+    return OK;
+}
+
+NnopbaseUChar* DynamicKeySegments::AppendTensorDescriptorKey(NnopbaseUChar* keyPtr,
+                                                             const NnopbaseTensors* const tensors)
+{
+    for (uint32_t i = 0U; i < tensors->paramDescs.count; i++) {
+        if (tensors->paramDescs.instances[i].cfgNum == 0U) {
+            continue;
+        }
+        const uint32_t startIndex = tensors->paramDescs.instances[i].startIndex;
+        keyPtr = NnopbaseAppend1Byte(
+            keyPtr, static_cast<NnopbaseUChar>(tensors->extTensors[startIndex].rt2Tensor.GetDataType()));
+        keyPtr = NnopbaseAppend1Byte(
+            keyPtr, static_cast<NnopbaseUChar>(tensors->extTensors[startIndex].rt2Tensor.GetStorageFormat()));
+    }
+    return keyPtr;
+}
+
+aclnnStatus DynamicKeySegments::InitTensorDescriptorKey()
+{
+    auto& segment = Segment(Id::kTensorDescriptorKey);
+    segment.Clear();
+    const uint32_t len = (executor_.ownArgs.inputs.requiredCnt + executor_.ownArgs.inputs.dynamicNum +
+                          executor_.ownArgs.outputs.requiredCnt + executor_.ownArgs.outputs.dynamicNum) *
+                         NNOPBASE_VERKEY_TENSOR_DESC_NUM;
+    segment.verbose.resize(len);
+    NnopbaseUChar* keyPtr = segment.verbose.data();
+    keyPtr = AppendTensorDescriptorKey(keyPtr, &executor_.ownArgs.inputs);
+    keyPtr = AppendTensorDescriptorKey(keyPtr, &executor_.ownArgs.outputs);
+    segment.len = static_cast<uint32_t>(keyPtr - segment.verbose.data());
+    segment.bufLen = static_cast<uint32_t>(segment.verbose.size());
+    return OK;
+}
+
+aclnnStatus DynamicKeySegments::InitCustomizedSimplifiedKey()
+{
+    auto& segment = Segment(Id::kSimplifiedKey);
+    segment.Clear();
+    if (executor_.regInfo->genSimplifiedKey == nullptr) {
+        return ACLNN_ERR_PARAM_INVALID;
+    }
+    if (NnopbaseTilingContextBuild(&executor_) != OK) {
+        return ACLNN_ERR_INNER;
+    }
+
+    char simplifiedKey[NNOPBASE_CUS_KEY_LEN] = {'\0'};
+    const auto ret = executor_.regInfo->genSimplifiedKey(
+        op::internal::PtrCastTo<gert::TilingContext>(executor_.tiling.contextExt.context), simplifiedKey);
+    if (ret != ge::GRAPH_SUCCESS) {
+        return ACLNN_ERR_PARAM_INVALID;
+    }
+    segment.verbose.assign(simplifiedKey, simplifiedKey + strlen(simplifiedKey));
+    segment.len = static_cast<uint32_t>(segment.verbose.size());
+    segment.bufLen = segment.len;
+    return OK;
+}
+
+NnopbaseBinInfo* DynamicKeySegments::FindWithLayout(BinInfoKey& out, NnopbaseRegInfo* const regInfo,
+                                                    const std::initializer_list<Id> layout) const
+{
+    out.Reset();
+    for (const auto id : layout) {
+        const auto& segment = Segment(id);
+        if (AppendVerboseSegment(out, segment) != OK) {
+            return nullptr;
+        }
+    }
+    out.hashKey = NnopbaseHashBinary(out.verbose.data(), out.len) % NNOPBASE_NORM_MAX_BIN_BUCKETS;
+    return NnopbaseCollectorFindBinInfo(regInfo, out.hashKey, out.verbose.data(), out.len);
+}
+
+bool FindBinInfoWithCustomizedSimplifiedKey(DynamicKeySegments& segments, NnopbaseExecutor* const executor)
+{
+    if (executor->regInfo->customizedSimplifiedKey && segments.InitCustomizedSimplifiedKey() == OK) {
+        NnopbaseBinInfo* binInfo = segments.FindWithLayout(
+            executor->binInfoKey, executor->regInfo,
+            {DynamicKeySegments::Id::kOpHead, DynamicKeySegments::Id::kDeterministicLevel,
+             DynamicKeySegments::Id::kSimplifiedKey});
+        if (binInfo != nullptr) {
+            executor->args->binInfo = binInfo;
+            OP_LOGI("Op[%s] found kernel with customized simplified key by deterministic level, path is %s.",
+                    executor->opType, binInfo->binPath.c_str());
+            return true;
+        }
+        binInfo = segments.FindWithLayout(executor->binInfoKey, executor->regInfo,
+                                          {DynamicKeySegments::Id::kOpHead, DynamicKeySegments::Id::kSimplifiedKey});
+        if (binInfo != nullptr) {
+            executor->args->binInfo = binInfo;
+            OP_LOGI("Op[%s] found kernel with customized simplified key, path is %s.", executor->opType,
+                    binInfo->binPath.c_str());
+            return true;
+        }
+        OP_LOGW("Op[%s] failed to find kernel by customized simplified key, try to find by tensor descriptor.",
+                executor->opType);
+    }
+    return false;
+}
+} // namespace
+
+bool KernelLookupHelper::FindDynamicBinInfo(NnopbaseExecutor* const executor)
+{
+    executor->args->binInfo = nullptr;
+    DynamicKeySegments segments(*executor);
+    if (segments.InitOpHead() != OK) {
+        return false;
+    }
+    if (segments.InitDeterministicLevel() != OK) {
+        return false;
+    }
+    if (FindBinInfoWithCustomizedSimplifiedKey(segments, executor)) {
+        return true;
+    }
+    if (segments.InitTensorDescriptorKey() != OK) {
+        return false;
+    }
+    NnopbaseBinInfo* binInfo = segments.FindWithLayout(
+        executor->binInfoKey, executor->regInfo,
+        {DynamicKeySegments::Id::kOpHead, DynamicKeySegments::Id::kDeterministicLevel,
+         DynamicKeySegments::Id::kTensorDescriptorKey});
+    if (binInfo != nullptr) {
+        executor->args->binInfo = binInfo;
+        OP_LOGI("Op[%s] found kernel with tensor descriptor and deterministic level, bin path is %s.", executor->opType,
+                binInfo->binPath.c_str());
+        return true;
+    }
+    binInfo = segments.FindWithLayout(executor->binInfoKey, executor->regInfo,
+                                      {DynamicKeySegments::Id::kOpHead, DynamicKeySegments::Id::kTensorDescriptorKey});
+    if (binInfo != nullptr) {
+        executor->args->binInfo = binInfo;
+        OP_LOGI("Op[%s] found kernel with tensor descriptor, path is %s.", executor->opType, binInfo->binPath.c_str());
+        return true;
+    }
+    return false;
+}
 } // namespace Indv
