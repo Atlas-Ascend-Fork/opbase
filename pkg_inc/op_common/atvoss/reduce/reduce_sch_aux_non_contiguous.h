@@ -50,17 +50,22 @@ public:
         uint64_t sliceStride = 1;
     } iterAddr_[Dim];
 
+    const ReduceOpTilingDataNonContiguous* ncTiling_;
+
 public:
+    __aicore__ inline uint64_t GetSliceShape(int32_t axis) const { return ncTiling_->sliceShape[axis]; }
+
     __aicore__ inline ReduceSchAuxNonContiguous(ReduceSch* sch, GlobalTensor<uint8_t>* input,
                                                 GlobalTensor<uint8_t>* output, GlobalTensor<uint8_t>* workspace,
-                                                const ReduceOpTilingData* tiling)
+                                                const ReduceOpTilingDataCommon* tiling)
         : ReduceSchAuxBase<LoopInfo, ReduceSch, IsStageOne, OpDag,
                            ReduceSchAuxNonContiguous<LoopInfo, ReduceSch, IsStageOne, OpDag>>(sch, input, output,
                                                                                               workspace, tiling)
     {
+        ncTiling_ = static_cast<const ReduceOpTilingDataNonContiguous*>(tiling);
         for (uint64_t i = 0; i < Dim; i++) {
-            iterAddr_[i].stride = tiling->sliceShape[i];
-            iterAddr_[i].sliceStride = tiling->sliceNum[i];
+            iterAddr_[i].stride = ncTiling_->sliceShape[i];
+            iterAddr_[i].sliceStride = ncTiling_->sliceNum[i];
         }
     }
 
@@ -85,8 +90,8 @@ public:
         auto curInSliceNum = temp % sliceStepSize;
         iterAddr_[axis].start = curInSliceShape * sliceShapeFactor;
         iterAddr_[axis].sliceStart = curInSliceNum * sliceNumFactor;
-        iterAddr_[axis].stride = this->tiling_->sliceShape[axis] - iterAddr_[axis].start;
-        iterAddr_[axis].sliceStride = this->tiling_->shape[axis] / this->tiling_->sliceShape[axis] -
+        iterAddr_[axis].stride = this->ncTiling_->sliceShape[axis] - iterAddr_[axis].start;
+        iterAddr_[axis].sliceStride = this->ncTiling_->shape[axis] / this->ncTiling_->sliceShape[axis] -
                                       iterAddr_[axis].sliceStart;
         if (likely(iterAddr_[axis].stride >= sliceShapeFactor)) {
             iterAddr_[axis].stride = sliceShapeFactor;
@@ -109,18 +114,18 @@ public:
     __aicore__ inline void InitSliceFactors()
     {
         constexpr auto axisA = LoopInfo->loopAAxis[LoopInfo->loopACount - 1];
-        auto factorsA = ComputeSliceFactors(this->ubFactorA_, this->tiling_->sliceShape[axisA]);
+        auto factorsA = ComputeSliceFactors(this->ubFactorA_, this->ncTiling_->sliceShape[axisA]);
         sliceShapeFactorA_ = factorsA.sliceShapeFactor;
         sliceNumFactorA_ = factorsA.sliceNumFactor;
 
         if constexpr (LoopInfo->loopInnerRCount > 0) {
             constexpr auto axisR = LoopInfo->loopInnerRAxis[LoopInfo->loopInnerRCount - 1];
-            auto factorsR = ComputeSliceFactors(this->ubFactorR_, this->tiling_->sliceShape[axisR]);
+            auto factorsR = ComputeSliceFactors(this->ubFactorR_, this->ncTiling_->sliceShape[axisR]);
             sliceShapeFactorR_ = factorsR.sliceShapeFactor;
             sliceNumFactorR_ = factorsR.sliceNumFactor;
         } else if constexpr (LoopInfo->loopRCount > 0) {
             constexpr auto axisR = LoopInfo->loopRAxis[LoopInfo->loopRCount - 1];
-            auto factorsR = ComputeSliceFactors(this->ubFactorR_, this->tiling_->sliceShape[axisR]);
+            auto factorsR = ComputeSliceFactors(this->ubFactorR_, this->ncTiling_->sliceShape[axisR]);
             sliceShapeFactorR_ = factorsR.sliceShapeFactor;
             sliceNumFactorR_ = factorsR.sliceNumFactor;
         } else {
@@ -133,27 +138,27 @@ public:
     {
         int32_t blockId = GetBlockIdx();
         if constexpr (IsBlockCutA<LoopInfo>()) {
-            this->loopAStartIndex_ = blockId * this->tiling_->factorACntPerCore;
-            this->loopAEndIndex_ = this->loopAStartIndex_ + this->tiling_->factorACntPerCore;
-            if (unlikely(this->loopAEndIndex_ > this->tiling_->factorATotalCnt)) {
-                this->loopAEndIndex_ = this->tiling_->factorATotalCnt;
+            this->loopAStartIndex_ = blockId * this->ncTiling_->factorACntPerCore;
+            this->loopAEndIndex_ = this->loopAStartIndex_ + this->ncTiling_->factorACntPerCore;
+            if (unlikely(this->loopAEndIndex_ > this->ncTiling_->factorATotalCnt)) {
+                this->loopAEndIndex_ = this->ncTiling_->factorATotalCnt;
             }
             constexpr int32_t aAxisIdx = LoopInfo->loopACount - 1;
             constexpr int32_t aAxis = LoopInfo->loopAAxis[aAxisIdx];
-            CalcAxisStep(this->tiling_->sliceNum[aAxis], this->tiling_->sliceShape[aAxis], this->ubFactorA_,
+            CalcAxisStep(this->ncTiling_->sliceNum[aAxis], this->ncTiling_->sliceShape[aAxis], this->ubFactorA_,
                          this->loopAAxisStep_, loopAAxisSliceStep_);
             if constexpr (LoopInfo->loopInnerRCount > 0) {
                 constexpr int32_t rAxisIdx = LoopInfo->loopInnerRCount - 1;
                 constexpr int32_t rAxis = LoopInfo->loopInnerRAxis[rAxisIdx];
-                CalcAxisStep(this->tiling_->sliceNum[rAxis], this->tiling_->sliceShape[rAxis], this->ubFactorR_,
+                CalcAxisStep(this->ncTiling_->sliceNum[rAxis], this->ncTiling_->sliceShape[rAxis], this->ubFactorR_,
                              this->loopRAxisStep_, loopRAxisSliceStep_);
             }
         } else {
-            this->loopRStartIndex_ = blockId / this->tiling_->groupR * this->tiling_->factorRTotalCnt +
-                                     blockId % this->tiling_->groupR * this->tiling_->factorRCntPerCore;
-            this->loopREndIndex_ = this->loopRStartIndex_ + this->tiling_->factorRCntPerCore;
-            uint64_t maxRCnt = (blockId / this->tiling_->groupR + 1) * this->tiling_->factorRTotalCnt;
-            uint64_t totalCnt = this->tiling_->factorATotalCnt * this->tiling_->factorRTotalCnt;
+            this->loopRStartIndex_ = blockId / this->ncTiling_->groupR * this->ncTiling_->factorRTotalCnt +
+                                     blockId % this->ncTiling_->groupR * this->ncTiling_->factorRCntPerCore;
+            this->loopREndIndex_ = this->loopRStartIndex_ + this->ncTiling_->factorRCntPerCore;
+            uint64_t maxRCnt = (blockId / this->ncTiling_->groupR + 1) * this->ncTiling_->factorRTotalCnt;
+            uint64_t totalCnt = this->ncTiling_->factorATotalCnt * this->ncTiling_->factorRTotalCnt;
             maxRCnt = maxRCnt > totalCnt ? totalCnt : maxRCnt;
             if (unlikely(this->loopRStartIndex_ > maxRCnt)) {
                 this->loopRStartIndex_ = maxRCnt;
@@ -164,12 +169,12 @@ public:
 
             constexpr int32_t rAxisIdx = LoopInfo->loopRCount - 1;
             constexpr int32_t rAxis = LoopInfo->loopRAxis[rAxisIdx];
-            CalcAxisStep(this->tiling_->sliceNum[rAxis], this->tiling_->sliceShape[rAxis], this->ubFactorR_,
+            CalcAxisStep(this->ncTiling_->sliceNum[rAxis], this->ncTiling_->sliceShape[rAxis], this->ubFactorR_,
                          this->loopRAxisStep_, loopRAxisSliceStep_);
             if constexpr (LoopInfo->loopACount > 0) {
                 constexpr int32_t aAxisIdx = LoopInfo->loopACount - 1;
                 constexpr int32_t aAxis = LoopInfo->loopAAxis[aAxisIdx];
-                CalcAxisStep(this->tiling_->sliceNum[aAxis], this->tiling_->sliceShape[aAxis], this->ubFactorA_,
+                CalcAxisStep(this->ncTiling_->sliceNum[aAxis], this->ncTiling_->sliceShape[aAxis], this->ubFactorA_,
                              this->loopAAxisStep_, loopAAxisSliceStep_);
             }
         }
@@ -212,10 +217,10 @@ public:
                     CalculateIterA<LoopAIdx - 1>(step / this->loopAAxisStep_ / this->loopAAxisSliceStep_);
                 }
             } else {
-                iterAddr_[axis].start = step % this->tiling_->shape[axis];
+                iterAddr_[axis].start = step % this->ncTiling_->shape[axis];
                 iterAddr_[axis].stride = 1;
                 iterAddr_[axis].sliceStride = 1;
-                CalculateIterA<LoopAIdx - 1>(step / this->tiling_->shape[axis]);
+                CalculateIterA<LoopAIdx - 1>(step / this->ncTiling_->shape[axis]);
             }
         }
     }
@@ -227,10 +232,10 @@ public:
         const uint64_t alignSize = view.isBlockAligned == 1U ? blkSize : 1UL;
         const bool isLastSplit = IsLoopSpliteRAxis<LoopInfo>(Dim - 1);
         uint64_t mainBurstLen = 0;
-        if (this->tiling_->sliceNum[Dim - 1] != 1) {
-            if (this->ubFactorR_ <= this->tiling_->sliceShape[Dim - 1]) { // 切sliceShape
+        if (this->ncTiling_->sliceNum[Dim - 1] != 1) {
+            if (this->ubFactorR_ <= this->ncTiling_->sliceShape[Dim - 1]) { // 切sliceShape
                 mainBurstLen = isLastSplit ? this->ubFactorR_ : view.axis[0].repeat;
-            } else {                                                      // 切sliceNum
+            } else { // 切sliceNum
                 mainBurstLen = view.axis[0].repeat;
             }
         } else {
@@ -306,16 +311,16 @@ public:
             if (!view.axis[i].isAxisA) {
                 auto axisIdx = view.axis[i].idx;
                 if (IsLoopSpliteRAxis<LoopInfo>(axisIdx)) {
-                    if (!view.axis[i].isSliceNum && this->ubFactorR_ < this->tiling_->sliceShape[axisIdx]) {
+                    if (!view.axis[i].isSliceNum && this->ubFactorR_ < this->ncTiling_->sliceShape[axisIdx]) {
                         rPaddingStart = view.axis[i].repeat;
                         rPaddingTimes = this->ubFactorR_ - view.axis[i].repeat;
-                    } else if (!view.axis[i].isSliceNum && this->ubFactorR_ >= this->tiling_->sliceShape[axisIdx]) {
+                    } else if (!view.axis[i].isSliceNum && this->ubFactorR_ >= this->ncTiling_->sliceShape[axisIdx]) {
                         // tiling 切 sliceShape
                         aPaddingRepeat *= view.axis[i].repeat;
-                    } else if (view.axis[i].isSliceNum && this->ubFactorR_ >= this->tiling_->sliceShape[axisIdx]) {
+                    } else if (view.axis[i].isSliceNum && this->ubFactorR_ >= this->ncTiling_->sliceShape[axisIdx]) {
                         // tiling 切 sliceNum
                         rPaddingStart = view.axis[i].repeat;
-                        rPaddingTimes = this->ubFactorR_ / this->tiling_->sliceShape[axisIdx] - view.axis[i].repeat;
+                        rPaddingTimes = this->ubFactorR_ / this->ncTiling_->sliceShape[axisIdx] - view.axis[i].repeat;
                     } else {
                         break;
                     }
@@ -344,10 +349,10 @@ public:
                 CalculateInnerIterR<LoopInnerRIdx - 1>(basicBlockIdx / this->loopRAxisStep_ /
                                                        this->loopRAxisSliceStep_);
             } else {
-                iterAddr_[axis].start = basicBlockIdx % this->tiling_->shape[axis];
+                iterAddr_[axis].start = basicBlockIdx % this->ncTiling_->shape[axis];
                 iterAddr_[axis].stride = 1;
                 iterAddr_[axis].sliceStride = 1;
-                CalculateInnerIterR<LoopInnerRIdx - 1>(basicBlockIdx / this->tiling_->shape[axis]);
+                CalculateInnerIterR<LoopInnerRIdx - 1>(basicBlockIdx / this->ncTiling_->shape[axis]);
             }
         }
     }
@@ -373,10 +378,10 @@ public:
                         temp = temp / this->loopAAxisStep_;
                         temp = temp / this->loopAAxisSliceStep_;
                     } else {
-                        iterAddr_[axis].start = temp % this->tiling_->shape[axis];
+                        iterAddr_[axis].start = temp % this->ncTiling_->shape[axis];
                         iterAddr_[axis].stride = 1;
                         iterAddr_[axis].sliceStride = 1;
-                        temp = temp / this->tiling_->shape[axis];
+                        temp = temp / this->ncTiling_->shape[axis];
                     }
                 }
             }
@@ -388,14 +393,14 @@ public:
     {
         constexpr static auto burstLenAxis = Dim - 1; // 获取第一个循环轴
         view.axis[0].start = iterAddr_[burstLenAxis].start;
-        view.axis[0].srcStride = this->tiling_->stride[burstLenAxis];
+        view.axis[0].srcStride = this->ncTiling_->stride[burstLenAxis];
         view.axis[0].repeat = iterAddr_[burstLenAxis].stride;
         view.axis[0].idx = burstLenAxis;
         view.axis[0].isAxisA = IsAxisA<AuxBase::Pattern::FirstA>(view.axis[0].idx);
         view.axisSize = 1;
-        if (this->tiling_->sliceNum[burstLenAxis] != 1) {
+        if (this->ncTiling_->sliceNum[burstLenAxis] != 1) {
             view.axis[1].start = iterAddr_[burstLenAxis].sliceStart;
-            view.axis[1].srcStride = this->tiling_->sliceStride[burstLenAxis];
+            view.axis[1].srcStride = this->ncTiling_->sliceStride[burstLenAxis];
             view.axis[1].repeat = iterAddr_[burstLenAxis].sliceStride;
             view.axis[1].idx = view.axis[0].idx;
             view.axis[1].isAxisA = view.axis[0].isAxisA;
@@ -407,21 +412,21 @@ public:
         if constexpr (burstLenAxis > 0) {
             int32_t axis = burstLenAxis;
             for (int32_t i = 1; i < Dim; i++) {
-                if (this->tiling_->shape[axis - 1] == 1 && i != Dim - 1) {
+                if (this->ncTiling_->shape[axis - 1] == 1 && i != Dim - 1) {
                     axis = axis - 1;
                     continue;
                 }
                 int32_t currentIdx = axisStart;
                 view.axis[currentIdx].start = iterAddr_[axis - 1].start;
-                view.axis[currentIdx].srcStride = this->tiling_->stride[axis - 1];
+                view.axis[currentIdx].srcStride = this->ncTiling_->stride[axis - 1];
                 view.axis[currentIdx].repeat = iterAddr_[axis - 1].stride;
                 view.axis[currentIdx].idx = axis - 1;
                 view.axis[currentIdx].isAxisA = IsAxisA<AuxBase::Pattern::FirstA>(view.axis[currentIdx].idx);
                 axisStart++;
                 view.axisSize = axisStart;
-                if (this->tiling_->sliceNum[burstLenAxis - i] != 1) {
+                if (this->ncTiling_->sliceNum[burstLenAxis - i] != 1) {
                     view.axis[currentIdx + 1].start = iterAddr_[burstLenAxis - i].sliceStart;
-                    view.axis[currentIdx + 1].srcStride = this->tiling_->sliceStride[burstLenAxis - i];
+                    view.axis[currentIdx + 1].srcStride = this->ncTiling_->sliceStride[burstLenAxis - i];
                     view.axis[currentIdx + 1].repeat = iterAddr_[burstLenAxis - i].sliceStride;
                     view.axis[currentIdx + 1].idx = view.axis[currentIdx].idx;
                     view.axis[currentIdx + 1].isAxisA = view.axis[currentIdx].isAxisA;
@@ -435,7 +440,7 @@ public:
                 axis = view.axis[currentIdx].idx;
             }
         }
-        view.isBlockAligned = (this->tiling_->useNddma == 0);
+        view.isBlockAligned = (this->ncTiling_->useNddma == 0);
     }
 
     template <class V, class S>
@@ -451,9 +456,9 @@ public:
                 // 第一个R轴的dstStride就是A轴大小
                 aSize = (aSize == 1) ? view.axis[i].dstStride : aSize;
                 if (IsLoopSpliteRAxis<LoopInfo>(view.axis[i].idx) && !view.axis[i].isSliceNum) {
-                    if (this->ubFactorR_ <= this->tiling_->sliceShape[view.axis[i].idx]) { // UB切在sliceShape
+                    if (this->ubFactorR_ <= this->ncTiling_->sliceShape[view.axis[i].idx]) { // UB切在sliceShape
                         rSize = rSize * this->ubFactorR_;
-                    } else {                                                               // UB切在sliceNum
+                    } else { // UB切在sliceNum
                         rSize = rSize * view.axis[i].repeat;
                         rSize = rSize * (this->ubFactorR_ / view.axis[i].repeat);
                     }
@@ -478,7 +483,7 @@ public:
         view.axis[0].dstStride = 1;
         if (IsLoopSpliteRAxis<LoopInfo>(Dim - 1)) {
             // R是切分轴时, 主尾块会先add起来, 所以R轴按照factorR算
-            if (this->ubFactorR_ < this->tiling_->sliceShape[view.axis[0].idx]) {
+            if (this->ubFactorR_ < this->ncTiling_->sliceShape[view.axis[0].idx]) {
                 value = Ops::Base::CeilAlign(this->ubFactorR_, alignedValue);
             }
         }
@@ -488,12 +493,12 @@ public:
                 auto axisIdx = view.axis[i].idx;
                 view.axis[i].dstStride = value;
                 if (IsLoopSpliteRAxis<LoopInfo>(axisIdx)) {
-                    if (!view.axis[i].isSliceNum && this->ubFactorR_ < this->tiling_->sliceShape[axisIdx]) {
+                    if (!view.axis[i].isSliceNum && this->ubFactorR_ < this->ncTiling_->sliceShape[axisIdx]) {
                         value = value * this->ubFactorR_;
-                    } else if (!view.axis[i].isSliceNum && this->ubFactorR_ >= this->tiling_->sliceShape[axisIdx]) {
+                    } else if (!view.axis[i].isSliceNum && this->ubFactorR_ >= this->ncTiling_->sliceShape[axisIdx]) {
                         value = value * view.axis[i].repeat;
-                    } else if (view.axis[i].isSliceNum && this->ubFactorR_ >= this->tiling_->sliceShape[axisIdx]) {
-                        value = value * this->ubFactorR_ / this->tiling_->sliceShape[axisIdx];
+                    } else if (view.axis[i].isSliceNum && this->ubFactorR_ >= this->ncTiling_->sliceShape[axisIdx]) {
+                        value = value * this->ubFactorR_ / this->ncTiling_->sliceShape[axisIdx];
                     } else {
                         value = value * view.axis[i].repeat;
                     }
@@ -536,12 +541,12 @@ public:
                 auto axisIdx = view.axis[i].idx;
                 view.axis[i].dstStride = value;
                 if (IsLoopSpliteRAxis<LoopInfo>(axisIdx)) {
-                    if (!view.axis[i].isSliceNum && this->ubFactorR_ < this->tiling_->sliceShape[axisIdx]) {
+                    if (!view.axis[i].isSliceNum && this->ubFactorR_ < this->ncTiling_->sliceShape[axisIdx]) {
                         value = value * this->ubFactorR_;
-                    } else if (!view.axis[i].isSliceNum && this->ubFactorR_ >= this->tiling_->sliceShape[axisIdx]) {
+                    } else if (!view.axis[i].isSliceNum && this->ubFactorR_ >= this->ncTiling_->sliceShape[axisIdx]) {
                         value = value * view.axis[i].repeat;
-                    } else if (view.axis[i].isSliceNum && this->ubFactorR_ >= this->tiling_->sliceShape[axisIdx]) {
-                        value = value * this->ubFactorR_ / this->tiling_->sliceShape[axisIdx];
+                    } else if (view.axis[i].isSliceNum && this->ubFactorR_ >= this->ncTiling_->sliceShape[axisIdx]) {
+                        value = value * this->ubFactorR_ / this->ncTiling_->sliceShape[axisIdx];
                     } else {
                         value = value * view.axis[i].repeat;
                     }
@@ -558,12 +563,13 @@ public:
         auto aAxis = LoopInfo->loopAAxis[LoopInfo->loopACount - 1];
         for (int32_t i = axis; i < Dim; i += CONST2) {
             if (i == aAxis) {
-                addrOffset += iterAddr_[i].start * this->tiling_->dstStride[i];
-                if (this->tiling_->sliceNum[i] != 1) {
-                    addrOffset += iterAddr_[i].sliceStart * this->tiling_->sliceShape[i] * this->tiling_->dstStride[i];
+                addrOffset += iterAddr_[i].start * this->ncTiling_->dstStride[i];
+                if (this->ncTiling_->sliceNum[i] != 1) {
+                    addrOffset += iterAddr_[i].sliceStart * this->ncTiling_->sliceShape[i] *
+                                  this->ncTiling_->dstStride[i];
                 }
             } else {
-                addrOffset += iterAddr_[i].start * this->tiling_->dstStride[i];
+                addrOffset += iterAddr_[i].start * this->ncTiling_->dstStride[i];
             }
         }
         return addrOffset;
@@ -575,17 +581,17 @@ public:
         uint64_t addrOffset = 0;
         if constexpr (LoopInfo->loopInnerACount > 0) {
             for (int32_t i = axis; i < Dim; i += CONST2) {
-                addrOffset += iterAddr_[i].start * this->tiling_->dstStride[i];
+                addrOffset += iterAddr_[i].start * this->ncTiling_->dstStride[i];
             }
         }
 
         uint64_t axisStep = LoopInfo->loopACount > 0 ? this->loopAAxisStep_ : 1;
         uint64_t axisSliceStep = LoopInfo->loopACount > 0 ? this->loopAAxisSliceStep_ : 1;
         uint64_t step = axisStep * axisSliceStep;
-        return (blockId % this->tiling_->groupR) *
-                   Ops::Base::CeilAlign(this->tiling_->outSize, static_cast<uint64_t>(AuxBase::VL_ELEMS)) +
-               (blockId / this->tiling_->groupR % step) * this->ubFactorA_ * innerA +
-               (blockId / (this->tiling_->groupR * step)) * this->tiling_->shape[axis] * innerA + addrOffset;
+        return (blockId % this->ncTiling_->groupR) *
+                   Ops::Base::CeilAlign(this->ncTiling_->outSize, static_cast<uint64_t>(AuxBase::VL_ELEMS)) +
+               (blockId / this->ncTiling_->groupR % step) * this->ubFactorA_ * innerA +
+               (blockId / (this->ncTiling_->groupR * step)) * this->ncTiling_->shape[axis] * innerA + addrOffset;
     }
 
     template <class T, class V>

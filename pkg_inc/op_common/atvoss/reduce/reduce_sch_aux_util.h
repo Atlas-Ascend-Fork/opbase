@@ -159,7 +159,7 @@ __aicore__ inline int64_t GetCacheID(const int64_t idx)
 template <HardEvent EVENT>
 __aicore__ inline void SetEvent(HardEvent evt)
 {
-    event_t eventId = static_cast<event_t>(GetTPipePtr()->FetchEventID(evt));
+    event_t eventId = static_cast<event_t>(EVENT_ID0);
     SetFlag<EVENT>(eventId);
     WaitFlag<EVENT>(eventId);
 }

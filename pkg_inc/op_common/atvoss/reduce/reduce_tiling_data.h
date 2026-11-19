@@ -19,7 +19,8 @@
 #include "reduce_util.h"
 namespace Ops {
 namespace Base {
-struct ReduceOpTilingData {
+// 连续/非连续场景共用的tiling data
+struct ReduceOpTilingDataCommon {
     uint64_t factorACntPerCore;
     uint64_t factorATotalCnt;
     uint64_t ubFactorA;
@@ -34,13 +35,25 @@ struct ReduceOpTilingData {
     int32_t realCoreNum;
     int32_t useNddma;
     float meanVar;
-    uint64_t shape[ReduceOpTmpl::MAX_DIM] = {0};       // 输入shape
-    int64_t stride[ReduceOpTmpl::MAX_DIM] = {0};       // 输入stride
-    int64_t dstStride[ReduceOpTmpl::MAX_DIM] = {0};    // 输出stride
+    uint64_t shape[ReduceOpTmpl::MAX_DIM] = {0}; // 输入shape
+};
+
+// 连续场景使用的精简tiling data：stride/dstStride 由 kernel 从 shape 推导；
+// 168B 有效字段，补齐到 192B（64B 对齐）
+struct ReduceOpTilingDataContiguous : ReduceOpTilingDataCommon {
+    uint64_t reserved[3];
+};
+
+// 非连续场景使用的完整tiling data
+struct ReduceOpTilingDataNonContiguous : ReduceOpTilingDataCommon {
+    int64_t stride[ReduceOpTmpl::MAX_DIM] = {0};    // 输入stride
+    int64_t dstStride[ReduceOpTmpl::MAX_DIM] = {0}; // 输出stride
     uint64_t sliceNum[ReduceOpTmpl::MAX_DIM] = {0};    // 每个轴slice切片的个数
     uint64_t sliceShape[ReduceOpTmpl::MAX_DIM] = {0};  // 每个轴slice切片后的shape大小
     uint64_t sliceStride[ReduceOpTmpl::MAX_DIM] = {0}; // 每个轴slice切片后的stride长度
 };
+
+using ReduceOpTilingData = ReduceOpTilingDataNonContiguous;
 } // namespace Base
 } // namespace Ops
 #endif

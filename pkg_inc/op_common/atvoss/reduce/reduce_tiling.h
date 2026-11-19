@@ -281,6 +281,8 @@ public:
         : context_(context), compileInfo_(compileInfo), tilingData_(tilingData) {};
 
     virtual ~ReduceOpTiling() {}
+
+    void EnableCompactContiguousTiling() { compactContiguousTiling_ = true; }
     /*
      * \brief reduce template do tiling with input shape and axis
      *
@@ -297,6 +299,7 @@ public:
                     OP_LOGE(context_->GetNodeName(), "Do tiling param check failed"), return ge::GRAPH_FAILED);
 
         PreProcessInput<OpDag>(opInput);
+        tilingKey_.batchInvariant = key.batchInvariant;
 
         OP_CHECK_IF((PreProcessOptionalParam() != ge::GRAPH_SUCCESS),
                     OP_LOGE(context_->GetNodeName(), "Do tiling preprocess optional param failed"),
@@ -445,7 +448,9 @@ protected:
     gert::TilingContext* context_{nullptr};
     ReduceOpCompileInfo* compileInfo_{nullptr};
     std::unique_ptr<ReduceOpCompileInfo> compileInfoPtr_;
-    ReduceOpTilingData* tilingData_{nullptr};
+    ReduceOpTilingDataCommon* tilingData_{nullptr};
+    bool compactContiguousTiling_{false};
+    bool useCompactTiling_{false};
     uint64_t basicBlock_{0};  // 算子搬入的buffer大小
     uint64_t resultBlock_{0}; // reduce计算后的buffer大小
     int32_t dimNum_{0};
@@ -503,6 +508,15 @@ OPBASE_API ge::graphStatus Tiling4ReduceOp(gert::TilingContext* context, ReduceO
 {
     (void)compileInfo;
     ReduceOpTiling tiling(context, nullptr, tilingData);
+    return tiling.DoTiling<OpDag>(opInput, key);
+}
+
+template <class OpDag = void>
+OPBASE_API ge::graphStatus Tiling4ReduceOpCompact(gert::TilingContext* context, ReduceOpInputParam& opInput,
+                                                  ReduceTilingKey& key)
+{
+    ReduceOpTiling tiling(context, nullptr, nullptr);
+    tiling.EnableCompactContiguousTiling();
     return tiling.DoTiling<OpDag>(opInput, key);
 }
 } // namespace Base

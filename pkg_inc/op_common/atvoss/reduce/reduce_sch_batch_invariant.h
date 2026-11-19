@@ -40,9 +40,11 @@ public:
     } iterAddr_[Dim];
 
 public:
+    __aicore__ inline uint64_t GetSliceShape(int32_t axis) const { return this->tiling_->shape[axis]; }
+
     __aicore__ inline ReduceSchAuxBatchInvariant(ReduceSch* sch, GlobalTensor<uint8_t>* input,
                                                  GlobalTensor<uint8_t>* output, GlobalTensor<uint8_t>* workspace,
-                                                 const ReduceOpTilingData* tiling)
+                                                 const ReduceOpTilingDataCommon* tiling)
         : ReduceSchAuxBase<LoopInfo, ReduceSch, IsStageOne, OpDag,
                            ReduceSchAuxBatchInvariant<LoopInfo, ReduceSch, IsStageOne, OpDag>>(sch, input, output,
                                                                                                workspace, tiling)
@@ -165,7 +167,7 @@ public:
             }
         } else {
             constexpr int32_t axis = LoopInfo->loopInnerAAxis[start];
-            uint64_t shapeSize = this->tiling_->sliceShape[axis];
+            uint64_t shapeSize = static_cast<const ReduceOpTilingDataNonContiguous*>(this->tiling_)->sliceShape[axis];
             if constexpr (start + 1 == end) {
                 uint64_t loopSize = shapeSize / this->ubFactorA_;
                 uint64_t tail = shapeSize - loopSize * this->ubFactorA_;
@@ -233,9 +235,10 @@ public:
             newView.axis[1].srcStride = outLen;
         }
         constexpr int32_t axis = AuxBase::Pattern::FirstA ? 0 : 1;
+        const auto* fullTiling = static_cast<const ReduceOpTilingDataNonContiguous*>(this->tiling_);
         uint64_t addrOffset = 0;
         for (int32_t i = axis; i < Dim; i += CONST2) {
-            addrOffset += iterAddr_[i].start * this->tiling_->dstStride[i];
+            addrOffset += iterAddr_[i].start * fullTiling->dstStride[i];
         }
         newView.addr = (blockId % this->tiling_->groupR) *
                            Ops::Base::CeilAlign(this->tiling_->outSize, static_cast<uint64_t>(AuxBase::VL_ELEMS)) +
@@ -370,9 +373,10 @@ public:
     __aicore__ inline void InitView(V& view)
     {
         constexpr static auto burstLenAxis = Dim - 1;
+        const auto* fullTiling = static_cast<const ReduceOpTilingDataNonContiguous*>(this->tiling_);
         view.axis[0].start = iterAddr_[burstLenAxis].start;
         view.axis[0].srcStride = 1;
-        view.axis[0].repeat = GetBurstLen<LoopInfo, burstLenAxis>(iterAddr_, this->tiling_);
+        view.axis[0].repeat = GetBurstLen<LoopInfo, burstLenAxis>(iterAddr_, fullTiling);
         view.axis[0].idx = burstLenAxis;
         view.axis[0].isAxisA = IsAxisA<AuxBase::Pattern::FirstA>(view.axis[0].idx);
         view.axisSize = 1;
@@ -382,8 +386,8 @@ public:
             for (int32_t i = 1; i < Dim; i++) {
                 view.axisSize = i + 1;
                 view.axis[i].start = iterAddr_[axis - 1].start;
-                view.axis[i].repeat = GetRepeatStride<LoopInfo>(axis - 1, iterAddr_, this->tiling_,
-                                                                view.axis[i].srcStride);
+                view.axis[i].repeat =
+                    GetRepeatStride<LoopInfo>(axis - 1, iterAddr_, fullTiling, view.axis[i].srcStride);
                 view.axis[i].idx = axis - 1;
                 view.axis[i].isAxisA = IsAxisA<AuxBase::Pattern::FirstA>(view.axis[i].idx);
                 if (view.axis[i].idx <= 0) {
@@ -486,9 +490,10 @@ public:
 
     __aicore__ inline uint64_t CalculateCopyOutAddr(int32_t axis)
     {
+        const auto* fullTiling = static_cast<const ReduceOpTilingDataNonContiguous*>(this->tiling_);
         uint64_t addrOffset = 0;
         for (int32_t i = axis; i < Dim; i += CONST2) {
-            addrOffset += iterAddr_[i].start * this->tiling_->dstStride[i];
+            addrOffset += iterAddr_[i].start * fullTiling->dstStride[i];
         }
         return addrOffset;
     }

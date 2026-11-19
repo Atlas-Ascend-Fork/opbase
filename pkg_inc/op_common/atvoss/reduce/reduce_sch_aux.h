@@ -37,15 +37,41 @@ public:
         uint64_t start = 0;
         uint64_t stride = 1;
     } iterAddr_[Dim];
+    uint64_t stride_[Dim];
+    uint64_t dstStride_[Dim];
 
 public:
+    __aicore__ inline uint64_t GetSliceShape(int32_t axis) const { return this->tiling_->shape[axis]; }
+
+    __aicore__ inline uint64_t GetStride(int32_t axis) const { return stride_[axis]; }
+
+    __aicore__ inline uint64_t GetDstStride(int32_t axis) const { return dstStride_[axis]; }
+
     __aicore__ inline ReduceSchAux(ReduceSch* sch, GlobalTensor<uint8_t>* input, GlobalTensor<uint8_t>* output,
-                                   GlobalTensor<uint8_t>* workspace, const ReduceOpTilingData* tiling)
+                                   GlobalTensor<uint8_t>* workspace, const ReduceOpTilingDataCommon* tiling)
         : ReduceSchAuxBase<LoopInfo, ReduceSch, IsStageOne, OpDag,
                            ReduceSchAux<LoopInfo, ReduceSch, IsStageOne, OpDag>>(sch, input, output, workspace, tiling)
     {
         for (uint64_t i = 0; i < Dim; i++) {
             iterAddr_[i].stride = this->tiling_->shape[i];
+        }
+        if constexpr (!IsStageOne) {
+            const auto* fullTiling = static_cast<const ReduceOpTilingDataNonContiguous*>(this->tiling_);
+            for (int32_t i = 0; i < Dim; i++) {
+                stride_[i] = fullTiling->stride[i];
+                dstStride_[i] = fullTiling->dstStride[i];
+            }
+        } else {
+            uint64_t stride = 1;
+            uint64_t dstStride = 1;
+            for (int32_t i = Dim - 1; i >= 0; --i) {
+                stride_[i] = stride;
+                dstStride_[i] = dstStride;
+                stride *= this->tiling_->shape[i];
+                if (IsAxisA<AuxBase::Pattern::FirstA>(i)) {
+                    dstStride *= this->tiling_->shape[i];
+                }
+            }
         }
     }
 
@@ -277,7 +303,7 @@ public:
         constexpr static auto burstLenAxis = Dim - 1;
         view.axis[0].start = iterAddr_[burstLenAxis].start;
         view.axis[0].srcStride = 1;
-        view.axis[0].repeat = GetBurstLen<LoopInfo, burstLenAxis>(iterAddr_, this->tiling_);
+        view.axis[0].repeat = iterAddr_[burstLenAxis].stride * GetStride(burstLenAxis);
         view.axis[0].idx = burstLenAxis;
         view.axis[0].isAxisA = IsAxisA<AuxBase::Pattern::FirstA>(view.axis[0].idx);
         view.axisSize = 1;
@@ -287,8 +313,8 @@ public:
             for (int32_t i = 1; i < Dim; i++) {
                 view.axisSize = i + 1;
                 view.axis[i].start = iterAddr_[axis - 1].start;
-                view.axis[i].repeat = GetRepeatStride<LoopInfo>(axis - 1, iterAddr_, this->tiling_,
-                                                                view.axis[i].srcStride);
+                view.axis[i].srcStride = GetStride(axis - 1);
+                view.axis[i].repeat = iterAddr_[axis - 1].stride;
                 view.axis[i].idx = axis - 1;
                 view.axis[i].isAxisA = IsAxisA<AuxBase::Pattern::FirstA>(view.axis[i].idx);
                 if (view.axis[i].idx <= 0) {
@@ -396,7 +422,7 @@ public:
     {
         uint64_t addrOffset = 0;
         for (int32_t i = axis; i < Dim; i += CONST2) {
-            addrOffset += iterAddr_[i].start * this->tiling_->dstStride[i];
+            addrOffset += iterAddr_[i].start * GetDstStride(i);
         }
         return addrOffset;
     }
@@ -407,7 +433,7 @@ public:
         uint64_t addrOffset = 0;
         if constexpr (LoopInfo->loopInnerACount > 0) {
             for (int32_t i = axis; i < Dim; i += CONST2) {
-                addrOffset += iterAddr_[i].start * this->tiling_->dstStride[i];
+                addrOffset += iterAddr_[i].start * GetDstStride(i);
             }
         }
 

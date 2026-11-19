@@ -25,15 +25,13 @@ template <typename T>
 class ReduceTensorEmpty {
 public:
     template <class... Args>
-    __aicore__ inline explicit ReduceTensorEmpty(const ReduceOpTilingData* tilingData, GlobalTensor<uint8_t>* output,
-                                                 TPipe* pipeIn, Args... args)
+    __aicore__ inline explicit ReduceTensorEmpty(const ReduceOpTilingDataCommon* tilingData,
+                                                 GlobalTensor<uint8_t>* output, Args... args)
     {
         tiling_ = tilingData;
         bufferSize_ = tiling_->basicBlock == 0 ? bufferSize_ : tiling_->basicBlock;
+        bufferSize_ = (bufferSize_ + UB_SIZE - 1) / UB_SIZE * UB_SIZE;
         output_ = output;
-
-        pipeIn->InitBuffer(dupTempBuf_, UB_SIZE);
-        pipeIn->InitBuffer(vecQue_, BUFFER_NUM, bufferSize_);
         InitValue(args...);
     };
 
@@ -49,7 +47,7 @@ private:
         if constexpr (IsSameType<T, T1>::value) {
             value_ = value;
         } else {
-            auto tempBuf = dupTempBuf_.Get<T1>();
+            LocalTensor<T1> tempBuf(TPosition::VECCALC, 0, UB_SIZE / sizeof(T1));
             Duplicate<T1>(tempBuf, value, UB_SIZE / sizeof(T1));
             auto tempCastBuf = tempBuf.template ReinterpretCast<T>();
             if constexpr (IsSameType<T, bfloat16_t>::value) {
@@ -57,7 +55,7 @@ private:
             } else {
                 Cast(tempCastBuf, tempBuf, RoundMode::CAST_NONE, 1);
             }
-            event_t eventIdVToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
+            event_t eventIdVToS = static_cast<event_t>(EVENT_ID0);
             SetFlag<HardEvent::V_S>(eventIdVToS);
             WaitFlag<HardEvent::V_S>(eventIdVToS);
             value_ = tempCastBuf.GetValue(0);
@@ -69,13 +67,11 @@ private:
 private:
     constexpr static uint32_t UB_SIZE = Ops::Base::GetUbBlockSize();
     constexpr static int32_t BUFFER_NUM = 2;
-    const ReduceOpTilingData* tiling_;
+    const ReduceOpTilingDataCommon* tiling_;
 
     GlobalTensor<uint8_t>* output_;
-    TBuf<TPosition::VECCALC> dupTempBuf_;
-    TQueBind<QuePosition::VECIN, QuePosition::VECOUT, BUFFER_NUM> vecQue_;
 
-    int64_t bufferSize_ = 64 * 1024;
+    uint32_t bufferSize_ = 64 * 1024;
     uint64_t loopStartIdx_ = 0;
     uint64_t loopEndIdx_ = 0;
     T value_ = 0;
@@ -103,23 +99,32 @@ template <typename T>
 __aicore__ inline void ReduceTensorEmpty<T>::ProcessPerCore()
 {
     int64_t copyElementNum = tiling_->ubFactorA;
+    int64_t ping = 0;
+    SetFlag<HardEvent::MTE3_V>(EVENT_ID0);
+    SetFlag<HardEvent::MTE3_V>(EVENT_ID1);
     for (uint64_t loopIdx = loopStartIdx_; loopIdx < loopEndIdx_; loopIdx++) {
         if (loopIdx == tiling_->factorATotalCnt - 1) {
             copyElementNum = tiling_->outSize - (tiling_->factorATotalCnt - 1) * tiling_->ubFactorA;
         }
+        event_t evt = (ping == 0) ? EVENT_ID0 : EVENT_ID1;
+        uint32_t offset = ping * bufferSize_;
+        LocalTensor<T> bindLocalIn(TPosition::VECIN, offset, bufferSize_ / sizeof(T));
+        LocalTensor<T> bindLocalOut(TPosition::VECOUT, offset, bufferSize_ / sizeof(T));
 
-        auto bindLocalIn = vecQue_.AllocTensor<T>();
+        WaitFlag<HardEvent::MTE3_V>(evt);
         copyOutParams_.blockLen = copyElementNum * sizeof(T);
         Duplicate<T>(bindLocalIn, value_, copyElementNum);
-        vecQue_.EnQue<QuePosition::VECCALC, QuePosition::VECOUT>(bindLocalIn);
+        SetFlag<HardEvent::V_MTE3>(evt);
+        WaitFlag<HardEvent::V_MTE3>(evt);
 
-        auto bindLocalOut = vecQue_.DeQue<QuePosition::VECCALC, QuePosition::VECOUT, T>();
         GlobalTensor<T> globalTensor;
         globalTensor.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(output_[0].GetPhyAddr(0)));
         DataCopyPad(globalTensor[loopIdx * tiling_->ubFactorA], bindLocalOut, copyOutParams_);
-
-        vecQue_.FreeTensor(bindLocalOut);
+        SetFlag<HardEvent::MTE3_V>(evt);
+        ping ^= 1;
     }
+    WaitFlag<HardEvent::MTE3_V>(EVENT_ID0);
+    WaitFlag<HardEvent::MTE3_V>(EVENT_ID1);
 }
 
 } // namespace ReduceOpTmpl

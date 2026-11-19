@@ -216,12 +216,13 @@ void ReduceOpTiling::SetTilingDataBatchInvariant(const uint64_t* shape)
                     OP_LOGE(context_->GetNodeName(), "Failed to set ScheduleMode!"), return);
     }
 
+    auto* fullTilingData = static_cast<ReduceOpTilingDataNonContiguous*>(tilingData_);
     for (int32_t i = 0; i < MAX_DIM; i++) {
         tilingData_->shape[i] = shape[i];
-        tilingData_->stride[i] = viewStride_[i];
-        tilingData_->sliceNum[i] = sliceNum_[i];
-        tilingData_->sliceShape[i] = sliceShape_[i];
-        tilingData_->sliceStride[i] = sliceStride_[i];
+        fullTilingData->stride[i] = viewStride_[i];
+        fullTilingData->sliceNum[i] = sliceNum_[i];
+        fullTilingData->sliceShape[i] = sliceShape_[i];
+        fullTilingData->sliceStride[i] = sliceStride_[i];
     }
 
     tilingData_->useNddma = IsUseNddma<Pattern>(shape);

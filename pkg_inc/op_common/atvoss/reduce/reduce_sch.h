@@ -116,8 +116,7 @@ private:
     }
 
 private:
-    const ReduceOpTilingData* tiling_;
-    TPipe* pipeIn_;
+    const ReduceOpTilingDataCommon* tiling_;
     constexpr static int32_t PRE_MTE2_NUM_TOTAL = GetPreMte2Num();
     constexpr static int32_t PRE_MTE3_NUM_TOTAL = GetPreMte3Num();
     constexpr static int32_t PRE_TEMP_CALC_NUM = GetPreTempCalcNum();
@@ -140,7 +139,6 @@ private:
     LocalTensor<uint8_t> postBufPool_;
     LocalTensor<uint8_t> resBuf_;
     LocalTensor<uint8_t> cache_;
-    TBuf<TPosition::VECCALC> buf_;
     int32_t preBufSize_ = 0;
     int32_t postBufSize_ = 0;
     int32_t resBufSize_ = 0;
@@ -175,13 +173,21 @@ protected:
     }
 
 public:
-    __aicore__ inline explicit ReduceSch(const ReduceOpTilingData* tiling) { tiling_ = tiling; };
+    __aicore__ inline explicit ReduceSch(const ReduceOpTilingDataCommon* tiling) { tiling_ = tiling; };
 
+    // 兼容旧接口：调度器已改为静态 LocalTensor，不再持有/使用 TPipe。
+    // 保留该重载使存量算子无需修改 Init 调用。
     template <class... Args>
     __aicore__ inline void Init(TPipe* pipeIn, Args... args)
     {
+        (void)pipeIn;
+        Init(args...);
+    }
+
+    template <class... Args>
+    __aicore__ inline void Init(Args... args)
+    {
         static_assert(BUF_LEVEL != MemLevel::LEVEL_0, "Buffer Level should be in [1, 2,]");
-        pipeIn_ = pipeIn;
         InitArgsInput<0>(args...);
         if constexpr (CheckInit<ReduceOp>(0)) {
             reduceOp_->Init(args...);
@@ -202,18 +208,18 @@ public:
                 PRE_MTE2_NUM_TOTAL, PRE_TEMP_CALC_NUM, PRE_MTE3_NUM_TOTAL, POST_MTE2_NUM, POST_TEMP_CALC_NUM,
                 POST_MTE3_NUM, preBufSize_, postBufSize_, resBufSize_);
 
-        pipeIn->InitBuffer(buf_, preBufSize_ + postBufSize_ + resBufSize_ + CACHE_BUF_SIZE);
-        preBufPool_ = buf_.Get<uint8_t>();
-        postBufPool_ = preBufPool_[preBufSize_];
-        resBuf_ = preBufPool_[preBufSize_ + postBufSize_];
-        cache_ = preBufPool_[preBufSize_ + postBufSize_ + resBufSize_];
+        LocalTensor<uint8_t> ubPool(TPosition::VECCALC, 0, preBufSize_ + postBufSize_ + resBufSize_ + CACHE_BUF_SIZE);
+        preBufPool_ = ubPool;
+        postBufPool_ = ubPool[preBufSize_];
+        resBuf_ = ubPool[preBufSize_ + postBufSize_];
+        cache_ = ubPool[preBufSize_ + postBufSize_ + resBufSize_];
     }
 
     template <class... Args>
     __aicore__ inline void ProcessEmpty(Args... args)
     {
         using OpEmpty = ReduceTensorEmpty<OutDType>;
-        OpEmpty op(tiling_, output_, pipeIn_, args...);
+        OpEmpty op(tiling_, output_, args...);
         op.Process();
     }
 
@@ -221,7 +227,7 @@ public:
     __aicore__ inline void ProcessMove(Args... args)
     {
         using OpMove = ReduceTensorMove<InDType>;
-        OpMove op(tiling_, input_, output_, pipeIn_);
+        OpMove op(tiling_, input_, output_);
         op.Process();
     }
 
@@ -326,11 +332,13 @@ public:
 
     __aicore__ inline void SetGroupTilingNonContiguous(ReduceOpTilingData& groupTiling)
     {
+        const auto* fullTiling = static_cast<const ReduceOpTilingDataNonContiguous*>(tiling_);
         groupTiling.sliceNum[0] = 1;
         groupTiling.sliceNum[1] = 1;
-        groupTiling.sliceShape[0] = tiling_->groupR;
-        groupTiling.sliceShape[1] = tiling_->outSize;
-        groupTiling.sliceStride[0] = Ops::Base::CeilAlign(tiling_->outSize, static_cast<uint64_t>(ELEMENT_ONE_REPEAT));
+        groupTiling.sliceShape[0] = fullTiling->groupR;
+        groupTiling.sliceShape[1] = fullTiling->outSize;
+        groupTiling.sliceStride[0] = Ops::Base::CeilAlign(fullTiling->outSize,
+                                                          static_cast<uint64_t>(ELEMENT_ONE_REPEAT));
         groupTiling.sliceStride[1] = 1;
     }
 

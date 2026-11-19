@@ -303,15 +303,19 @@ void ReduceOpTiling::PrintTilingData()
             tilingData_->outSize, tilingData_->basicBlock, tilingData_->resultBlock, context_->GetBlockDim(),
             tilingData_->useNddma, tilingData_->meanVar);
 
-    OP_LOGI(
-        context_,
-        "TilingData: shape is:%s, stride is:%s, dstStride is:%s, sliceNum is:%s, sliceShape is:%s, sliceStride is:%s",
-        ReduceOpTmpl::VectorToString(tilingData_->shape, MAX_DIM).c_str(),
-        ReduceOpTmpl::VectorToString(tilingData_->stride, MAX_DIM).c_str(),
-        ReduceOpTmpl::VectorToString(tilingData_->dstStride, MAX_DIM).c_str(),
-        ReduceOpTmpl::VectorToString(tilingData_->sliceNum, MAX_DIM).c_str(),
-        ReduceOpTmpl::VectorToString(tilingData_->sliceShape, MAX_DIM).c_str(),
-        ReduceOpTmpl::VectorToString(tilingData_->sliceStride, MAX_DIM).c_str());
+    OP_LOGI(context_, "TilingData: shape is:%s",
+            ReduceOpTmpl::VectorToString(tilingData_->shape, MAX_DIM).c_str());
+    if (useCompactTiling_) {
+        return;
+    }
+    const auto* tilingData = static_cast<const ReduceOpTilingDataNonContiguous*>(tilingData_);
+    OP_LOGI(context_, "TilingData: stride is:%s, dstStride is:%s",
+            ReduceOpTmpl::VectorToString(tilingData->stride, MAX_DIM).c_str(),
+            ReduceOpTmpl::VectorToString(tilingData->dstStride, MAX_DIM).c_str());
+    OP_LOGI(context_, "TilingData: sliceNum is:%s, sliceShape is:%s, sliceStride is:%s",
+            ReduceOpTmpl::VectorToString(tilingData->sliceNum, MAX_DIM).c_str(),
+            ReduceOpTmpl::VectorToString(tilingData->sliceShape, MAX_DIM).c_str(),
+            ReduceOpTmpl::VectorToString(tilingData->sliceStride, MAX_DIM).c_str());
 }
 
 uint64_t ReduceOpTiling::Ratio()
@@ -363,13 +367,6 @@ ge::graphStatus ReduceOpTiling::ParamCheck(ReduceOpInputParam& opInput)
 
 ge::graphStatus ReduceOpTiling::PreProcessOptionalParam()
 {
-    if (tilingData_ == nullptr) {
-        tilingData_ = context_->GetTilingData<ReduceOpTilingData>();
-        OP_CHECK_NULL_WITH_CONTEXT(context_, tilingData_);
-    }
-    OP_CHECK_IF((memset_s(tilingData_, sizeof(ReduceOpTilingData), 0, sizeof(ReduceOpTilingData)) != EOK),
-                OP_LOGE(context_, "memset tilingdata failed"), return ge::GRAPH_FAILED);
-
     if (opInput_.dimStrides.empty()) {
         size_t shapeSize = opInput_.shape.size();
         opInput_.dimStrides.resize(shapeSize);
@@ -379,6 +376,21 @@ ge::graphStatus ReduceOpTiling::PreProcessOptionalParam()
             stride = stride * opInput_.shape[i];
         }
     }
+
+    if (tilingData_ == nullptr) {
+        isContiguous_ = CheckIsContiguous(opInput_);
+        useCompactTiling_ = compactContiguousTiling_ && isContiguous_ && !tilingKey_.batchInvariant;
+        if (useCompactTiling_) {
+            tilingData_ = context_->GetTilingData<ReduceOpTilingDataContiguous>();
+        } else {
+            tilingData_ = context_->GetTilingData<ReduceOpTilingDataNonContiguous>();
+        }
+        OP_CHECK_NULL_WITH_CONTEXT(context_, tilingData_);
+    }
+    size_t tilingDataSize = useCompactTiling_ ? sizeof(ReduceOpTilingDataContiguous) :
+                                                sizeof(ReduceOpTilingDataNonContiguous);
+    OP_CHECK_IF((memset_s(tilingData_, tilingDataSize, 0, tilingDataSize) != EOK),
+                OP_LOGE(context_, "memset tilingdata failed"), return ge::GRAPH_FAILED);
 
     if (compileInfo_ == nullptr) {
         compileInfoPtr_ = std::make_unique<ReduceOpCompileInfo>();
@@ -1137,10 +1149,15 @@ void ReduceOpTiling::SetTilingData(const uint64_t* shape)
     }
     for (int32_t i = 0; i < MAX_DIM; i++) {
         tilingData_->shape[i] = shape[i];
-        tilingData_->stride[i] = viewStride_[i];
-        tilingData_->sliceNum[i] = sliceNum_[i];
-        tilingData_->sliceShape[i] = sliceShape_[i];
-        tilingData_->sliceStride[i] = sliceStride_[i];
+    }
+    if (!useCompactTiling_) {
+        auto* fullTilingData = static_cast<ReduceOpTilingDataNonContiguous*>(tilingData_);
+        for (int32_t i = 0; i < MAX_DIM; i++) {
+            fullTilingData->stride[i] = viewStride_[i];
+            fullTilingData->sliceNum[i] = sliceNum_[i];
+            fullTilingData->sliceShape[i] = sliceShape_[i];
+            fullTilingData->sliceStride[i] = sliceStride_[i];
+        }
     }
     tilingData_->basicBlock = basicBlock_;
     tilingData_->resultBlock = resultBlock_;
@@ -1210,8 +1227,11 @@ void ReduceOpTiling::ComputeStride(const uint64_t* shape)
 {
     uint64_t s = 1UL;
     uint64_t ds = 1UL;
+    auto* fullTilingData = useCompactTiling_ ? nullptr : static_cast<ReduceOpTilingDataNonContiguous*>(tilingData_);
     for (int32_t dim = Pattern::Dim - 1; dim > -1; dim--) {
-        tilingData_->dstStride[dim] = ds;
+        if (fullTilingData != nullptr) {
+            fullTilingData->dstStride[dim] = ds;
+        }
         s *= shape[dim];
         if (IsAxisA<Pattern>(dim)) {
             ds *= shape[dim];

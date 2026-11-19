@@ -22,13 +22,15 @@ namespace ReduceOpTmpl {
 template <typename T>
 class ReduceTensorMove {
 public:
-    __aicore__ inline ReduceTensorMove(const ReduceOpTilingData* tilingData, GlobalTensor<uint8_t>* input,
-                                       GlobalTensor<uint8_t>* output, TPipe* pipeIn)
+    __aicore__ inline ReduceTensorMove(const ReduceOpTilingDataCommon* tilingData, GlobalTensor<uint8_t>* input,
+                                       GlobalTensor<uint8_t>* output)
     {
         tiling_ = tilingData;
         input_ = input;
         output_ = output;
-        pipeIn->InitBuffer(vecQue_, BUFFER_NUM, tiling_->basicBlock);
+        constexpr uint32_t UB_SIZE = Ops::Base::GetUbBlockSize();
+        bufferSize_ = static_cast<uint32_t>(tiling_->basicBlock);
+        bufferSize_ = (bufferSize_ + UB_SIZE - 1) / UB_SIZE * UB_SIZE;
     };
 
     __aicore__ inline void Process();
@@ -40,9 +42,9 @@ private:
     GlobalTensor<uint8_t>* input_;
     GlobalTensor<uint8_t>* output_;
     constexpr static int32_t BUFFER_NUM = 2;
-    TQueBind<QuePosition::VECIN, QuePosition::VECOUT, BUFFER_NUM> vecQue_;
 
-    const ReduceOpTilingData* tiling_;
+    const ReduceOpTilingDataCommon* tiling_;
+    uint32_t bufferSize_ = 0;
     int64_t tailLoopLen_ = 0;
     int64_t addrOffset_ = 0;
 
@@ -75,21 +77,30 @@ __aicore__ inline void ReduceTensorMove<T>::ProcessPerCore()
     GlobalTensor<T> outputGM;
     outputGM.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(output_[0].GetPhyAddr(0)));
     int64_t copyElementNum = tiling_->ubFactorA;
+    int64_t ping = 0;
+    SetFlag<HardEvent::MTE3_MTE2>(EVENT_ID0);
+    SetFlag<HardEvent::MTE3_MTE2>(EVENT_ID1);
     for (int64_t loopIdx = loopStartIdx_; loopIdx < loopEndIdx_; loopIdx++) {
         if (loopIdx == tiling_->factorATotalCnt - 1 && tailLoopLen_ != 0) {
             copyElementNum = tailLoopLen_;
         }
+        event_t evt = (ping == 0) ? EVENT_ID0 : EVENT_ID1;
+        uint32_t offset = ping * bufferSize_;
+        LocalTensor<T> bindLocalIn(TPosition::VECIN, offset, bufferSize_ / sizeof(T));
+        LocalTensor<T> bindLocalOut(TPosition::VECOUT, offset, bufferSize_ / sizeof(T));
 
-        auto bindLocalIn = vecQue_.AllocTensor<T>();
+        WaitFlag<HardEvent::MTE3_MTE2>(evt);
         copyOutParams_.blockLen = copyElementNum * sizeof(T);
         DataCopyPad(bindLocalIn, inputGM[loopIdx * tiling_->ubFactorA], copyOutParams_, padParams_);
-        vecQue_.EnQue(bindLocalIn);
+        SetFlag<HardEvent::MTE2_MTE3>(evt);
+        WaitFlag<HardEvent::MTE2_MTE3>(evt);
 
-        auto bindLocalOut = vecQue_.DeQue<T>();
         DataCopyPad(outputGM[loopIdx * tiling_->ubFactorA], bindLocalOut, copyOutParams_);
-
-        vecQue_.FreeTensor(bindLocalOut);
+        SetFlag<HardEvent::MTE3_MTE2>(evt);
+        ping ^= 1;
     }
+    WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID0);
+    WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID1);
 }
 
 } // namespace ReduceOpTmpl

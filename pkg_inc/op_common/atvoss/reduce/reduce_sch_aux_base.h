@@ -64,7 +64,7 @@ public:
 
     uint64_t eleNum_ = 0;
 
-    const ReduceOpTilingData* tiling_;
+    const ReduceOpTilingDataCommon* tiling_;
     ReduceSch* sch_;
     ReduceOp* op_;
 
@@ -84,7 +84,7 @@ public:
 
 public:
     __aicore__ inline ReduceSchAuxBase(ReduceSch* sch, GlobalTensor<uint8_t>* input, GlobalTensor<uint8_t>* output,
-                                       GlobalTensor<uint8_t>* workspace, const ReduceOpTilingData* tiling)
+                                       GlobalTensor<uint8_t>* workspace, const ReduceOpTilingDataCommon* tiling)
     {
         sch_ = sch;
         input_ = input;
@@ -147,7 +147,7 @@ public:
             }
         } else {
             constexpr int32_t axis = LoopInfo->loopInnerAAxis[start];
-            uint64_t shape = tiling_->sliceShape[axis];
+            uint64_t shape = static_cast<Derived*>(this)->GetSliceShape(axis);
             if constexpr (start + 1 == end) { // 为最内轴
                 uint64_t loopSize = shape / ubFactorA_;
                 uint64_t tail = shape - loopSize * ubFactorA_;

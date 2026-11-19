@@ -835,7 +835,7 @@ public:
         uint32_t totalPaddingLen = noPaddingLen + paddingLen;
         int64_t blockElems = vLElems * dimR;
 
-        int32_t eventIDSToV = static_cast<int32_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
+        int32_t eventIDSToV = static_cast<int32_t>(EVENT_ID0);
         SetFlag<HardEvent::S_V>(eventIDSToV);
         WaitFlag<HardEvent::S_V>(eventIDSToV);
 
