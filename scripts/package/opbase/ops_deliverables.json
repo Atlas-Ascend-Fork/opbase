@@ -112,6 +112,7 @@
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-math.json",
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-nn.json",
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-oam.json",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-ras.json",
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-transformer.json",
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-legacy.json"
             ]
