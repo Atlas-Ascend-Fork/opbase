@@ -18,7 +18,7 @@ void SetViewStrides(op::Strides &&strides)
 
 | 参数 | 输入/输出 | 说明 |
 | --- | --- | --- |
-| strides | 输入 | 类型为FVector<int64_t>，表示aclTensor每一维的stride大小，取值不支持负数。 |
+| strides | 输入 | 类型为op::Strides，表示aclTensor每一维的stride大小，取值不支持负数。 |
 
 ## 返回值说明
 

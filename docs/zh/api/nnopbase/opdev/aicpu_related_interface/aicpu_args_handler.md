@@ -32,12 +32,12 @@
 | GetDeviceCacheAddr(void *&deviceAddr, aclOpExecutor*executor, const uint64_t deviceCacheOffset) | 获取预留的device侧内存地址。 |
 | AicpuCCArgsHandler(const std::string &opType, const std::string &nodeName, const uint32_t ioNum, const bool needDeviceExt) | AI CPU CANN算子框架参数管理类。 |
 | AicpuArgsHandler(opType, nodeName, ioNum, needDeviceExt) | AI CPU框架用于构造AI CPU opTask时的辅助类。 |
-| GenCCArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, std::string &taskInfo) | 生成CANN算子args中nodedef及head信息。 |
+| GenCCArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, std::string &taskInfo) | 生成CANN算子args中的AicpuParamHead、IO 地址及nodedef信息。 |
 | BuildCCArgs(const std::string &argData, const std::string &kernelName, const std::string &soName, const size_t extInfoSize) | 封装CANN算子args中参数。 |
 | SetHostArgs(const std::string &argData, const size_t extInfoSize) | 设置args中内存的地址和长度信息。 |
 | SetOffsetArgs() | 设置args中偏移值。 |
 | AicpuTfArgsHandler(const std::string &opType, const std::string &nodeName, const uint32_t ioNum, const bool needDeviceExt) | AI CPU TensorFlow算子框架参数管理类。 |
-| GenTfArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, STR_FWK_OP_KERNEL &fwkOpKernel, std::string &taskInfo) | 生成CANN算子args中nodedef及head信息。 |
+| GenTfArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, STR_FWK_OP_KERNEL &fwkOpKernel, std::string &taskInfo) | 生成TensorFlow算子args中的KernelRunParam及nodedef信息，并填充STR_FWK_OP_KERNEL。 |
 | BuildTfArgs(STR_FWK_OP_KERNEL &fwkOpKernel, const std::string &taskInfo, const size_t extInfoSize) | 封装Tensorflow算子args中参数。 |
 | GenNodeDef(const FVector<const aclTensor *> &inputs, const AicpuAttrs &attrs, ge::Buffer &nodeDefBytes) | 生成算子的描述符信息，包含输入、输出shape及属性等信息。 |
 | UpdateKernelId() | 更新args中的Kernel字段，用于匹配device侧的Kernel Cache。 |

@@ -31,7 +31,7 @@ void SetStorageShape(const op::Shape &shape) const
 ```cpp
 // 将input的StorageShape设置为[1, 2, 3, 4, 5]
 void Func(aclTensor *input) {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }

@@ -43,7 +43,7 @@ The input pointer cannot be null.
 ```cpp
 // Allocate an int64 ND tensor with shape [1, 2, 3, 4, 5].
 void Func(aclOpExecutor *executor) {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }

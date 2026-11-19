@@ -7,15 +7,14 @@
 | 接口定义 | 功能说明 |
 | --- | --- |
 | VisitTupleElem(const F &func, const std::tuple<Ts...> &tp) | 遍历OpArgBase的所有元素，调用func。 |
-| VisitTupleElemNoReturn(const F &func, const std::tuple<Ts...> &tp) | 遍历OpArgBase的所有元素，调用func。 |
+| VisitTupleElemNoReturn(const F &func, const std::tuple<Ts...> &tp) | 遍历OpArgBase的所有元素，调用func，不返回值。 |
 | VisitTupleElemAt(size_t idx, const F &func, const std::tuple<Ts...> &tp) | 对OpArgBase给定idx的元素，调用func。 |
 | OpArgBase(const std::tuple<T...> &arg) | OpArgBase构造函数。 |
 | OpArgBase(std::tuple<T...> &&arg) | OpArgBase构造函数。 |
 | OpArgBase() | OpArgBase构造函数。 |
 | Size() | 获取OpArgBase的元素个数。 |
 | VisitBy(const F &func) | 遍历OpArgBase的所有元素，调用func。 |
-| VisitTupleElem(const F &func, const std::tuple<Ts...> &arg_) | 遍历OpArgBase的所有元素，调用func。 |
-| VisitByNoReturn(const F &func) | 遍历OpArgBase的所有元素，调用func。 |
+| VisitByNoReturn(const F &func) | 遍历OpArgBase的所有元素，调用func，不返回值。 |
 | VisitAt(size_t idx, const F &func) | 对OpArgBase给定idx的元素，调用func。 |
 | OpArgTypeStr(int argType) | 将argType转换为字符串。 |
 | ExtractOpArgType(const T &t, const Ts &...ts) | 获取ts中类型为V的元素。 |
@@ -51,7 +50,7 @@
 | OpArgValue(const T &value) | 使用const T&类型value构造OpArgValue并赋值。 |
 | OpArg() | OpArg的构造函数。 |
 | OpArgList() | OpArgList的构造函数。 |
-| OpArgList(OpArg *args\_, size_t count_) | 用给定的args创建OpArgList。 |
+| OpArgList(OpArg *args\_, size_t count_) | 用给定的 OpArg 数组 `args_` 和元素个数 `count_` 创建 `OpArgList`。 |
 | OpArgContext() | OpArgContext的构造函数。 |
 | GetOpArg(OpArgDef type) | 用给定的type获取OpArgList。 |
 | ContainsOpArgType(OpArgDef type) | 判断OpArgContext是否包含指定类型的OpArgList。 |

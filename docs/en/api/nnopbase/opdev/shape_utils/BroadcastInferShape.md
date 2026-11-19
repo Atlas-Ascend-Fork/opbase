@@ -31,13 +31,13 @@ None
 ```cpp
 // Generate two shape objects with shapes [2, 1] and [2, 10] to obtain the broadcast shape.
 void Func() {
-    gert::Shape shapeA;
+    op::Shape shapeA;
     shapeA.AppendDim(2);
     shapeA.AppendDim(1);
-    gert::Shape shapeB;
+    op::Shape shapeB;
     shapeB.AppendDim(2);
     shapeB.AppendDim(10);
-    gert::Shape shapeBrc;
+    op::Shape shapeBrc;
     bool isBrc = BroadcastInferShape(shapeA, shapeB, shapeBrc);
 }
 ```

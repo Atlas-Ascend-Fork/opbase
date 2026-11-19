@@ -14,8 +14,7 @@ The APIs described in this section are reserved and may be changed or deprecated
 | OpArgBase() | Indicates the `OpArgBase` constructor.|
 | Size() | Obtains the number of elements in `OpArgBase`.|
 | VisitBy(const F &func) | Traverses all elements of `OpArgBase` and calls `func`.|
-| VisitTupleElem(func, arg_) | Traverses all elements of `OpArgBase` and calls `func`.|
-| VisitByNoReturn(const F &func) | Calls `func` for the element with the specified `idx` in `OpArgBase`.|
+| VisitByNoReturn(const F &func) | Traverses all elements of `OpArgBase` and calls `func` without returning a value.|
 | VisitAt(size_t idx, const F &func) | Calls `func` for the element with the specified `idx` in `OpArgBase`.|
 | OpArgTypeStr(int argType) | Converts `argType` to a string.|
 | ExtractOpArgType(const T &t, const Ts &...ts) | Obtains the elements of the V type from `ts`.|
@@ -29,8 +28,8 @@ The APIs described in this section are reserved and may be changed or deprecated
 | OpArgValue(const std::string *value) | Constructs `OpArgValue` using a value of the `const string` type and assigns a value to it.|
 | OpArgValue(std::string &value) | Constructs `OpArgValue` using a value of the `string&` type and assigns a value to it.|
 | OpArgValue(const std::string &value) | Constructs `OpArgValue` using a value of the `const string&` type and assigns a value to it.|
-| OpArgValue(const char *value) | Constructs `OpArgValue` using a value of the `const aclTensor` type and assigns a value to it.|
-| OpArgValue(char *value) | Constructs `OpArgValue` using a value of the `const char` type and assigns a value to it.|
+| OpArgValue(const char *value) | Constructs `OpArgValue` using a value of the `const char` type and assigns a value to it.|
+| OpArgValue(char *value) | Constructs `OpArgValue` using a value of the `char` type and assigns a value to it.|
 | OpArgValue(std::vector<std::tuple<void *, const aclTensor*>> *value) | Constructs `OpArgValue` using a value of the `vector` type and assigns a value to it.|
 | OpArgValue(const std::vector<std::tuple<void*, const aclTensor*>> *value) | Constructs `OpArgValue` using a value of the `const vector` type and assigns a value to it.|
 | OpArgValue(double value) | Constructs `OpArgValue` using a value of the `double` type and assigns a value to it.|
@@ -51,10 +50,10 @@ The APIs described in this section are reserved and may be changed or deprecated
 | OpArgValue(const T &value) | Constructs `OpArgValue` using a value of the `const T& type` and assigns a value to it.|
 | OpArg() | Indicates the `OpArg` constructor.|
 | OpArgList() | Indicates the `OpArgList` constructor.|
-| OpArgList(OpArg *args\_, size_t count_) | Creates an `OpArgList` with the given `args`.|
+| OpArgList(OpArg *args\_, size_t count_) | Creates an `OpArgList` from the given `OpArg` array `args_` and element count `count_`.|
 | OpArgContext() | Indicates the `OpArgContext` constructor.|
 | GetOpArg(OpArgDef type) | Obtains an `OpArgList` with the given type.|
-| ContainsOpArgType(OpArgDef type) | Checks whether `OpArgContext` contains an `OpArgList` of the execution type.|
+| ContainsOpArgType(OpArgDef type) | Checks whether `OpArgContext` contains an `OpArgList` of the specified type.|
 | AppendOpWorkspaceArg(aclTensorList *tensorList) | Adds the given `TensorList` to `OpArgContext` as a workspace parameter.|
 | AppendOpArg([[maybe_unused]] size_t idx, const aclTensor *tensor, OpArg*&currArg) | Adds the given `const aclTensor` parameter to `OpArgList`.|
 | AppendOpArg([[maybe_unused]] size_t idx, aclTensor *tensor, OpArg*&currArg) | Adds the given `aclTensor` parameter to `OpArgList`.|

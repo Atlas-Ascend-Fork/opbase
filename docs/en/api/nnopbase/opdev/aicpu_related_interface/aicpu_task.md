@@ -13,7 +13,7 @@ The APIs described in this section are reserved and may be changed or deprecated
 | AppendTensor(aclOpExecutor *executor, const aclTensorList*arg, V &l) | Inserts an `aclTensorList` pointer into a container. This is a template function.|
 | CreateTensorListImpl(aclOpExecutor *executor, OpArg &arg, TensorList &l) | Creates a tensor list from input `args`. This is a template function.|
 | CreateTensorList(aclOpExecutor *executor, OpArgList &t, TensorList &l) | Creates a tensor list.|
-| Append1Byte(uint8_t *buf, uint8_t src) | Appends one byte to the specified buffer.|
+| Append1Byte(uint8_t *buf, uint8_t src) | Appends one byte to the specified buffer and returns the next write position.|
 | AppendAttrForKey(const V &value, uint8_t *&key, size_t &keyLen) | Appends attribute information to the task key field. This is a template function.|
 | AppendAttrForKey(const std::string &value, uint8_t *&key, size_t &keyLen) | Appends `const string &` attribute information to the task key field.|
 | AppendAttrForKey(const std::string *value, uint8_t*&key, size_t &keyLen) | Appends `const string` pointer attribute information to the task key field.|

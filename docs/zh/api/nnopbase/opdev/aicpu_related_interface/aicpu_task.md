@@ -14,7 +14,7 @@
 | AppendTensor(aclOpExecutor *executor, const aclTensorList*arg, V &l) | 将aclTensorList指针塞入到容器中的模板函数。 |
 | CreateTensorListImpl(aclOpExecutor *executor, OpArg &arg, TensorList &l) | 从输入的args中创建Tensor列表的模板函数。 |
 | CreateTensorList(aclOpExecutor *executor, OpArgList &t, TensorList &l) | 创建Tensor列表。 |
-| Append1Byte(uint8_t *buf, uint8_t src) | 在指定的缓冲区后再拼接一个字节。 |
+| Append1Byte(uint8_t *buf, uint8_t src) | 将一字节追加到指定的缓冲区，并返回下一个写入位置。 |
 | AppendAttrForKey(const V &value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接属性信息的模板函数。 |
 | AppendAttrForKey(const std::string &value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接const string &属性信息的函数。 |
 | AppendAttrForKey(const std::string *value, uint8_t *&key, size_t &keyLen) | 向task key字段中拼接const string指针属性信息的函数。 |

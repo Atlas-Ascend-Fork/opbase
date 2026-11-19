@@ -44,7 +44,7 @@ aclTensor* AllocTensor(op::DataType dataType, op::Format storageFormat, op::Form
 ```cpp
 // 申请一个int64类型，shape为[1, 2, 3, 4, 5]的ND tensor
 void Func(aclOpExecutor *executor) {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }

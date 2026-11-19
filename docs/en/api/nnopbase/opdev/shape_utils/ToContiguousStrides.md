@@ -30,11 +30,11 @@ None
 ```cpp
 // Generate a shape object with shape information is [1, 2, 3, 4, 5] and generate its stride data.
 void Func() {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }
-    FVector<int64_t, 25> strides;
+    op::Strides strides;
     ToContiguousStrides(newShape, strides);
 }
 ```

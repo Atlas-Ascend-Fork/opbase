@@ -29,13 +29,13 @@
 | InitThreadLocalContext() | 初始化线程局部上下文信息。 |
 | AddInputTensorToThreadLocalCtx(const aclTensor *const t) | 线程局部上下文信息中增加input tensor信息。 |
 | AddInputTensorToThreadLocalCtx(aclTensor *const t) | 线程局部上下文信息中增加input tensor信息。 |
-| AddInputTensorToThreadLocalCtx([[maybe_unused]] T &t) | 线程局部上下文信息中增加input tensor信息。 |
+| AddInputTensorToThreadLocalCtx([[maybe_unused]] T &t) | 对非 `aclTensor`/`aclTensorList` 类型的入参不做处理；作为模板兜底重载，用于保证模板展开时的重载匹配。 |
 | AddInputTensorsToThreadLocalCtx(const std::tuple<Args...> &t) | 线程局部上下文信息中增加多个input tensor信息。 |
 | AddInputTensorToThreadLocalCtx(const aclTensorList *const t) | 线程局部上下文信息中增加多个input tensor信息。 |
 | AddInputTensorToThreadLocalCtx(aclTensorList *const t) | 线程局部上下文信息中增加多个input tensor信息。 |
 | AddOutputTensorToThreadLocalCtx(const aclTensor *const t) | 线程局部上下文信息中增加output tensor信息。 |
 | AddOutputTensorToThreadLocalCtx(aclTensor *const t) | 线程局部上下文信息中增加output tensor信息。 |
-| AddOutputTensorToThreadLocalCtx([[maybe_unused]] T &t) | 线程局部上下文信息中增加output tensor信息。 |
+| AddOutputTensorToThreadLocalCtx([[maybe_unused]] T &t) | 对非 `aclTensor`/`aclTensorList` 类型的入参不做处理；作为模板兜底重载，用于保证模板展开时的重载匹配。 |
 | AddOutputTensorsToThreadLocalCtx(const std::tuple<Args...> &t) | 线程局部上下文信息中增加多个output tensor信息。 |
 | AddOutputTensorToThreadLocalCtx(const aclTensorList *const t) | 线程局部上下文信息中增加多个output tensor信息。 |
 | AddOutputTensorToThreadLocalCtx(aclTensorList *const t) | 线程局部上下文信息中增加多个output tensor信息。 |

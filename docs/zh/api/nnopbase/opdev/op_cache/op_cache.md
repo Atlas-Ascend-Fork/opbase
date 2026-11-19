@@ -73,7 +73,7 @@
 | OpCacheValue(OpExecCache *cache, OpCacheKey &key) | OpCacheValue是aclnn cache在LRU（Least Recently Used）中的数据节点封装，该函数为其构造函数。 |
 | OpCacheValue(const OpCacheValue &value) | OpCacheValue是aclnn cache在LRU（Least Recently Used）中的数据节点封装，该函数为其构造函数。 |
 | OpCacheValue(OpCacheValue &&value) | OpCacheValue是aclnn cache在LRU（Least Recently Used）中的数据节点封装，该函数为其构造函数。 |
-| GetOpExecCache(uint64_t hash) | 通过hashkey获取一个aclnn cache。 |
-| GetOpExecCache(OpCacheKey &key) | 通过hashkey获取一个aclnn cache。 |
+| GetOpExecCache(uint64_t hash) | 通过 hash 值获取一个 aclnn cache。 |
+| GetOpExecCache(OpCacheKey &key) | 通过 OpCacheKey 获取一个 aclnn cache。 |
 | AddOpExecCache(OpExecCache *exec) | 向aclnn cache全局管理中，添加一个aclnn cache对象。 |
 | RemoveExecCache(OpExecCache *exec) | 在aclnn cache全局管理中，移除一个aclnn cache对象。 |

@@ -65,15 +65,15 @@ The APIs described in this section are reserved and may be changed or deprecated
 | DoSummaryProfiling(int index) | Reports the profiling summary during aclnn cache use.|
 | RestoreThreadLocal(int index) | Restores the current thread context during aclnn cache use.|
 | Run(void *workspaceAddr, const aclrtStream stream, const std::vector<void*> &tensors) | Runs a host API through the aclnn cache.|
-| CanUse() | Sets the availability status of the aclnn cache.|
-| SetUse() | Obtains the availability status of the aclnn cache.|
+| CanUse() | Obtains the availability status of the aclnn cache.|
+| SetUse() | Sets the availability status of the aclnn cache.|
 | GetShrinkList() | Obtains the current shrink list of the aclnn cache.|
 | GetStorageRelation() | Obtains the aclTensor memory equivalence table recorded in the aclnn cache.|
 | OpCacheValue() | Works as the constructor of `OpCacheValue`, which is the data node encapsulation of the aclnn cache in the least recently used (LRU).|
 | OpCacheValue(OpExecCache *cache, OpCacheKey &key) | Works as the constructor of `OpCacheValue`, which is the data node encapsulation of the aclnn cache in the least recently used (LRU).|
 | OpCacheValue(const OpCacheValue &value) | Works as the constructor of `OpCacheValue`, which is the data node encapsulation of the aclnn cache in the least recently used (LRU).|
 | OpCacheValue(OpCacheValue &&value) | Works as the constructor of `OpCacheValue`, which is the data node encapsulation of the aclnn cache in the least recently used (LRU).|
-| GetOpExecCache(uint64_t hash) | Obtains an aclnn cache by hashkey.|
-| GetOpExecCache(OpCacheKey &key) | Obtains an aclnn cache by hashkey.|
+| GetOpExecCache(uint64_t hash) | Obtains an aclnn cache by hash value.|
+| GetOpExecCache(OpCacheKey &key) | Obtains an aclnn cache by OpCacheKey.|
 | AddOpExecCache(OpExecCache *exec) | Adds an aclnn cache object to the global management of the aclnn cache.|
 | RemoveExecCache(OpExecCache *exec) | Removes an aclnn cache object to the global management of the aclnn cache.|

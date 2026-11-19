@@ -30,11 +30,11 @@ void ToContiguousStrides(const op::Shape &shape, op::Strides &strides)
 ```cpp
 // 生成一个shape信息为[1, 2, 3, 4, 5]的Shape对象，并生成它的stride数据。
 void Func() {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }
-    FVector<int64_t, 25> strides;
+    op::Strides strides;
     ToContiguousStrides(newShape, strides);
 }
 ```

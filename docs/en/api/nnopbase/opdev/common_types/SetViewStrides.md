@@ -18,7 +18,7 @@ void SetViewStrides(op::Strides &&strides)
 
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
-| strides | Input| Stride size of each `aclTensor` dimension. The type is `FVector<int64_t>`. The value cannot be a negative number.|
+| strides | Input| Stride size of each `aclTensor` dimension. The type is `op::Strides`. The value cannot be a negative number.|
 
 ## Returns
 

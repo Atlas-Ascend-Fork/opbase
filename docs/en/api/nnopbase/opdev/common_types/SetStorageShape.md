@@ -31,7 +31,7 @@ None
 ```cpp
 // Set StorageShape of the input to [1, 2, 3, 4, 5].
 void Func(aclTensor *input) {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }

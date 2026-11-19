@@ -29,7 +29,7 @@ void SetViewShape(const op::Shape &shape)
 ```cpp
 // 将input的ViewShape设置为[1, 2, 3, 4, 5]
 void Func(aclTensor *input) {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }

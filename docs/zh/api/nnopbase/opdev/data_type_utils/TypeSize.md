@@ -27,8 +27,8 @@ size_t TypeSize(DataType dataType)
 ## 调用示例
 
 ```cpp
-// 获取dtype的单个元素size大小
-void Func(const DataType dtype) {
-    size_t size = TypeSize(dtype);
+// 获取dataType的单个元素大小
+void Func(const DataType dataType) {
+    size_t size = TypeSize(dataType);
 }
 ```

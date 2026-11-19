@@ -29,13 +29,13 @@ The APIs described in this section are reserved and may be changed or deprecated
 | InitThreadLocalContext() | Initializes the local context of a thread.|
 | AddInputTensorToThreadLocalCtx(const aclTensor *const t) | Adds an input tensor to the local context of a thread.|
 | AddInputTensorToThreadLocalCtx(aclTensor *const t) | Adds an input tensor to the local context of a thread.|
-| AddInputTensorToThreadLocalCtx([[maybe_unused]] T &t) | Adds an input tensor to the local context of a thread.|
+| AddInputTensorToThreadLocalCtx([[maybe_unused]] T &t) | Does nothing for parameters of types other than `aclTensor` or `aclTensorList`; it is a template fallback overload used to keep overload resolution valid during template expansion.|
 | AddInputTensorsToThreadLocalCtx(const std::tuple<Args...> &t) | Adds multiple input tensors to the local context of a thread.|
 | AddInputTensorToThreadLocalCtx(const aclTensorList *const t) | Adds multiple input tensors to the local context of a thread.|
 | AddInputTensorToThreadLocalCtx(aclTensorList *const t) | Adds multiple input tensors to the local context of a thread.|
 | AddOutputTensorToThreadLocalCtx(const aclTensor *const t) | Adds an output tensor to the local context of a thread.|
 | AddOutputTensorToThreadLocalCtx(aclTensor *const t) | Adds an output tensor to the local context of a thread.|
-| AddOutputTensorToThreadLocalCtx([[maybe_unused]] T &t) | Adds an output tensor to the local context of a thread.|
+| AddOutputTensorToThreadLocalCtx([[maybe_unused]] T &t) | Does nothing for parameters of types other than `aclTensor` or `aclTensorList`; it is a template fallback overload used to keep overload resolution valid during template expansion.|
 | AddOutputTensorsToThreadLocalCtx(const std::tuple<Args...> &t) | Adds multiple output tensors to the local context of a thread.|
 | AddOutputTensorToThreadLocalCtx(const aclTensorList *const t) | Adds multiple output tensors to the local context of a thread.|
 | AddOutputTensorToThreadLocalCtx(aclTensorList *const t) | Adds multiple output tensors to the local context of a thread.|

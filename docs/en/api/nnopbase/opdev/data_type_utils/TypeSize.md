@@ -28,7 +28,7 @@ None
 
 ```cpp
 // Obtain the size of a single element of the specified data type.
-void Func(const DataType dtype) {
-    size_t size = TypeSize(dtype);
+void Func(const DataType dataType) {
+    size_t size = TypeSize(dataType);
 }
 ```

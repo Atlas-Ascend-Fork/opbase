@@ -32,12 +32,12 @@ The APIs described in this section are reserved and may be changed or deprecated
 | GetDeviceCacheAddr(void *&deviceAddr, aclOpExecutor*executor, const uint64_t deviceCacheOffset) | Obtains the address of reserved memory on the device.|
 | AicpuCCArgsHandler(const std::string &opType, const std::string &nodeName, const uint32_t ioNum, const bool needDeviceExt) | Indicates the class for managing AI CPU CANN framework parameters.|
 | AicpuArgsHandler(opType, nodeName, ioNum, needDeviceExt) | Indicates the auxiliary class used by the AI CPU framework to construct AI CPU opTask.|
-| GenCCArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, std::string &taskInfo) | Generates the nodedef and head information in args of the CANN operator.|
+| GenCCArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, std::string &taskInfo) | Generates the AicpuParamHead, I/O address, and nodedef information in args of the CANN operator.|
 | BuildCCArgs(const std::string &argData, const std::string &kernelName, const std::string &soName, const size_t extInfoSize) | Encapsulates parameters in args of the CANN operator.|
 | SetHostArgs(const std::string &argData, const size_t extInfoSize) | Sets the address and length of memory in args.|
 | SetOffsetArgs() | Sets the offset value in args.|
 | AicpuTfArgsHandler(const std::string &opType, const std::string &nodeName, const uint32_t ioNum, const bool needDeviceExt) | Indicates the class for managing AI CPU TensorFlow framework parameters.|
-| GenTfArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, STR_FWK_OP_KERNEL &fwkOpKernel, std::string &taskInfo) | Generates the nodedef and head information in args of the CANN operator.|
+| GenTfArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, STR_FWK_OP_KERNEL &fwkOpKernel, std::string &taskInfo) | Generates the KernelRunParam and nodedef information in args of the TensorFlow operator, and fills `STR_FWK_OP_KERNEL`.|
 | BuildTfArgs(STR_FWK_OP_KERNEL &fwkOpKernel, const std::string &taskInfo, const size_t extInfoSize) | Encapsulates parameters in args of the TensorFlow operator.|
 | GenNodeDef(const FVector<const aclTensor *> &inputs, const AicpuAttrs &attrs, ge::Buffer &nodeDefBytes) | Generates the operator description, including the input and output addresses and shapes.|
 | UpdateKernelId() | Updates the Kernel field in args to match the kernel cache on the device.|

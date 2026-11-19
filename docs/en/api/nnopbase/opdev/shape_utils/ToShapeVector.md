@@ -7,7 +7,7 @@ Extracts the dimension information from the input shape object to a ShapeVector 
 ## Prototype
 
 ```cpp
-FVector<int64_t, 25> ToShapeVector(const op::Shape &shape)
+op::ShapeVector ToShapeVector(const op::Shape &shape)
 ```
 
 ## Parameters
@@ -29,7 +29,7 @@ None
 ```cpp
 // Generate a shape object whose shape is [1, 2, 3, 4, 5] and convert it to an FVector.
 void Func() {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }

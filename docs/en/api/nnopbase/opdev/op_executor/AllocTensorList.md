@@ -30,7 +30,7 @@ The input pointer cannot be null.
 ```cpp
 // Initialize five aclTensors and encapsulate them into an aclTensorList.
 void Func(aclOpExecutor *executor) {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }

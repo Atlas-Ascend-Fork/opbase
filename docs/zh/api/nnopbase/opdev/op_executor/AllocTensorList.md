@@ -30,7 +30,7 @@ aclTensorList *AllocTensorList(const aclTensor *const *tensors, uint64_t size)
 ```cpp
 // 初始化5个aclTensor，并将它们组装为一个aclTensorList
 void Func(aclOpExecutor *executor) {
-    gert::Shape newShape;
+    op::Shape newShape;
     for (int64_t i = 1; i <= 5; i++) {
         newShape.AppendDim(i);
     }

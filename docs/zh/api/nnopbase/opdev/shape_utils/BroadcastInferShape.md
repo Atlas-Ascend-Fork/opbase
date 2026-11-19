@@ -31,13 +31,13 @@ bool BroadcastInferShape(const op::Shape &self, const op::Shape &other, op::Shap
 ```cpp
 // 生成shape为[2， 1]和[2, 10]的两个Shape对象，获取broadcast后的shape。
 void Func() {
-    gert::Shape shapeA;
+    op::Shape shapeA;
     shapeA.AppendDim(2);
     shapeA.AppendDim(1);
-    gert::Shape shapeB;
+    op::Shape shapeB;
     shapeB.AppendDim(2);
     shapeB.AppendDim(10);
-    gert::Shape shapeBrc;
+    op::Shape shapeBrc;
     bool isBrc = BroadcastInferShape(shapeA, shapeB, shapeBrc);
 }
 ```
