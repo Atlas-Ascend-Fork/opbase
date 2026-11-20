@@ -856,9 +856,17 @@ public:
 #else
         static NpuArch npuArch = GetCurrentPlatformInfo().GetCurNpuArch();
 #endif
-        bool needAlign = (npuArch == Ops::Base::DAV_2201 || npuArch == Ops::Base::DAV_3510) ? false : true;
-        MemsetVersion memsetVersion = (npuArch == Ops::Base::DAV_3510) ? MemsetVersion::MEMSET_V1_ASCENDC :
-                                                                         MemsetVersion::MEMSET_V1;
+        // 910b及后续新增芯片默认不需要对齐，仅以下芯片的MemSet算子的输入tensor需要按block对齐：
+        // ascend910(DAV_1001)、ascend310p(DAV_2002)、ascend310b(DAV_3002)、ascend610lite(DAV_3102)。
+        bool needAlign = (npuArch == Ops::Base::DAV_1001 || npuArch == Ops::Base::DAV_2002 ||
+                          npuArch == Ops::Base::DAV_3002 || npuArch == Ops::Base::DAV_3102);
+        // 原有tbe实现的MemSet算子仅保留在以下芯片：ascend910(DAV_1001)、ascend310p(DAV_2002)、
+        // ascend910b/ascend910_93(DAV_2201)、ascend310b(DAV_3002)、ascend610lite(DAV_3102)。
+        // 950及后续新增芯片（含kirinx90/kirin9030）使用ascendc版。
+        bool isLegacyMemsetArch = (npuArch == Ops::Base::DAV_1001 || npuArch == Ops::Base::DAV_2002 ||
+                                   npuArch == Ops::Base::DAV_2201 || npuArch == Ops::Base::DAV_3002 ||
+                                   npuArch == Ops::Base::DAV_3102);
+        MemsetVersion memsetVersion = isLegacyMemsetArch ? MemsetVersion::MEMSET_V1 : MemsetVersion::MEMSET_V1_ASCENDC;
         CHECK_RET_CODE(SelectMemsetOpBin(memsetVersion, memSetValue_.size(), memsetBin), "Select MemSet op failed");
 
         // for multi thread
