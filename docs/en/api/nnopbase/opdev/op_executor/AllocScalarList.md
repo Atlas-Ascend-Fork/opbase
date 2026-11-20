@@ -2,7 +2,7 @@
 
 ## Function
 
-Allocates an aclScalarList and specifies the aclScalars contained in it.
+This function is a member function of the `aclOpExecutor` class and is used to allocate an aclScalarList and specify the aclScalars contained in it.
 
 ## Prototype
 

@@ -2,7 +2,7 @@
 
 ## Function
 
-Allocates a tensor on the device. Multiple overloaded functions are provided to specify different attributes.
+This function is a member function of the `aclOpExecutor` class and is used to allocate a tensor on the device. Multiple overloaded functions are provided to specify different attributes.
 
 ## Prototype
 

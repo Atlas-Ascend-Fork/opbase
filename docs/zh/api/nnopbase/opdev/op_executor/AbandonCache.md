@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-关闭aclnn cache功能。
+本函数是aclOpExecutor类的成员函数，用于关闭aclnn cache功能。
 
 该功能是指首次调用aclnn算子后框架会记录算子缓存，后续再次调用时，将跳过一阶段aclnnXxxGetWorkspaceSize函数的执行，从而达到性能优化的目的。
 

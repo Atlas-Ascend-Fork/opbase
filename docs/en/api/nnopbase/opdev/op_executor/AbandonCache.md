@@ -2,7 +2,7 @@
 
 ## Function
 
-Disables the ACLNN cache.
+This function is a member function of the `aclOpExecutor` class and is used to disable the ACLNN cache.
 
 After the first call to an ACLNN operator, the framework records cache information. On subsequent calls, it skips the initial `aclnnXxxGetWorkspaceSize` phase, thereby achieving performance optimization.
 

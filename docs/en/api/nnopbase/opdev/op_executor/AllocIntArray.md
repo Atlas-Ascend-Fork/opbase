@@ -2,7 +2,7 @@
 
 ## Function
 
-Allocates an `aclIntArray` and initializes it with values from the specified memory.
+This function is a member function of the `aclOpExecutor` class and is used to allocate an `aclIntArray` and initialize it with values from the specified memory.
 
 ## Prototype
 

@@ -2,7 +2,7 @@
 
 ## Function
 
-Allocates an `aclScalar` and assigns it a value. Multiple overloaded functions are used to support multiple data types.
+This function is a member function of the `aclOpExecutor` class and is used to allocate an `aclScalar` and assign it a value. Multiple overloaded functions are used to support multiple data types.
 
 ## Prototype
 

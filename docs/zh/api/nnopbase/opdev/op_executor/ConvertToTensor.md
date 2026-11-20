@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-将不同数据类型的Host侧数据，转为一个Host侧aclTensor对象。
+本函数是aclOpExecutor类的成员函数，用于将不同数据类型的Host侧数据，转为一个Host侧aclTensor对象。
 
 ## 函数原型
 

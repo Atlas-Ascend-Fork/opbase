@@ -2,7 +2,7 @@
 
 ## Function
 
-Allocates an aclTensorList and specifies the aclTensors contained in it.
+This function is a member function of the `aclOpExecutor` class and is used to allocate an aclTensorList and specify the aclTensors contained in it.
 
 ## Prototype
 

@@ -2,7 +2,7 @@
 
 ## Function
 
-Converts host-side data of various data types to host-side `aclTensor` objects.
+This function is a member function of the `aclOpExecutor` class and is used to convert host-side data of various data types to host-side `aclTensor` objects.
 
 ## Prototype
 

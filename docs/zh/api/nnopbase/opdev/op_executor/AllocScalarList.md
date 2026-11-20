@@ -2,7 +2,7 @@
 
 ## 功能说明
 
-申请一个aclScalarList，并指定其内部包含的aclScalar。
+本函数是aclOpExecutor类的成员函数，用于申请一个aclScalarList，并指定其内部包含的aclScalar。
 
 ## 函数原型
 

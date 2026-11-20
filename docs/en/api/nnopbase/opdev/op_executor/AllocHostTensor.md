@@ -2,7 +2,7 @@
 
 ## Function
 
-Allocates a tensor on the host. Multiple overloaded functions are provided to specify different input attributes, such as different data types.
+This function is a member function of the `aclOpExecutor` class and is used to allocate a tensor on the host. Multiple overloaded functions are provided to specify different input attributes, such as different data types.
 
 ## Prototype
 

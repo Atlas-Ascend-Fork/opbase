@@ -2,6 +2,8 @@
 
 ## Function
 
+This function is a member function of the `aclOpExecutor` class.
+
 Computes the required workspace size based on the L0 API called in the L2 first phase.
 
 ## Prototype
