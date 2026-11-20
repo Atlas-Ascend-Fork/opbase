@@ -1,0 +1,328 @@
+{
+  "binList": [
+    {
+      "simplifiedKeyMode": 0,
+      "deterministic": "ignore",
+      "implMode": "high_performance",
+      "binInfo": {
+        "jsonFilePath": "ascend910/test_level_split_op/TestLevelSplitOp_old.json"
+      },
+      "inputs": [
+        {
+          "name": "x1",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        },
+        {
+          "name": "x2",
+          "index": 1,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "opMode": "dynamic"
+    }
+  ],
+  "binListWithLoadPriority": [
+    {
+      "simplifiedKeyMode": 0,
+      "deterministic": "false",
+      "implMode": "high_performance",
+      "deterministicLevels": [
+        0
+      ],
+      "binInfo": {
+        "jsonFilePath": "ascend910/test_level_split_op/TestLevelSplitOp_fp16_l0.json"
+      },
+      "inputs": [
+        {
+          "name": "x1",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        },
+        {
+          "name": "x2",
+          "index": 1,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "opMode": "dynamic"
+    },
+    {
+      "simplifiedKeyMode": 0,
+      "deterministic": "true",
+      "implMode": "high_performance",
+      "deterministicLevels": [
+        1,
+        2,
+        2
+      ],
+      "binInfo": {
+        "jsonFilePath": "ascend910/test_level_split_op/TestLevelSplitOp_fp16_l12.json"
+      },
+      "inputs": [
+        {
+          "name": "x1",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        },
+        {
+          "name": "x2",
+          "index": 1,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "opMode": "dynamic"
+    },
+    {
+      "simplifiedKeyMode": 0,
+      "deterministic": "true",
+      "implMode": "high_performance",
+      "deterministicLevels": [
+        3
+      ],
+      "binInfo": {
+        "jsonFilePath": "ascend910/test_level_split_op/TestLevelSplitOp_fp16_l3.json"
+      },
+      "inputs": [
+        {
+          "name": "x1",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        },
+        {
+          "name": "x2",
+          "index": 1,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "opMode": "dynamic"
+    },
+    {
+      "simplifiedKeyMode": 0,
+      "deterministic": "false",
+      "implMode": "high_performance",
+      "deterministicLevels": [
+        0
+      ],
+      "binInfo": {
+        "jsonFilePath": "ascend910/test_level_split_op/TestLevelSplitOp_fp32_l0.json"
+      },
+      "inputs": [
+        {
+          "name": "x1",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        },
+        {
+          "name": "x2",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "opMode": "dynamic"
+    },
+    {
+      "simplifiedKeyMode": 0,
+      "deterministic": "true",
+      "implMode": "high_performance",
+      "deterministicLevels": [
+        1,
+        2
+      ],
+      "binInfo": {
+        "jsonFilePath": "ascend910/test_level_split_op/TestLevelSplitOp_fp32_l12.json"
+      },
+      "inputs": [
+        {
+          "name": "x1",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        },
+        {
+          "name": "x2",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "opMode": "dynamic"
+    },
+    {
+      "simplifiedKeyMode": 0,
+      "deterministic": "true",
+      "implMode": "high_performance",
+      "deterministicLevels": [
+        3
+      ],
+      "binInfo": {
+        "jsonFilePath": "ascend910/test_level_split_op/TestLevelSplitOp_fp32_l3.json"
+      },
+      "inputs": [
+        {
+          "name": "x1",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        },
+        {
+          "name": "x2",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "opMode": "dynamic"
+    }
+  ]
+}

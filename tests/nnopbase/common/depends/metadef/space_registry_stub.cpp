@@ -178,6 +178,10 @@ void InitKernelRegistryImplFunc()
     // "diy,zzz" 不匹配，故 customizedKey 必然未命中而回落
     InitOpImplFunc("StubMixKeyOp", TilingFuncStub);
     InitGenSimplifiedKeyFunc("StubMixKeyOp", GenSimplifiedKeyFuncStub);
+    // TestLevelSplitMode2Op: mode 2 自定义 key 场景，gen 产出固定后缀 "diy,99"；
+    // GenSimplifiedKey 经 opTilingFuncs_ 取函数表，故须同时注册 tiling/tiling_parse
+    InitOpImplFunc("TestLevelSplitMode2Op", TilingFuncStub);
+    InitGenSimplifiedKeyFunc("TestLevelSplitMode2Op", GenSimplifiedKeyFuncStub);
 }
 
 void InitSpaceRegistryOpImpl()

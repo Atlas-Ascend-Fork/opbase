@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -12,7 +12,9 @@
 #include <fstream>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
+#include <utility>
 #include <cerrno>
 #include <system_error>
 
@@ -36,7 +38,7 @@ namespace {
 constexpr const char* NULL_STR = "null";
 constexpr const char* BIN_SUFFIX = ".o";
 constexpr const char* JSON_SUFFIX = ".json";
-constexpr const char* BIN_LIST = "binList";
+constexpr const char* DETERMINISTIC_LEVELS = "deterministicLevels";
 constexpr const char* BIN_INFO = "binInfo";
 constexpr const char* JSON_FILE_PATH = "jsonFilePath";
 constexpr const char* BIN_PATH = "binPath";
@@ -81,6 +83,9 @@ constexpr int64_t UNKNOWN_DIM_NUM = -2;
 constexpr int64_t CUSTOMIZED_SIMPLIFIED_KEY = 2;
 constexpr int64_t IGNORE_ATTR_SIMPLIFIED_KEY = 0;
 constexpr size_t MAX_CUSTOMIZED_SIMPLIFIED_KEY_LEN = 256;
+constexpr size_t DETERMINISTIC_LEVEL_KEY_LEN = 2;                              // 等级字符 + '/'
+constexpr size_t CUSTOMIZED_DETERMINISTIC_LEVEL_KEY_LEN = sizeof(",dt=3") - 1; // ",dt=" + 等级字符
+constexpr int64_t MAX_SINGLE_CHAR_DETERMINISTIC_LEVEL = 9; // 等级以单字符编码，最大可表示 9
 constexpr char const*
     ALL_PRECISION_MODE = "high_performance,high_precision,enable_float_32_execution,enable_hi_float_32_execution";
 
@@ -693,38 +698,17 @@ void ParseImplModeByJson(const nlohmann::json& singleBinJson, const std::string&
     }
 }
 
-aclnnStatus OpKernel::ParseContext(const nlohmann::json& singleBinJson, const std::string& jsonPath,
-                                   KeyParams& keyParams)
+namespace {
+// implMode 在 key 中按 ToIndexChar 的索引编码取值：
+//  "high_performance" :1;
+//  "high_precision" : 2
+//  "super_performance" : 3,
+//  "support_out_of_bound_index": 4
+//  "enable_float_32_execution": 5
+//  "enable_hi_float_32_execution": 6
+//  "keep_fp16": 7
+void CollectImplModes(const nlohmann::json& singleBinJson, const std::string& jsonPath, FVector<OpImplMode>& implModes)
 {
-    // simp_key: "deterministic/overflow/precision_mode + inputs + outputs"
-    /* 1. Generate context. */
-    // deterministic: 1, 2
-    // overflow: default as 2
-    // precision_mode:
-    //  "high_performance" :1;
-    //  "high_precision" : 2
-    //  "super_performance" : 3,
-    //  "support_out_of_bound_index": 4
-    //  "enable_float_32_execution": 5
-    //  "enable_hi_float_32_execution": 6
-    auto dtm = singleBinJson.find(DETERMINISTIC);
-    FVector<char> determinFlags;
-    if (dtm != singleBinJson.end()) {
-        const auto& dtmStr = dtm->get<std::string>();
-        if (dtmStr == OP_KERNEL_TRUE) {
-            determinFlags.emplace_back(DETERMINISTIC_VALUE);
-        } else if (dtmStr == OP_KERNEL_FALSE) {
-            determinFlags.emplace_back(NON_DETERMINISTIC_VALUE);
-        } else {
-            determinFlags.emplace_back(DETERMINISTIC_VALUE);
-            determinFlags.emplace_back(NON_DETERMINISTIC_VALUE);
-        }
-    } else {
-        determinFlags.emplace_back(DETERMINISTIC_VALUE);
-        determinFlags.emplace_back(NON_DETERMINISTIC_VALUE);
-    }
-
-    FVector<OpImplMode> implModes;
     if (jsonPath.find(ToString(OpImplMode::IMPL_MODE_HIGH_PERFORMANCE).GetString()) != string::npos) {
         implModes.emplace_back(OpImplMode::IMPL_MODE_HIGH_PERFORMANCE);
     } else if (jsonPath.find(ToString(OpImplMode::IMPL_MODE_HIGH_PRECISION).GetString()) != string::npos) {
@@ -734,23 +718,132 @@ aclnnStatus OpKernel::ParseContext(const nlohmann::json& singleBinJson, const st
     } else {
         ParseImplModeByJson(singleBinJson, jsonPath, implModes);
     }
+}
 
-    for (const auto& dtmFlag : determinFlags) {
+// deterministic信息收集：仅产出 d 标志
+aclnnStatus CollectDeterministicFlags(const nlohmann::json& singleBinJson,
+                                      FVector<std::pair<char, char>>& deterministicCombinations)
+{
+    auto deterministicIter = singleBinJson.find(DETERMINISTIC);
+    if (deterministicIter == singleBinJson.end()) {
+        deterministicCombinations.emplace_back(DETERMINISTIC_VALUE, '\0');
+        deterministicCombinations.emplace_back(NON_DETERMINISTIC_VALUE, '\0');
+        return ACLNN_SUCCESS;
+    }
+
+    CHECK_COND(deterministicIter->is_string(), ACLNN_ERR_INNER_OP_FILE_INVALID,
+               "Field %s must be a string, but got %s.", DETERMINISTIC, deterministicIter->type_name());
+    const std::string deterministicValue = deterministicIter->get<std::string>();
+    if (deterministicValue == OP_KERNEL_TRUE) {
+        deterministicCombinations.emplace_back(DETERMINISTIC_VALUE, '\0');
+    } else if (deterministicValue == OP_KERNEL_FALSE) {
+        deterministicCombinations.emplace_back(NON_DETERMINISTIC_VALUE, '\0');
+    } else {
+        deterministicCombinations.emplace_back(DETERMINISTIC_VALUE, '\0');
+        deterministicCombinations.emplace_back(NON_DETERMINISTIC_VALUE, '\0');
+    }
+    return ACLNN_SUCCESS;
+}
+
+// 确定性开关(deterministic)、确定性等级(deterministicLevels)信息收集：
+// 两者都未配置则按非确定性处理；只配置一个时，另一维度按固定规则推断；都配置则校验是否匹配。
+// 只配置 deterministic：true→等级 1、false→等级 0、ignore/其他字符串→等级 0 和 1（原有语义）。
+// 只配置 deterministicLevels：d 由等级推导，等级 0 为 '0'，其余为 '1'。
+aclnnStatus CollectDeterministicLevels(const nlohmann::json& singleBinJson,
+                                       FVector<std::pair<char, char>>& deterministicCombinations)
+{
+    std::string deterministicValue;
+    auto deterministicIter = singleBinJson.find(DETERMINISTIC);
+    if (deterministicIter != singleBinJson.end()) {
+        CHECK_COND(deterministicIter->is_string(), ACLNN_ERR_INNER_OP_FILE_INVALID,
+                   "Field %s must be a string, but got %s.", DETERMINISTIC, deterministicIter->type_name());
+        deterministicValue = deterministicIter->get<std::string>();
+    }
+
+    bool levelsConfigured = false;
+    std::set<int64_t> levelSet;
+    auto levelsIter = singleBinJson.find(DETERMINISTIC_LEVELS);
+    if (levelsIter != singleBinJson.end()) {
+        CHECK_COND(levelsIter->is_array() && !levelsIter->empty(), ACLNN_ERR_INNER_OP_FILE_INVALID,
+                   "Field %s must be a non-empty array, but got %s.", DETERMINISTIC_LEVELS, levelsIter->dump().c_str());
+        for (const auto& levelJson : *levelsIter) {
+            CHECK_COND(levelJson.is_number_integer(), ACLNN_ERR_INNER_OP_FILE_INVALID,
+                       "Field %s must contain integers only, but got %s.", DETERMINISTIC_LEVELS,
+                       levelsIter->dump().c_str());
+            const int64_t level = levelJson.get<int64_t>();
+            // 实际等级由 rts 保证为 0~3，这里按单字符编码上限校验，避免将来扩展等级时再改校验
+            CHECK_COND(level >= 0 && level <= MAX_SINGLE_CHAR_DETERMINISTIC_LEVEL, ACLNN_ERR_INNER_OP_FILE_INVALID,
+                       "Field %s level %ld is out of range [0, %ld].", DETERMINISTIC_LEVELS, level,
+                       MAX_SINGLE_CHAR_DETERMINISTIC_LEVEL);
+            levelSet.insert(level);
+        }
+        levelsConfigured = true;
+    } else {
+        if (deterministicIter == singleBinJson.end() || deterministicValue == OP_KERNEL_FALSE) {
+            levelSet = {0};
+        } else if (deterministicValue == OP_KERNEL_TRUE) {
+            levelSet = {1};
+        } else {
+            levelSet = {0, 1};
+        }
+    }
+
+    if (levelsConfigured && deterministicValue == OP_KERNEL_TRUE) {
+        CHECK_COND(levelSet.count(0) == 0, ACLNN_ERR_INNER_OP_FILE_INVALID, "Field %s true conflicts with %s %s.",
+                   DETERMINISTIC, DETERMINISTIC_LEVELS, levelsIter->dump().c_str());
+    }
+    if (levelsConfigured && deterministicValue == OP_KERNEL_FALSE) {
+        CHECK_COND(levelSet.size() == 1 && levelSet.count(0) == 1, ACLNN_ERR_INNER_OP_FILE_INVALID,
+                   "Field %s false conflicts with %s %s.", DETERMINISTIC, DETERMINISTIC_LEVELS,
+                   levelsIter->dump().c_str());
+    }
+
+    for (const auto level : levelSet) {
+        deterministicCombinations.emplace_back(level == 0 ? NON_DETERMINISTIC_VALUE : DETERMINISTIC_VALUE,
+                                               static_cast<char>('0' + level));
+    }
+    return ACLNN_SUCCESS;
+}
+} // namespace
+
+aclnnStatus OpKernel::ParseContext(const nlohmann::json& singleBinJson, const std::string& jsonPath,
+                                   KeyParams& keyParams)
+{
+    // 每条目要注册的确定性维度：d 字符 + 等级字符。
+    // 仅当需要按确定性等级区分不同 kernel 产物时（binListWithLoadPriority 路径）才把等级值拼入 key，
+    // 老路径不带等级字符。
+    // 每项为 (确定性标志, 等级字符)：标志取 '0'/'1'，等级取 '0'~'9'，老路径等级字符为 '\0'
+    FVector<std::pair<char, char>> deterministicCombinations;
+    if (needDeterministicLevelKey_) {
+        CHECK_RET_CODE(CollectDeterministicLevels(singleBinJson, deterministicCombinations),
+                       "Failed to collect deterministic levels.");
+    } else {
+        CHECK_RET_CODE(CollectDeterministicFlags(singleBinJson, deterministicCombinations),
+                       "Failed to collect deterministic flags.");
+    }
+
+    FVector<OpImplMode> implModes;
+    CollectImplModes(singleBinJson, jsonPath, implModes);
+
+    for (const auto& [deterministicFlag, deterministicLevelDigit] : deterministicCombinations) {
         for (const auto& implMode : implModes) {
             keyParams.keys.emplace_back();
             auto& back = keyParams.keys.back();
-            back.key += dtmFlag;
-            back.key += "/";
+            back.key += deterministicFlag;
+            back.key += SLASH;
             back.key += ToIndexChar(implMode);
-            back.key += "/";
-
+            back.key += SLASH;
+            if (needDeterministicLevelKey_) {
+                back.key += deterministicLevelDigit;
+                back.key += SLASH;
+            }
             keyParams.keysWithoutAttr.emplace_back(back.key);
-
-            back.deterministicFlag = (dtmFlag != NON_DETERMINISTIC_VALUE);
+            back.deterministicFlag = (deterministicFlag != NON_DETERMINISTIC_VALUE);
             back.implMode = ToString(implMode).GetString();
             AppendImplModeBm(implMode);
         }
     }
+    // 默认同一 binList 条目内各 key 前缀等长；若后续出现前缀长度不一致的场景，可以考虑将 KeyLength 移入 KeyAndDetail
     keyParams.len.ctxLen = keyParams.keys.back().key.length();
     return ACLNN_SUCCESS;
 }
@@ -935,6 +1028,8 @@ aclnnStatus OpKernel::GenerateKeyBySimplifiedKey(const nlohmann::json& singleBin
         uint32_t deterministicFlag;
         uint32_t mode;
         constexpr int goodRes = 2;
+        // 支持batch一致性拆分的算子包，key 在模式段带有 dt=<level>（如 "Op/d=1,p=1,dt=3/<后缀>"）；
+        // 下方格式末尾的 '/' 遇到 ',' 即停止匹配，返回值仍为 2，key 按整串注册、运行期按整串匹配。
         int rc = sscanf_s(keyStr.c_str(), "d=%u,p=%u/", &deterministicFlag, &mode);
         if (rc != goodRes) {
             OP_LOGE(ACLNN_ERR_INNER_OP_FILE_INVALID, "simplifiedKey %s is invalid", keyStr.c_str());
@@ -963,7 +1058,8 @@ aclnnStatus OpKernel::GenerateKeyByJson(const nlohmann::json& singleBinJson, con
                                         KeyParams& keyParams)
 {
     /* 1. Generate key by context. */
-    ParseContext(singleBinJson, jsonPath, keyParams);
+    CHECK_RET_CODE(ParseContext(singleBinJson, jsonPath, keyParams), "Failed to parse key context for %s.",
+                   jsonPath.c_str());
     keyParams.genPlaceholder = IsGenInputPlaceholder(singleBinJson);
     keyParams.hasDevPtrArg = HasDevPtrArg(singleBinJson);
     string tensorKey;
@@ -973,10 +1069,8 @@ aclnnStatus OpKernel::GenerateKeyByJson(const nlohmann::json& singleBinJson, con
         if (inputs->size() > inputNum_) {
             inputNum_ = inputs->size();
         }
-        auto ret = AssembleKeyByTensor(*inputs, inputInfos_, tensorKey, keyParams);
-        if (ret != ACLNN_SUCCESS) {
-            return ret;
-        }
+        CHECK_RET_CODE(AssembleKeyByTensor(*inputs, inputInfos_, tensorKey, keyParams),
+                       "Failed to assemble input key.");
         UpdateFormatType(inputInfos_, inputNum_);
     }
 
@@ -985,10 +1079,8 @@ aclnnStatus OpKernel::GenerateKeyByJson(const nlohmann::json& singleBinJson, con
         if (outputs->size() > outputNum_) {
             outputNum_ = outputs->size();
         }
-        auto ret = AssembleKeyByTensor(*outputs, outputInfos_, tensorKey, keyParams);
-        if (ret != ACLNN_SUCCESS) {
-            return ret;
-        }
+        CHECK_RET_CODE(AssembleKeyByTensor(*outputs, outputInfos_, tensorKey, keyParams),
+                       "Failed to assemble output key.");
         UpdateFormatType(outputInfos_, outputNum_);
     }
 
@@ -1425,31 +1517,59 @@ aclnnStatus OpKernel::GetOpDescJson(bool debug)
     return ACLNN_SUCCESS;
 }
 
+aclnnStatus OpKernel::GetEffectiveBinList(const nlohmann::json& configJson, const nlohmann::json*& effectiveBinList)
+{
+    auto loadPriorityIter = configJson.find(BIN_LIST_WITH_LOAD_PRIORITY);
+    if (loadPriorityIter != configJson.end()) {
+        CHECK_COND(loadPriorityIter->is_array(), ACLNN_ERR_INNER_OP_FILE_INVALID, "Op %s field %s is not an array.",
+                   opTypeStr_.c_str(), BIN_LIST_WITH_LOAD_PRIORITY);
+        needDeterministicLevelKey_ = true;
+        effectiveBinList = &(*loadPriorityIter);
+        OP_LOGI("Op %s uses bin list with load priority, entry count %zu.", opTypeStr_.c_str(),
+                loadPriorityIter->size());
+        return ACLNN_SUCCESS;
+    }
+
+    auto binIter = configJson.find(BIN_LIST);
+    if (binIter != configJson.end()) {
+        CHECK_COND(binIter->is_array(), ACLNN_ERR_INNER_OP_FILE_INVALID, "Op %s field %s is not an array.",
+                   opTypeStr_.c_str(), BIN_LIST);
+        needDeterministicLevelKey_ = false;
+        effectiveBinList = &(*binIter);
+        OP_LOGI("Op %s uses legacy bin list, entry count %zu.", opTypeStr_.c_str(), binIter->size());
+        return ACLNN_SUCCESS;
+    }
+
+    const std::string reason = std::string("The operator JSON file does not contain ") + BIN_LIST_WITH_LOAD_PRIORITY +
+                               " or " + BIN_LIST;
+    OP_LOGE_FOR_FILE_OPERATION_ERROR_PARSE_WITH_INVALID_CONTENT(configJsonPath_.c_str(), reason.c_str());
+    return ACLNN_ERR_INNER;
+}
+
 aclnnStatus OpKernel::AppendDynBin(const string& jsonPath, const string& binAndJsonDir, bool debug)
 {
     configJsonPath_ = jsonPath;
     auto ret = GetOpDescJson(debug);
     CHECK_COND(ret == ACLNN_SUCCESS, ACLNN_ERR_INNER, "Failed to get op desc info [%s].", opTypeStr_.c_str());
 
-    auto binListIter = configJson_.find(BIN_LIST);
-    if (binListIter == configJson_.end()) {
-        std::string reason = "The operator JSON file does not contain the bin list";
-        OP_LOGE_FOR_FILE_OPERATION_ERROR_PARSE_WITH_INVALID_CONTENT(jsonPath.c_str(), reason.c_str());
-        return ACLNN_ERR_INNER;
-    }
-
-    JudgeCustomizedSimpliedKeyMode(*binListIter);
-    ret = JudgeAttrSupportAll(*binListIter);
+    const nlohmann::json* effectiveBinList = nullptr;
+    ret = GetEffectiveBinList(configJson_, effectiveBinList);
     if (ret != ACLNN_SUCCESS) {
         return ret;
     }
 
-    ret = InitTensorInfo(*binListIter);
+    JudgeCustomizedSimpliedKeyMode(*effectiveBinList);
+    ret = JudgeAttrSupportAll(*effectiveBinList);
     if (ret != ACLNN_SUCCESS) {
         return ret;
     }
 
-    for (auto& binJson : *binListIter) {
+    ret = InitTensorInfo(*effectiveBinList);
+    if (ret != ACLNN_SUCCESS) {
+        return ret;
+    }
+
+    for (auto& binJson : *effectiveBinList) {
         auto binInfoIter = binJson.find(BIN_INFO);
         if (binInfoIter == binJson.end()) {
             continue;
@@ -1491,9 +1611,13 @@ aclnnStatus OpKernel::AppendDynBin(const string& jsonPath, const string& binAndJ
         attrInfos_.back().attrName = "shape_gamma_private";
         attrInfos_.back().supportAll = false;
     }
-    maxKeyLength_ = customizedSimplifiedKeyMode_ ? MAX_CUSTOMIZED_SIMPLIFIED_KEY_LEN + sizeof("d=1,p=1/") :
-                                                   (inputNum_ + outputNum_) * MAX_BIN_MATCH_ARG_KEY_COUNT +
-                                                       maxAttrLen_ + DEFAULT_CONTEXT_LEN + REDUNDANT_LEN;
+    if (customizedSimplifiedKeyMode_) {
+        maxKeyLength_ = MAX_CUSTOMIZED_SIMPLIFIED_KEY_LEN + sizeof("d=1,p=1/") +
+                        (needDeterministicLevelKey_ ? CUSTOMIZED_DETERMINISTIC_LEVEL_KEY_LEN : 0);
+    } else {
+        maxKeyLength_ = (inputNum_ + outputNum_) * MAX_BIN_MATCH_ARG_KEY_COUNT + maxAttrLen_ + DEFAULT_CONTEXT_LEN +
+                        REDUNDANT_LEN + (needDeterministicLevelKey_ ? DETERMINISTIC_LEVEL_KEY_LEN : 0);
+    }
     OP_LOGD("End for parsing config file %s. Max key length = %zu.", jsonPath.c_str(), maxKeyLength_);
     return ACLNN_SUCCESS;
 }

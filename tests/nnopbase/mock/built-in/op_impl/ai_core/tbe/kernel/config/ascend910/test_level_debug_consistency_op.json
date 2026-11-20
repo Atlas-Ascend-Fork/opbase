@@ -1,0 +1,49 @@
+{
+  "binListWithLoadPriority": [
+    {
+      "simplifiedKeyMode": 0,
+      "implMode": "high_performance",
+      "binInfo": {
+        "jsonFilePath": "ascend910/test_level_debug_consistency_op/TestLevelDebugConsistencyOp_formal.json"
+      },
+      "inputs": [
+        {
+          "name": "x1",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        },
+        {
+          "name": "x2",
+          "index": 1,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "index": 0,
+          "dtype": "float16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ]
+        }
+      ],
+      "opMode": "dynamic",
+      "deterministicLevels": [
+        0
+      ]
+    }
+  ]
+}

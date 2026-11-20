@@ -84,6 +84,9 @@ aclError aclrtMemcpy(void* dst, size_t destMax, const void* src, size_t count, a
         memcpy(dst, src, count);
     } else if (std::getenv("MEMCPY_ENV") != nullptr) {
         memcpy(dst, src, count);
+    } else {
+        // DEVICE_TO_HOST 默认不拷贝，清零目标缓冲区，避免 UT 读取未初始化内存导致结果不确定
+        memset(dst, 0, count);
     }
     return ACL_SUCCESS;
 }

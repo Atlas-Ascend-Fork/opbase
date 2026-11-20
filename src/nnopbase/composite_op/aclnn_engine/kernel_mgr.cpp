@@ -22,6 +22,7 @@
 #include "file_utils.h"
 #include "op_kernel_lib.h"
 #include "kernel_utils.h"
+#include "op_kernel.h"
 #include "op_run_context.h"
 #include "../../common/inc/kernel_mgr.h"
 #include "nnopbase_error_msg.h"
@@ -434,10 +435,21 @@ aclnnStatus KernelMgr::ParseDynamicKernels(uint32_t opType)
                 OP_LOGI("Can not find json file: %s, continue next priority", jsonPath.c_str());
                 continue;
             }
+            nlohmann::json debugConfigJson;
             try {
-                auto j = nlohmann::json::parse(f);
+                debugConfigJson = nlohmann::json::parse(f);
             } catch (nlohmann::json::exception& e) {
                 OP_LOGW("Cannot parse debug json for config file [%s].", jsonPath.c_str());
+                continue;
+            }
+            // debug 索引与正式索引必须使用同一个 bin 列表节点，否则运行期 key 格式不一致
+            if (kernel_[opType].IsSupportBinListWithLoadPriority() !=
+                debugConfigJson.contains(BIN_LIST_WITH_LOAD_PRIORITY)) {
+                OP_LOGW("Debug kernel config of op %s uses a different bin list node: formal [%s], debug [%s], "
+                        "skip debug kernel.",
+                        op::OpTypeDict::ToString(opType).GetString(),
+                        kernel_[opType].IsSupportBinListWithLoadPriority() ? BIN_LIST_WITH_LOAD_PRIORITY : BIN_LIST,
+                        debugConfigJson.contains(BIN_LIST_WITH_LOAD_PRIORITY) ? BIN_LIST_WITH_LOAD_PRIORITY : BIN_LIST);
                 continue;
             }
             ret = internal::gKernelMgr.ParseDynamicKernelConfig(debugConfigDir_, debugDynBinAndJsonDir_,

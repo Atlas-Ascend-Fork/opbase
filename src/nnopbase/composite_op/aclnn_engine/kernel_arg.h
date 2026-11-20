@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 
 #include "launch_arg_info.h"
 #include "opdev/op_dfx.h"
+#include "opdev/op_log.h"
 
 namespace op {
 namespace internal {
@@ -26,6 +27,7 @@ inline aclnnStatus AssignAndIncrement(char*& key, size_t maxSize, const uint8_t*
 {
     auto ret = memcpy_s(key, maxSize, arg, size);
     if (ret != EOK) {
+        OP_LOGW("Failed to copy key segment, ret %d, maxSize %zu, size %zu.", static_cast<int32_t>(ret), maxSize, size);
         return ACLNN_ERR_INNER_ATTR_LEN_NOT_ENOUGH;
     }
     key += size;
