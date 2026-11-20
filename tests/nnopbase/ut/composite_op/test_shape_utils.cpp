@@ -53,6 +53,38 @@ TEST_F(TestShapeUtils, TestUpdateOutputShape)
     EXPECT_EQ(ret, ACLNN_SUCCESS);
 }
 
+// TransferShape 失败分支：DT_UNDEFINED 使 NCHW -> NC1HWC0 转换失败，
+// UpdateOutputShape 应返回 ACLNN_ERR_INNER，且 storage shape 保持不变。
+TEST_F(TestShapeUtils, TestUpdateOutputShapeTransferFail)
+{
+    op::Shape originShape{33, 16, 14, 48}; // NCHW
+    auto out = std::make_unique<aclTensor>(originShape, originShape, op::DataType::DT_UNDEFINED,
+                                           op::Format::FORMAT_NC1HWC0, op::Format::FORMAT_NCHW, nullptr);
+
+    EXPECT_EQ(op::internal::UpdateOutputShape(out.get()), ACLNN_ERR_INNER);
+    EXPECT_EQ(out->GetStorageShape(), originShape);
+}
+
+// TransferShape 改变 storage shape 且元素数变大时，UpdateOutputShape 应刷新 size：
+// NCHW [2,17,5,7] -> NC1HWC0 [2,2,5,7,16]，size 由 2*17*5*7*2=2380 变为 2*2*5*7*16*2=4480。
+TEST_F(TestShapeUtils, TestUpdateOutputShapeStorageShapeGrowRefreshesSize)
+{
+    op::Shape originShape{2, 17, 5, 7}; // NCHW
+    auto out = std::make_unique<aclTensor>(originShape, originShape, op::DataType::DT_FLOAT16,
+                                           op::Format::FORMAT_NC1HWC0, op::Format::FORMAT_NCHW, nullptr);
+
+    const size_t sizeBefore = out->GetTensor()->GetSize();
+
+    ASSERT_EQ(op::internal::UpdateOutputShape(out.get()), ACLNN_SUCCESS);
+
+    EXPECT_EQ(out->GetStorageShape(), op::Shape({2, 2, 5, 7, 16}));
+    EXPECT_EQ(out->GetOriginalShape(), originShape);
+    EXPECT_EQ(out->GetViewShape(), originShape);
+    EXPECT_EQ(sizeBefore, static_cast<size_t>(2380));
+    EXPECT_EQ(out->GetTensor()->GetSize(), static_cast<size_t>(4480));
+    EXPECT_NE(sizeBefore, out->GetTensor()->GetSize());
+}
+
 TEST_F(TestShapeUtils, TestBroadcastInferShape)
 {
     op::Shape shape1({2, 2});

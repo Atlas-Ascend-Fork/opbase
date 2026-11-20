@@ -32,9 +32,9 @@ aclnnStatus UpdateOutputShape(aclTensor* tensor)
     auto isSuccess = transformer::ShapeTransferAccordingToFormatExt::TransferShape(
         tensor->GetOriginalFormat(), tensor->GetStorageFormat(), tensor->GetDataType(),
         tensor->GetTensor()->MutableStorageShape(), extAxisOpValue, GetCurrentPlatformInfo().GetPlatformInfos());
-    if (!isSuccess) {
-        return ACLNN_ERR_INNER;
-    }
+    CHECK_COND(isSuccess, ACLNN_ERR_INNER, "Failed to transfer shape. %s", tensor->ToString().GetString());
+    auto* geTensor = tensor->GetTensor();
+    geTensor->SetSize(op::CalcShapeBytes(geTensor->GetShapeSize(), geTensor->GetDataType()));
     tensor->SetViewShape(originalShape);
     return ACLNN_SUCCESS;
 }
