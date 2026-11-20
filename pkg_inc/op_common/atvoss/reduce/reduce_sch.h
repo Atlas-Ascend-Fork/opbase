@@ -215,6 +215,17 @@ public:
         cache_ = ubPool[preBufSize_ + postBufSize_ + resBufSize_];
     }
 
+    // 为依赖 TPipe 栈的高阶 API（如 Power）保留静态 pool 之后的栈区。
+    __aicore__ inline void ReserveStackBuffer(TPipe* pipeIn)
+    {
+        if (pipeIn == nullptr || preBufSize_ <= 0) {
+            return;
+        }
+        TBuf<TPosition::VECCALC> stackReserve;
+        pipeIn->InitBuffer(stackReserve,
+                           static_cast<uint32_t>(preBufSize_ + postBufSize_ + resBufSize_ + CACHE_BUF_SIZE));
+    }
+
     template <class... Args>
     __aicore__ inline void ProcessEmpty(Args... args)
     {
