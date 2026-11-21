@@ -18,6 +18,7 @@
 #include "executor/indv_tilingcontext_builder.h"
 #include "executor/indv_cache_key_builder.h"
 #include "utils/file_faker.h"
+#include "utils/indv_path.h"
 #include "utils/indv_soc.h"
 #include "utils/thread_var_container.h"
 #include "individual_op_api.h"
@@ -2674,6 +2675,70 @@ TEST_F(NnopbaseExecutorUnitTest, TestGetMemsetBinInfoFailed)
     ASSERT_EQ(NnopbaseReadMemsetJsonInfo(oppPath, memsetJsonInfo, memsetInfo, 3U, false), ACLNN_ERR_PARAM_INVALID);
 
     ASSERT_EQ(NnopbaseReadMemsetJsonInfo(oppPath, memsetJsonInfo, memsetInfo, 20U, false), ACLNN_ERR_PARAM_INVALID);
+}
+
+TEST_F(NnopbaseExecutorUnitTest, TestGetKernelJsonPathWithDotInPathComponent)
+{
+    std::string jsonPath;
+    ASSERT_EQ(NnopbaseGetKernelJsonPath("/opp/.ocache/ai_core/Add.o", jsonPath), OK);
+    ASSERT_EQ(jsonPath, "/opp/.ocache/ai_core/Add.json");
+
+    ASSERT_EQ(NnopbaseGetKernelJsonPath("/built-in/op_impl/a.jsonbak/Add/Add.o", jsonPath), OK);
+    ASSERT_EQ(jsonPath, "/built-in/op_impl/a.jsonbak/Add/Add.json");
+
+    ASSERT_EQ(NnopbaseGetKernelJsonPath("/built-in/op_impl/Add.obase/Add.o", jsonPath), OK);
+    ASSERT_EQ(jsonPath, "/built-in/op_impl/Add.obase/Add.json");
+
+    ASSERT_EQ(NnopbaseGetKernelJsonPath("/built-in/op_impl/Add/Add.obar.o", jsonPath), OK);
+    ASSERT_EQ(jsonPath, "/built-in/op_impl/Add/Add.obar.json");
+
+    jsonPath = "sentinel";
+    ASSERT_EQ(NnopbaseGetKernelJsonPath("/built-in/op_impl/Add/Add", jsonPath), ACLNN_ERR_PARAM_INVALID);
+    ASSERT_EQ(jsonPath, "sentinel");
+}
+
+TEST_F(NnopbaseExecutorUnitTest, TestGetBinPathWithDotInPathComponent)
+{
+    std::string binPath;
+    ASSERT_EQ(NnopbaseGetBinPath("/opp/.jsonbak/memset/MemSet.json", binPath), OK);
+    ASSERT_EQ(binPath, "/opp/.jsonbak/memset/MemSet.o");
+
+    ASSERT_EQ(NnopbaseGetBinPath("/built-in/op_impl/a.obase/Add/Add.json", binPath), OK);
+    ASSERT_EQ(binPath, "/built-in/op_impl/a.obase/Add/Add.o");
+
+    ASSERT_EQ(NnopbaseGetBinPath("/built-in/op_impl/Json/Json.oconfig/MemSet.json", binPath), OK);
+    ASSERT_EQ(binPath, "/built-in/op_impl/Json/Json.oconfig/MemSet.o");
+
+    ASSERT_EQ(NnopbaseGetBinPath("/built-in/op_impl/MemSet/MemSet.jsonbak.json", binPath), OK);
+    ASSERT_EQ(binPath, "/built-in/op_impl/MemSet/MemSet.jsonbak.o");
+
+    binPath = "sentinel";
+    ASSERT_EQ(NnopbaseGetBinPath("/built-in/op_impl/MemSet/MemSet", binPath), ACLNN_ERR_PARAM_INVALID);
+    ASSERT_EQ(binPath, "sentinel");
+}
+
+TEST_F(NnopbaseExecutorUnitTest, TestReplacePathSuffixForJsonAndBinPaths)
+{
+    std::string path;
+    ASSERT_TRUE(nnopbase::IndvPath::ReplacePathSuffix(
+        "/built-in/a.jsonbak/Json.oconfig/Add/Add.json", ".json", ".o", path));
+    ASSERT_EQ(path, "/built-in/a.jsonbak/Json.oconfig/Add/Add.o");
+
+    ASSERT_TRUE(nnopbase::IndvPath::ReplacePathSuffix(
+        "/built-in/a.jsonbak/Json.oconfig/Add/Add.obase.o", ".o", ".json", path));
+    ASSERT_EQ(path, "/built-in/a.jsonbak/Json.oconfig/Add/Add.obase.json");
+
+    path = "sentinel";
+    ASSERT_FALSE(nnopbase::IndvPath::ReplacePathSuffix(
+        "/built-in/a.jsonbak/Add/Add", ".json", ".o", path));
+    ASSERT_EQ(path, "sentinel");
+
+    ASSERT_FALSE(nnopbase::IndvPath::ReplacePathSuffix(
+        "/built-in/a.jsonbak/Add/Add.json", "", ".o", path));
+    ASSERT_EQ(path, "sentinel");
+
+    ASSERT_FALSE(nnopbase::IndvPath::ReplacePathSuffix("", ".json", ".o", path));
+    ASSERT_EQ(path, "sentinel");
 }
 
 TEST_F(NnopbaseExecutorUnitTest, NnopbaseGenPlaceHolderKey)

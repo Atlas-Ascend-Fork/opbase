@@ -638,13 +638,12 @@ void UpdatePlatformInfoForStaticJson(ExtraKernelDesc& kernelDesc, nlohmann::json
 aclnnStatus UpdateStaticJsonExtraInfo(NnopbaseJsonInfo& jsonInfo)
 {
     std::string staticKernelBinPath = jsonInfo.path;
-    const size_t pos = staticKernelBinPath.find(".o");
-    if (pos == std::string::npos) {
+    std::string staticKernelJsonPath;
+    if (!IndvPath::ReplacePathSuffix(staticKernelBinPath, ".o", ".json", staticKernelJsonPath)) {
         OP_LOGW("Static kernel json %s is not a correct format, failed to read extra infos.",
                 staticKernelBinPath.c_str());
         return ACLNN_ERR_PARAM_INVALID;
     }
-    std::string staticKernelJsonPath = staticKernelBinPath.substr(0U, pos + 1U) + "json";
     nlohmann::json staticKernelJsonConfig;
     if (NnopbaseReadJsonConfig(staticKernelJsonPath, staticKernelJsonConfig) != OK) {
         return ACLNN_ERR_PARAM_INVALID;
@@ -930,9 +929,8 @@ aclnnStatus NnopbaseCollectorConvertStaticVerbKey(const NnopbaseChar* const strK
 
 static aclnnStatus NnopbaseGetOpBinPath(const std::string& filePath, std::string& binPath)
 {
-    const size_t pos = filePath.find(".json");
-    if (pos != std::string::npos) {
-        binPath = filePath.substr(0U, pos + 1U) + "o";
+    if (IndvPath::ReplacePathSuffix(filePath, ".json", ".o", binPath)) {
+        OP_LOGD("Static kernel file path is %s.", binPath.c_str());
     } else {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Failed to get binPath from filePath %s.", filePath.c_str());
         return ACLNN_ERR_PARAM_INVALID;

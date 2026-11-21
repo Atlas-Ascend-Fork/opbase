@@ -10,15 +10,14 @@
 #ifndef INDV_PATH_H
 #define INDV_PATH_H
 
-#include <vector>
 #include <string>
-#include <cstdint>
 
 namespace nnopbase {
 class IndvPath {
 public:
-    static void GetChildDirs(std::string& baseDir, std::vector<std::string>& childDirs, uint32_t depth,
-                             uint32_t maxDepth);
+    static bool ReplacePathSuffix(const std::string& path, const std::string& fromSuffix, const std::string& toSuffix,
+                                  std::string& pathWithNewSuffix);
+
 };
 } // namespace nnopbase
 #endif

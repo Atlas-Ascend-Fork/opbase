@@ -22,6 +22,7 @@
 #include "register/op_binary_resource_manager.h"
 #include "acl/acl_rt.h"
 #include "nnopbase_error_msg.h"
+#include "utils/indv_path.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -381,9 +382,7 @@ aclnnStatus NnopbaseLoadMemsetJson(std::shared_ptr<MemsetOpInfo>& memsetInfo)
 
 aclnnStatus NnopbaseGetBinPath(const std::string& jsonPath, std::string& binPath)
 {
-    const size_t pos = jsonPath.find(".json");
-    if (pos != std::string::npos) {
-        binPath = jsonPath.substr(0U, pos + 1U) + "o";
+    if (nnopbase::IndvPath::ReplacePathSuffix(jsonPath, ".json", ".o", binPath)) {
         OP_LOGD("Kernel file path is %s.", binPath.c_str());
     } else {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
@@ -528,9 +527,8 @@ aclnnStatus NnopbaseReadBinFile(const NnopbaseChar* const binPath, const Nnopbas
 
 aclnnStatus NnopbaseGetKernelJsonPath(const std::string& binPath, std::string& jsonPath)
 {
-    const size_t pos = binPath.find(".o");
-    if (pos != std::string::npos) {
-        jsonPath = binPath.substr(0U, pos + 1U) + "json";
+    if (nnopbase::IndvPath::ReplacePathSuffix(binPath, ".o", ".json", jsonPath)) {
+        OP_LOGD("Kernel json path is %s.", jsonPath.c_str());
     } else {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "Failed to get json file from kernel file path %s,"

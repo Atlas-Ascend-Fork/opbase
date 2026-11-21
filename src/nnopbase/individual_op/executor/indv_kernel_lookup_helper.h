@@ -26,7 +26,7 @@ public:
 
     static NnopbaseBinInfo* FindStaticBinInfo(NnopbaseExecutor* const executor, BinInfoKey& binInfoKey);
 
-    static bool FindDynamicBinInfo(NnopbaseExecutor* executor);
+    static bool FindDynamicBinInfo(NnopbaseExecutor* const executor);
 };
 
 } // namespace Indv

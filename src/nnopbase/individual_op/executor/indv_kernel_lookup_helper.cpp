@@ -657,18 +657,26 @@ aclnnStatus DynamicKeySegments::InitCustomizedSimplifiedKey()
     auto& segment = Segment(Id::kSimplifiedKey);
     segment.Clear();
     if (executor_.regInfo->genSimplifiedKey == nullptr) {
+        OP_LOGW("Op[%s] customized simplified key is enabled, but genSimplifiedKey is not registered,"
+                " try to find by tensor descriptor.", executor_.opType);
         return ACLNN_ERR_PARAM_INVALID;
     }
-    if (NnopbaseTilingContextBuild(&executor_) != OK) {
+    const aclnnStatus buildRet = NnopbaseTilingContextBuild(&executor_);
+    if (buildRet != OK) {
+        OP_LOGW("Op[%s] failed to build tiling context for customized simplified key, ret is %d,"
+                " try to find by tensor descriptor.", executor_.opType, buildRet);
         return ACLNN_ERR_INNER;
     }
 
     char simplifiedKey[NNOPBASE_CUS_KEY_LEN] = {'\0'};
+    OP_LOGD("Op[%s] starts to generate customized simplified key.", executor_.opType);
     const auto ret = executor_.regInfo->genSimplifiedKey(
         op::internal::PtrCastTo<gert::TilingContext>(executor_.tiling.contextExt.context), simplifiedKey);
     if (ret != ge::GRAPH_SUCCESS) {
+        OP_LOGW("Op[%s] failed to generate customized simplified key, ret is %d.", executor_.opType, ret);
         return ACLNN_ERR_PARAM_INVALID;
     }
+    OP_LOGD("Op[%s] generated customized simplified key is %s.", executor_.opType, simplifiedKey);
     segment.verbose.assign(simplifiedKey, simplifiedKey + strlen(simplifiedKey));
     segment.len = static_cast<uint32_t>(segment.verbose.size());
     segment.bufLen = segment.len;

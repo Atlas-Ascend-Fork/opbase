@@ -8,38 +8,22 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 #include "indv_path.h"
-#include "indv_linux.h"
 
 namespace nnopbase {
-void IndvPath::GetChildDirs(std::string& baseDir, std::vector<std::string>& childDirs, uint32_t depth,
-                            uint32_t maxDepth)
+bool IndvPath::ReplacePathSuffix(const std::string& path, const std::string& fromSuffix, const std::string& toSuffix,
+                                 std::string& pathWithNewSuffix)
 {
-    if (baseDir.empty() || depth > maxDepth) {
-        return;
-    }
-    // 扫描子文件
-    IndvDirent** nameList = nullptr;
-    const int32_t fileCount = IndvScandir(baseDir.c_str(), &nameList, nullptr, nullptr);
-    if (fileCount == INDV_EN_ERROR || fileCount == INDV_EN_INVALID_PARAM) {
-        return;
+    if (fromSuffix.empty()) {
+        return false;
     }
 
-    if (nameList == nullptr) {
-        return;
-    }
-    // 遍历查找
-    for (int32_t i = 0; i < fileCount; ++i) {
-        std::string childName = nameList[i]->d_name;
-        std::string childPath = baseDir + "/" + childName;
-        // 过滤上级目录和本级目录符号
-        if (childName.compare(".") == 0 || childName.compare("..") == 0) {
-            continue;
-        }
-        childDirs.push_back(childPath);
-        // 递归查找
-        GetChildDirs(childPath, childDirs, depth + 1, maxDepth);
+    const auto suffixPos = path.rfind(fromSuffix);
+    if (suffixPos == std::string::npos || (suffixPos + fromSuffix.size()) != path.size()) {
+        return false;
     }
 
-    IndvScandirFree(nameList, fileCount);
+    pathWithNewSuffix = path.substr(0U, suffixPos) + toSuffix;
+    return true;
 }
+
 } // namespace nnopbase
