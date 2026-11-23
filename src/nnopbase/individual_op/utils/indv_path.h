@@ -17,7 +17,6 @@ class IndvPath {
 public:
     static bool ReplacePathSuffix(const std::string& path, const std::string& fromSuffix, const std::string& toSuffix,
                                   std::string& pathWithNewSuffix);
-
 };
 } // namespace nnopbase
 #endif

@@ -202,10 +202,11 @@ void NnopbaseReportCacheOpInfo(NnopbaseExecutor* const executor, uint32_t numBlo
 
     aclError ret = aclrtCacheLastTaskOpInfo(buffer, totalSize);
     if (ret != ACL_SUCCESS) {
-        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "Failed to report operator info cache, ret is [%d]", ret);
+        OP_LOGW("Failed to report operator info cache, ret is [%d]", ret);
+    } else {
+        OP_LOGI("Report op [%s] info cache successfully, task type[%u], numBlocks[%u], attrId[%llu] size[%zu]",
+                executor->opType, taskType, numBlocks, opInfo->attrId, totalSize);
     }
-    OP_LOGI("Report op [%s] info cache successfully, task type[%u], numBlocks[%u], attrId[%llu] size[%zu]",
-            executor->opType, taskType, numBlocks, opInfo->attrId, totalSize);
     free(buffer);
 }
 

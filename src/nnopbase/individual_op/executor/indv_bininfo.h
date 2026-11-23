@@ -110,8 +110,8 @@ struct NnopbaseDfxInfo {
 };
 
 struct NnopbaseOomConfig {
-    bool flag = false;                 // supportInfo.op_debug_config包含oom
-    bool storageShapeEnabled = false;  // JSON含oom版本字段时开启StorageShape扩展
+    bool flag = false;                // supportInfo.op_debug_config包含oom
+    bool storageShapeEnabled = false; // JSON含oom版本字段时开启StorageShape扩展
     uint8_t version = 0U;
     uint8_t tensorVersion = 0U;
 };
@@ -310,14 +310,6 @@ static inline void NnopbaseBinInfoDestroy(NnopbaseBinInfo** binInfo)
     (*binInfo)->initValues.clear();
     delete (*binInfo);
     *binInfo = nullptr;
-}
-
-static inline void NnopbaseBinInfoKeyCopy(BinInfoKey* dst, const BinInfoKey* src)
-{
-    dst->verbose = src->verbose;
-    dst->hashKey = src->hashKey;
-    dst->len = src->len;
-    dst->bufLen = src->len;
 }
 
 static inline void NnopbaseBinInfoInit(NnopbaseBinInfo* binInfo)

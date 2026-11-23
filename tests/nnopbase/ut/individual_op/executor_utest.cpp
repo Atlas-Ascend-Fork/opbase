@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 #include <gtest/gtest.h>
+#include <cstring>
 #include <future>
 #include "mockcpp/mockcpp.hpp"
 #include "executor/indv_bininfo.h"
@@ -189,7 +190,7 @@ void GetExecutor(NnopbaseExecutor*& executor, const char* opType = "bninference_
     executor->space = new NnopbaseExecutorSpace();
 
     NnopbaseExecutorSetCollector(executor, gBinCollector);
-    if (opType != "bninference_d_kernel") {
+    if (strcmp(opType, "bninference_d_kernel") != 0) {
         return;
     }
     ret = NnopbaseExecutorSetRegInfo(executor, opType);
@@ -290,7 +291,7 @@ void GetExecutorWithAttr(NnopbaseExecutor*& executor, const char* opType = "bnin
     NnopbaseExecutorSetCollector(executor, gBinCollector);
     NnopbaseExecutorSpace space;
     executor->space = &space;
-    if (opType != "bninference_d_kernel") {
+    if (strcmp(opType, "bninference_d_kernel") != 0) {
         return;
     }
     ret = NnopbaseExecutorSetRegInfo(executor, opType);
@@ -429,7 +430,7 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorDynamicInput)
     NnopbaseExecutorSpace space;
     executor->space = &space;
     const char* opType = "bninference_d_kernel";
-    if (opType != "bninference_d_kernel") {
+    if (strcmp(opType, "bninference_d_kernel") != 0) {
         return;
     }
     ret = NnopbaseExecutorSetRegInfo(executor, opType);
@@ -490,7 +491,7 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorDynamicOutput1)
     NnopbaseExecutorSpace space;
     executor->space = &space;
     const char* opType = "custom_op1";
-    if (opType != "custom_op1") {
+    if (strcmp(opType, "custom_op1") != 0) {
         return;
     }
     ret = NnopbaseExecutorSetRegInfo(executor, opType);
@@ -547,7 +548,7 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorDynamicOutput2)
     NnopbaseExecutorSpace space;
     executor->space = &space;
     const char* opType = "custom_op2";
-    if (opType != "custom_op2") {
+    if (strcmp(opType, "custom_op2") != 0) {
         return;
     }
     ret = NnopbaseExecutorSetRegInfo(executor, opType);
@@ -607,7 +608,7 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorOptionalInput1)
     NnopbaseExecutorSpace space;
     executor->space = &space;
     const char* opType = "bninference_d_kernel";
-    if (opType != "bninference_d_kernel") {
+    if (strcmp(opType, "bninference_d_kernel") != 0) {
         return;
     }
     ret = NnopbaseExecutorSetRegInfo(executor, opType);
@@ -684,7 +685,7 @@ TEST_F(NnopbaseExecutorUnitTest, ExecutorOptionalInput2)
     NnopbaseExecutorSpace space;
     executor->space = &space;
     const char* opType = "bninference_d_kernel";
-    if (opType != "bninference_d_kernel") {
+    if (strcmp(opType, "bninference_d_kernel") != 0) {
         return;
     }
     ret = NnopbaseExecutorSetRegInfo(executor, opType);
@@ -2222,7 +2223,7 @@ TEST_F(NnopbaseExecutorUnitTest, NnopbaseDynamicInputExceptionArgsUt)
     NnopbaseExecutorSpace space;
     executor->space = &space;
     const char* opType = "custom_op1";
-    if (opType != "custom_op1") {
+    if (strcmp(opType, "custom_op1") != 0) {
         return;
     }
     ret = NnopbaseExecutorSetRegInfo(executor, opType);
@@ -2720,21 +2721,19 @@ TEST_F(NnopbaseExecutorUnitTest, TestGetBinPathWithDotInPathComponent)
 TEST_F(NnopbaseExecutorUnitTest, TestReplacePathSuffixForJsonAndBinPaths)
 {
     std::string path;
-    ASSERT_TRUE(nnopbase::IndvPath::ReplacePathSuffix(
-        "/built-in/a.jsonbak/Json.oconfig/Add/Add.json", ".json", ".o", path));
+    ASSERT_TRUE(
+        nnopbase::IndvPath::ReplacePathSuffix("/built-in/a.jsonbak/Json.oconfig/Add/Add.json", ".json", ".o", path));
     ASSERT_EQ(path, "/built-in/a.jsonbak/Json.oconfig/Add/Add.o");
 
-    ASSERT_TRUE(nnopbase::IndvPath::ReplacePathSuffix(
-        "/built-in/a.jsonbak/Json.oconfig/Add/Add.obase.o", ".o", ".json", path));
+    ASSERT_TRUE(
+        nnopbase::IndvPath::ReplacePathSuffix("/built-in/a.jsonbak/Json.oconfig/Add/Add.obase.o", ".o", ".json", path));
     ASSERT_EQ(path, "/built-in/a.jsonbak/Json.oconfig/Add/Add.obase.json");
 
     path = "sentinel";
-    ASSERT_FALSE(nnopbase::IndvPath::ReplacePathSuffix(
-        "/built-in/a.jsonbak/Add/Add", ".json", ".o", path));
+    ASSERT_FALSE(nnopbase::IndvPath::ReplacePathSuffix("/built-in/a.jsonbak/Add/Add", ".json", ".o", path));
     ASSERT_EQ(path, "sentinel");
 
-    ASSERT_FALSE(nnopbase::IndvPath::ReplacePathSuffix(
-        "/built-in/a.jsonbak/Add/Add.json", "", ".o", path));
+    ASSERT_FALSE(nnopbase::IndvPath::ReplacePathSuffix("/built-in/a.jsonbak/Add/Add.json", "", ".o", path));
     ASSERT_EQ(path, "sentinel");
 
     ASSERT_FALSE(nnopbase::IndvPath::ReplacePathSuffix("", ".json", ".o", path));
