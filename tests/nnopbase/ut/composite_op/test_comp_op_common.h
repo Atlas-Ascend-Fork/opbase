@@ -15,6 +15,8 @@
 #include <cstdlib>
 #include <string>
 
+#include "op_log_internal.h"
+
 namespace op::internal::test {
 // ExpandableRtsArgBuffer 测试用初始容量（远小于生产值，用于加速测试）
 constexpr size_t TEST_LAUNCH_ARG_INIT_CAP = 1000;
@@ -50,8 +52,23 @@ public:
 private:
     std::string name_;
     std::string value_;
-    bool existed_ {false};
+    bool existed_{false};
 };
+
+#if defined(NNOPBASE_UT) || defined(NNOPBASE_ST)
+// 压测用例可在作用域内关闭高频诊断日志；构造保存原状态，析构恢复，支持嵌套
+class ScopedTestLogSilence {
+public:
+    ScopedTestLogSilence() : originEnabled_(TestSuppressibleLogEnabled().exchange(false)) {}
+    ~ScopedTestLogSilence() { TestSuppressibleLogEnabled().store(originEnabled_); }
+
+    ScopedTestLogSilence(const ScopedTestLogSilence&) = delete;
+    ScopedTestLogSilence& operator=(const ScopedTestLogSilence&) = delete;
+
+private:
+    bool originEnabled_;
+};
+#endif
 } // namespace op::internal::test
 
 #endif

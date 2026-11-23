@@ -953,8 +953,9 @@ T aclScalar::To() const
     switch (dataType_) {
         case op::DataType::DT_FLOAT:
             if constexpr (std::is_same<bool, typename std::decay<T>::type>::value) {
-                if (std::isnan(v.f))
-                    return static_cast<bool>(v.f);
+                if (std::isnan(v.f)) {
+                    return true;
+                }
                 return std::abs(v.f) >= std::numeric_limits<float>::epsilon();
             } else {
                 return static_cast<T>(v.f);
@@ -962,7 +963,7 @@ T aclScalar::To() const
         case op::DataType::DT_DOUBLE:
             if constexpr (std::is_same<bool, typename std::decay<T>::type>::value) {
                 if (std::isnan(v.d)) {
-                    return static_cast<bool>(v.d);
+                    return true;
                 }
                 return std::abs(v.d) >= std::numeric_limits<double>::epsilon();
             } else {

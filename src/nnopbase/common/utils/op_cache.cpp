@@ -21,6 +21,7 @@
 #include "opdev/fast_vector.h"
 #include "kernel_utils.h"
 #include "op_dfx_internal.h"
+#include "op_log_internal.h"
 #include "op_cache_internal.h"
 #include "op_feature_internal.h"
 #include "thread_local_context.h"
@@ -747,7 +748,7 @@ void AddParamToBuf(char* c)
     AddParamToBuf(constPtr);
 };
 
-void AddParamToBuf(){};
+void AddParamToBuf() {};
 
 std::size_t OpCacheKeyHash::operator()(const OpCacheKey& key) const { return MurmurHash(key.buf, key.len); }
 
@@ -873,7 +874,7 @@ OpExecCache::OpExecCache()
 
 OpExecCache::~OpExecCache()
 {
-    OP_LOGD("Destructing OpExecCache %p", this);
+    OP_LOG_TEST_SUPPRESSIBLE(OP_LOGD("Destructing OpExecCache %p", this));
     OldCacheClear();
     if (hasExclusiveMem_) {
         delete[] static_cast<char*>(cacheBuf_);
@@ -893,7 +894,7 @@ void OpExecCache::InitOpCacheKey()
     if (tlsData->threadLocalContext.cacheHashKeyLen_ != 0) {
         key_.len = tlsData->threadLocalContext.cacheHashKeyLen_;
         key_.buf = new uint8_t[key_.len];
-        OP_LOGI("key_.len is %zu", key_.len);
+        OP_LOG_TEST_SUPPRESSIBLE(OP_LOGI("key_.len is %zu", key_.len));
         OP_CHECK(memcpy_s(key_.buf, key_.len, tlsData->threadLocalContext.cacheHashKey_, key_.len) == EOK,
                  OP_LOGW("Failed to memcpy in op cache."),
                  ;);
@@ -1102,12 +1103,12 @@ void OpExecCache::MarkOpCacheInvalid()
     hashKey_ = 0;
     // 不释放/置空 buf 仅置 len 为 0，避免 operator== 跨线程读到 buf 为空而 len 非 0 的中间态导致崩溃
     key_.len = 0;
-    OP_LOGI("Mark op cache invalid.");
+    OP_LOG_TEST_SUPPRESSIBLE(OP_LOGI("Mark op cache invalid."));
 }
 
 bool OpExecCache::IsOpCacheValid()
 {
-    OP_LOGI("Hash key: %lu, OpCacheKey len: %zu", hashKey_, key_.len);
+    OP_LOG_TEST_SUPPRESSIBLE(OP_LOGI("Hash key: %lu, OpCacheKey len: %zu", hashKey_, key_.len));
     return hashKey_ || (key_.buf && key_.len);
 }
 

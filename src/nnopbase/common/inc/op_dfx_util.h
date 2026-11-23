@@ -16,6 +16,7 @@
 #include <string>
 
 #include "securec.h"
+#include "acl/acl_base_rt.h"
 #include "acl/acl_rt.h"
 #include "mmpa/mmpa_api.h"
 #include "dump/adump_pub.h"
@@ -63,7 +64,7 @@ public:
     {
         int64_t debugFlag = 0;
         aclError ret = aclrtCtxGetSysParamOpt(ACL_OPT_ENABLE_DEBUG_KERNEL, &debugFlag);
-        if (ret != ACL_ERROR_NONE) {
+        if (ret != ACL_SUCCESS) {
             if (ret != ACL_ERROR_RT_SYSPARAMOPT_NOT_SET) {
                 OP_LOGW("Failed to call aclrtCtxGetSysParamOpt, return %d", ret);
             }
@@ -79,8 +80,8 @@ private:
 
 class RecordOpArgCallbacker {
 public:
-    RecordOpArgCallbacker(){};
-    ~RecordOpArgCallbacker(){};
+    RecordOpArgCallbacker() {};
+    ~RecordOpArgCallbacker() {};
 
     static int32_t RecordOpArgCallback(uint64_t dumpSwitch, [[maybe_unused]] char* dumpConfig,
                                        [[maybe_unused]] int32_t size);

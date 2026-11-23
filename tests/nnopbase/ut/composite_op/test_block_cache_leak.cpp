@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -21,6 +21,7 @@
 #include "bridge_pool.h"
 #include "block_pool.h"
 #include "thread_local_context.h"
+#include "test_comp_op_common.h"
 
 using namespace op;
 using namespace op::internal;
@@ -97,6 +98,9 @@ TEST_F(BlockCacheLeakTest, test_alloc_free_same_thread_baseline)
 // ===== Test 2: Thread A alloc, Thread B free (cross-thread, potential leak) =====
 TEST_F(BlockCacheLeakTest, test_alloc_thread_a_free_thread_b_cross_thread)
 {
+    // 跨线程释放会高频命中缓存超限分支，关闭该诊断日志避免淹没测试输出；作用域结束自动恢复
+    op::internal::test::ScopedTestLogSilence silence;
+
     constexpr int32_t kTotalTensors = 50000;
     constexpr int32_t kQueueSize = 256;
 
@@ -164,6 +168,9 @@ TEST_F(BlockCacheLeakTest, test_alloc_thread_a_free_thread_b_cross_thread)
 // ===== Test 3: Thread A alloc, partial free in A, partial free in B =====
 TEST_F(BlockCacheLeakTest, test_alloc_a_partial_free_a_partial_free_b)
 {
+    // 跨线程释放会高频命中缓存超限分支，关闭该诊断日志避免淹没测试输出；作用域结束自动恢复
+    op::internal::test::ScopedTestLogSilence silence;
+
     constexpr int32_t kTotalTensors = 50000;
     constexpr int32_t kFreeInARatio = 2; // every 3 tensors: 2 freed in A, 1 freed in B
     constexpr int32_t kBatchGroup = 3;
@@ -306,6 +313,9 @@ TEST_F(BlockCacheLeakTest, test_repeated_thread_create_destroy_leak)
 // ===== Test 5: Multiple consumers free tensors from single producer =====
 TEST_F(BlockCacheLeakTest, test_one_producer_multiple_consumers)
 {
+    // 跨线程释放会高频命中缓存超限分支，关闭该诊断日志避免淹没测试输出；作用域结束自动恢复
+    op::internal::test::ScopedTestLogSilence silence;
+
     constexpr int32_t kTotalTensors = 60000;
     constexpr int32_t kConsumerCount = 4;
 
@@ -380,6 +390,9 @@ TEST_F(BlockCacheLeakTest, test_one_producer_multiple_consumers)
 // ===== Test 6: Directly test BlockCache::CacheAlloc/CacheFree cross-thread =====
 TEST_F(BlockCacheLeakTest, test_block_cache_direct_cross_thread)
 {
+    // 跨线程释放会高频命中缓存超限分支，关闭该诊断日志避免淹没测试输出；作用域结束自动恢复
+    op::internal::test::ScopedTestLogSilence silence;
+
     constexpr int32_t kIterCount = 50000;
     constexpr int32_t kBlockSize = 256;
 
@@ -494,6 +507,9 @@ TEST_F(BlockCacheLeakTest, test_stress_multi_thread_alloc_free)
 // ===== Test 8: Repeated cross-thread with B exiting — definitive leak test =====
 TEST_F(BlockCacheLeakTest, test_cross_thread_b_exit_accumulates_leak)
 {
+    // 跨线程释放会高频命中缓存超限分支，关闭该诊断日志避免淹没测试输出；作用域结束自动恢复
+    op::internal::test::ScopedTestLogSilence silence;
+
     constexpr int32_t kRounds = 30;
     constexpr int32_t kTensorsPerRound = 2000;
 

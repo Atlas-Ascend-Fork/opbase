@@ -1195,6 +1195,9 @@ TEST_F(OpCacheUt, DisableOpCacheUseCountTest)
 // 中间态 buf 为空但 len 非 0，memcmp 解引用空指针崩溃；patch 后不崩。
 TEST_F(OpCacheUt, OpCacheKeyRaceConditionTest)
 {
+    // 压测期间两个线程持续高频调用，关闭这两条诊断日志，避免淹没测试结果；
+    // 作用域结束自动恢复，不影响同一可执行文件中的其他用例
+    ScopedTestLogSilence silence;
     constexpr int64_t KEY_LEN = 7;
     auto keyBuf = reinterpret_cast<uint8_t*>(const_cast<char*>("racekey"));
 
@@ -1240,6 +1243,9 @@ TEST_F(OpCacheUt, OpCacheKeyRaceConditionTest)
 // 注意：UT 默认 cacheLimit_ 为 1，需在新线程构造 manager 前通过环境变量调大，否则 cache 满直接返回走不到 find。
 TEST_F(OpCacheUt, AddOpExecCacheRaceConditionTest)
 {
+    // 压测期间两个线程持续高频调用，关闭这两条诊断日志，避免淹没测试结果；
+    // 作用域结束自动恢复，不影响同一可执行文件中的其他用例
+    ScopedTestLogSilence silence;
     constexpr int64_t KEY_LEN = 7;
     auto keyBuf = reinterpret_cast<uint8_t*>(const_cast<char*>("racekey"));
 
@@ -1302,4 +1308,22 @@ TEST_F(OpCacheUt, AddOpExecCacheRaceConditionTest)
     } else {
         unsetenv("ACLNN_CACHE_LIMIT");
     }
+}
+
+// 验证压测用例可用的日志抑制守卫：默认开启、作用域内关闭、离开后恢复、支持嵌套
+TEST_F(OpCacheUt, TestSuppressibleLogSilenceRestoresState)
+{
+    EXPECT_TRUE(op::internal::TestSuppressibleLogEnabled().load());
+
+    {
+        ScopedTestLogSilence outer;
+        EXPECT_FALSE(op::internal::TestSuppressibleLogEnabled().load());
+        {
+            ScopedTestLogSilence inner;
+            EXPECT_FALSE(op::internal::TestSuppressibleLogEnabled().load());
+        }
+        EXPECT_FALSE(op::internal::TestSuppressibleLogEnabled().load());
+    }
+
+    EXPECT_TRUE(op::internal::TestSuppressibleLogEnabled().load());
 }

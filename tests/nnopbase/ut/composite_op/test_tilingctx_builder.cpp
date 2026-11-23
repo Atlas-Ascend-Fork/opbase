@@ -33,6 +33,7 @@
 #include "opdev/make_op_executor.h"
 #include "opdev/op_errno.h"
 #include "thread_local_context.h"
+#include "test_comp_op_common.h"
 #include "kernel_workspace.h"
 #include "op_run_context.h"
 #include "depends/platform/platform_stub.h"
@@ -581,6 +582,9 @@ TEST_F(TilingCtxBuildUT, SetCoreNumTest310PMIXAIV)
 
 TEST_F(TilingCtxBuildUT, TilingCtxMultiThreadTest)
 {
+    // 多线程并发构建 tiling context 会产生大量维测日志，关闭以保留有价值的测试输出；作用域结束自动恢复
+    op::internal::test::ScopedTestLogSilence silence;
+
     // 移除 SetCoreNumTest310PMIXAIV：该用例依赖 setenv 控制环境变量，不适合作为多线程并发对象
     vector<Functional> funVec = {TilingCtxBuildUTCase1,     TilingCtxBuildUTCase2,        TilingCtxBuildUTCase3,
                                  GetTilingResFromCacheCase, TilingParseCtxHolderFreeTest, SetCoreNumTestAiCore,
@@ -773,12 +777,12 @@ static void TilingCtxDeterministicLevelNullTest()
         nullptr); // CompiledInfoStruct
     EXPECT_EQ(
         op::internal::OpRunContextMgr::opRunCtx_.tilingCtx_.tilingCtx_->values[tilingInputNum - TILING_PLATFORM_IDX],
-        nullptr);       // PlatformInfo
+        nullptr); // PlatformInfo
     EXPECT_EQ(op::internal::OpRunContextMgr::opRunCtx_.tilingCtx_.tilingCtx_->values[tilingInputNum - TILING_FUNC_IDX],
               nullptr); // TilingFunc
     EXPECT_EQ(
         op::internal::OpRunContextMgr::opRunCtx_.tilingCtx_.tilingCtx_->values[tilingInputNum - DETERMINISTIC_IDX],
-        nullptr);       // Deterministic
+        nullptr); // Deterministic
     EXPECT_EQ(op::internal::OpRunContextMgr::opRunCtx_.tilingCtx_.tilingCtx_->values[tilingInputNum - 1],
               nullptr); // DeterministicLevel
 

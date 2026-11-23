@@ -1951,6 +1951,9 @@ TEST_F(OpKernelMultiThreadUT, SingleDoLaunchTest)
 
 TEST_F(OpKernelMultiThreadUT, MultiDoLaunchTest)
 {
+    // 上千个线程并发下发会产生大量维测日志，关闭以保留有价值的测试输出；作用域结束自动恢复
+    ScopedTestLogSilence silence;
+
     vector<Functional> funVec = {MultiDoLaunchAlignTest,   MultiDoLaunchNormalTest2,   MultiDoLaunchNormalTest3,
                                  MultiDoLaunchNormalTest4, TestInvalidFunctionHandle1, TestInvalidFunctionHandle2};
 
@@ -2242,6 +2245,9 @@ static void TestReselectStaticKernelWithPathFunc(pthread_barrier_t* barrier, pth
 
 TEST_F(OpKernelMultiThreadUT, TestReselectStaticKernel)
 {
+    // 多线程并发重选 kernel 会产生大量维测日志，关闭以保留有价值的测试输出；作用域结束自动恢复
+    ScopedTestLogSilence silence;
+
     op::GenOpTypeId("TestStatic");
     op::GenOpTypeId("TestStaticAdd");
     op::GenOpTypeId("Conv2D");
@@ -2286,6 +2292,9 @@ TEST_F(OpKernelMultiThreadUT, TestReselectStaticKernel)
 // 启用 debug、预 init testStaticAdd 和 Conv2D、LAUNCH_THREADS=20、结束前 restore enableDebug）完全对称
 TEST_F(OpKernelMultiThreadUT, TestReselectStaticKernelWithPath)
 {
+    // 多线程并发重选 kernel 会产生大量维测日志，关闭以保留有价值的测试输出；作用域结束自动恢复
+    ScopedTestLogSilence silence;
+
     op::GenOpTypeId("TestStatic");
     op::GenOpTypeId("TestStaticAdd");
     op::GenOpTypeId("Conv2D");

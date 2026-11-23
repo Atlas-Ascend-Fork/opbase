@@ -1062,7 +1062,7 @@ void PrepareExceptionDumpInfo(const std::vector<op::Tensor*>& in, const std::vec
     ret = aclrtStreamGetId(stream, &streamId);
     OP_CHECK(ret == ACL_SUCCESS, OP_LOGW("Failed to get streamId."), return);
     ret = aclrtGetDevice(&deviceId);
-    OP_CHECK(ret == ACL_ERROR_NONE, OP_LOGW("Failed to get deviceId."), return);
+    OP_CHECK(ret == ACL_SUCCESS, OP_LOGW("Failed to get deviceId."), return);
 
     PrepareDumpTensor(dumpInTensors, in, OpInputType);
     PrepareDumpTensor(dumpOutTensors, out, OpOutputType);

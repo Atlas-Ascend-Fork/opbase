@@ -26,6 +26,7 @@
 #include <vector>
 #include <unistd.h>
 #include "block_store.h"
+#include "op_log_internal.h"
 #include "opdev/op_log.h"
 
 namespace op {
@@ -217,7 +218,7 @@ private:
      * @brief Block size and count of BlockStore
      */
     struct BlockDesc {
-        BlockDesc(size_t s, size_t c) : size(s), count(c){};
+        BlockDesc(size_t s, size_t c) : size(s), count(c) {};
         size_t size{0};
         size_t count{0};
     };
@@ -417,11 +418,10 @@ private:
         }
 
         if (head->cacheExt_ != reinterpret_cast<uintptr_t>(this) && cacheCount_[idx] > cacheMaxCount_[idx]) {
-#if !defined(NNOPBASE_UT) && !defined(NNOPBASE_ST)
-            OP_LOGD("Cache count [%zu] exceeds max [%zu] for size class [%d], free the cross-thread released block to "
-                    "system memory",
-                    cacheCount_[idx], cacheMaxCount_[idx], idx);
-#endif
+            OP_LOG_TEST_SUPPRESSIBLE(
+                OP_LOGD("Cache count [%zu] exceeds max [%zu] for size class [%d], free the cross-thread released block "
+                        "to system memory",
+                        cacheCount_[idx], cacheMaxCount_[idx], idx));
             // 跨线程释放的块均为 SYS_TAG 系统内存, BlockPool::Free 实际执行 std::free, 此处为释放系统内存而非归还进程池
             BlockPool::Free(block);
             return;
