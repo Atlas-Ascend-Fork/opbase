@@ -505,7 +505,7 @@ logandprint "[INFO]: upgradePercentage:30%"
 logandprint "[INFO]: Install opbase module path in the install folder."
 setenv
 
-sh "${_COMMON_PARSER_FILE}" --package="${ops_base_platform_dir}" --install --username="${_TARGET_USERNAME}" --usergroup="${_TARGET_USERGROUP}" --set-cann-uninstall --use-share-info \
+sh "${_COMMON_PARSER_FILE}" --copy_all --package="${ops_base_platform_dir}" --install --username="${_TARGET_USERNAME}" --usergroup="${_TARGET_USERGROUP}" --set-cann-uninstall --use-share-info \
     --version=${pkg_version} --version-dir=$pkg_version_dir $upgrade_option ${in_install_for_all} ${in_feature_1} ${chip_type_1} "${install_type}" "${_TARGET_INSTALL_PATH}" "${_FILELIST_FILE}"
 logwitherrorlevel "$?" "error" "[ERROR]: ERR_NO:${INSTALL_FAILED};ERR_DES:Install opbase module files failed."
 logandprint "[INFO]: upgradePercentage:50%"
