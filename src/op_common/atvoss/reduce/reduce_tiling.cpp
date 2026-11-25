@@ -26,6 +26,7 @@ using namespace ReduceOpTmpl;
 constexpr static int32_t MAX_INNER_A = 512; // 单位字节
 constexpr static int32_t A_STEP_LEN = 4;
 constexpr static uint64_t NDDMA_TAIL_BYTES_ASCEND960 = 32UL; // Ascend960 尾轴 NDDMA 判定阈值（字节）
+constexpr static uint64_t SIZE_64K = 65536;
 /**
  * Ensure that the returned shape is non-scalar.
  * When the dim num of shape is 0, this shape is considered to express a scalar.
@@ -606,6 +607,18 @@ uint64_t ReduceOpTiling::CaculateReduceSize(const uint64_t* shape)
     return r;
 }
 
+template <class Pattern>
+uint64_t ReduceOpTiling::CaculateShapeSize(const uint64_t* shape)
+{
+    uint64_t dSize = ge::GetSizeByDataType(opInput_.inputDtype);
+    uint64_t ubBlockSize = compileInfo_->ubBlockSize / dSize;
+    uint64_t total = 1;
+    for (int32_t i = 0; i < Pattern::Dim; i++) {
+        total *= (i == Pattern::Dim - 1) ? CeilAlign(shape[i], ubBlockSize) : shape[i];
+    }
+    return total;
+}
+
 // pad dim = 1 in front of actual dim
 template <class Pattern>
 void ReduceOpTiling::PadDimOne(uint64_t* shape)
@@ -1043,6 +1056,11 @@ ge::graphStatus ReduceOpTiling::CalcBasicBlock(const uint64_t* shape)
         OP_LOGE_FOR_INVALID_VALUE_WITH_REASON(context_->GetNodeName(), "basicBlock",
                                               std::to_string(basicBlock_).c_str(), reasonMsg.c_str());
         return ge::GRAPH_FAILED;
+    }
+    uint64_t shapeSize = CaculateShapeSize<Pattern>(shape);
+    uint64_t dSize = ge::GetSizeByDataType(opInput_.inputDtype);
+    if (shapeSize * dSize <= basicBlock_ && basicBlock_ > SIZE_64K) {
+        basicBlock_ = SIZE_64K;
     }
     OP_LOGI(context_, "preInputBufferNum:%lu, preRestBufferNum:%lu, postBufferNum:%lu, basicBlock:%ld, resBlock:%ld",
             preInputBufferNum, preRestBufferNum, postBufferNum, basicBlock_, resultBlock_);
