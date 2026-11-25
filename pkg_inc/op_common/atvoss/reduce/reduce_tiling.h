@@ -372,6 +372,9 @@ protected:
     uint64_t CaculateReduceSize(const uint64_t* shape);
 
     template <class Pattern>
+    uint64_t CaculateShapeSize(const uint64_t* shape);
+
+    template <class Pattern>
     ge::graphStatus CalcBasicBlock(const uint64_t* shape);
 
     template <class Pattern>
