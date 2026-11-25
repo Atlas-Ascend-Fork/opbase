@@ -10,7 +10,7 @@ The APIs described in this section are reserved and may be changed or deprecated
 | nodeName_(nodeName) | Operator name.|
 | inputNum_(inputNum) | Number of operator inputs.|
 | outputNum_(outputNum) | Number of operator outputs.|
-| unknownType_(unknownType) | Operator type.|
+| unknownType_(unknownType) | Dynamic-shape processing category of the operator. Values are defined by the `ge::UnknowShapeOpType` enumeration.|
 | AicpuExtInfoHandler() | Constructs an instance of the class that manages AI CPU extended parameters.|
 | GenTfExtBuffer(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, std::string &taskExtInfo) | Generates extended parameters for the TensorFlow operator framework.|
 | GenCCExtBuffer( const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, std::string &taskExtInfo) | Generates extended parameters for the CANN operator framework.|

@@ -10,7 +10,7 @@
 | nodeName_(nodeName) | 算子名称。 |
 | inputNum_(inputNum) | 算子的输入个数。 |
 | outputNum_(outputNum) | 算子的输出个数。 |
-| unknownType_(unknownType) | 标识算子是什么类型的算子。 |
+| unknownType_(unknownType) | 标识算子的动态形状处理类别，取值见ge::UnknowShapeOpType枚举。 |
 | AicpuExtInfoHandler() | AI CPU拓展参数管理类的默认构造函数，用于创建未指定算子的空实例。 |
 | GenTfExtBuffer(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, std::string &taskExtInfo) | 生成TensorFlow算子框架的拓展参数。 |
 | GenCCExtBuffer(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, std::string &taskExtInfo) | 生成CANN算子框架的拓展参数。 |

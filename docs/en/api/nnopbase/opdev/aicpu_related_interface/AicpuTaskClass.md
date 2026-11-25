@@ -7,18 +7,27 @@ The definition is as follows:
 ```cpp
 class AicpuTask {
 public:
+    // opType is the operator type name; unknownType is the dynamic-shape processing category. Neither has a default.
     AicpuTask(const std::string &opType, const ge::UnknowShapeOpType unknownType)
         : opType_(opType), unknownType_(unknownType) {}
     virtual ~AicpuTask() = default;
+    // Initializes task parameters and extended information: inputs/outputs are Tensor lists; attrs is the attribute map.
+    // Implemented by derived classes. Returns ACLNN_SUCCESS on success or a specific error code on failure.
     virtual aclnnStatus Init(const FVector<const aclTensor *> &inputs, const FVector<aclTensor *> &outputs,
                              const AicpuAttrs &attrs) = 0;
+    // Launches the task after SetIoTensors succeeds. executor must be valid; stream is the stream for this execution.
+    // Returns ACLNN_SUCCESS or a specific error code. Success does not imply synchronized device completion on every path.
     virtual aclnnStatus Run(aclOpExecutor *executor, aclrtStream stream) = 0;
+    // Refreshes inputs, outputs, shapes, and any existing workspace record from args before execution.
+    // executor and args must be valid; args is borrowed. Returns ACLNN_SUCCESS or a specific error code.
     aclnnStatus SetIoTensors(aclOpExecutor *executor, op::OpArgContext *args);
     friend class AicpuTaskSpace;
+    // space points to the owning AicpuTaskSpace and must remain valid while the task is used. No return value.
     void SetSpace(void *space)
     {
         space_ = space;
     }
+    // visit is true to mark the task as occupied, or false to release it. Does not wait for device completion. Returns void.
     void SetVisit(bool visit);
 protected:
     const std::string opType_;
@@ -46,7 +55,7 @@ For details about the members in this class, see the following table.
 | Attribute| Type| Default Value| Description|
 | --- | --- | --- | --- |
 | opType_ | const std::string | "" | Name of the AI CPU operator corresponding to a task.|
-| UnknownType_ | const ge::UnknowShapeOpType | 0 | A flag indicating that the operator shape is a base class. The specific type is `UnknowShapeOpType`.|
+| unknownType_ | const ge::UnknowShapeOpType | None (supplied by the constructor) | Dynamic-shape processing category of the operator. Values are defined by the `ge::UnknowShapeOpType` enumeration.|
 | argsHandle_ | std::unique_ptr\<AicpuArgsHandler\> | null | Object for managing task encapsulation parameters.|
 | extInfoHandle_ | std::unique_ptr\<AicpuExtInfoHandler\> | null | Object for managing extended task encapsulation parameters.|
 | launchId_ | uint64_t | 0 | ID of a profiling task.|
