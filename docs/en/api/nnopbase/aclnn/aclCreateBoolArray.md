@@ -34,8 +34,8 @@ The following code examples are for reference only and are not intended for dire
 
 ```cpp
 // Create an aclBoolArray.
-std::vector<bool> maskData = {true, false};
-aclBoolArray *mask = aclCreateBoolArray(maskData.data(), maskData.size());
+bool maskData[] = {true, false};
+aclBoolArray *mask = aclCreateBoolArray(maskData, sizeof(maskData) / sizeof(maskData[0]));
 ...
 // Use the aclBoolArray as the input parameter for single-operator API execution.
 auto ret = aclxxXxxGetWorkspaceSize(srcTensor, mask, ..., outTensor, ..., &workspaceSize, &executor);

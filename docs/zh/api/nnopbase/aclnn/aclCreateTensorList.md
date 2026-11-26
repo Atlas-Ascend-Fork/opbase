@@ -47,6 +47,7 @@ nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
 // 创建aclTensorList
 std::vector<aclTensor *> tmp{input1, input2};
 aclTensorList* tensorList = aclCreateTensorList(tmp.data(), tmp.size());
+// 实际使用时需校验返回值是否为nullptr，为nullptr时停止后续流程
 // aclTensorList作为单算子API执行接口的入参
 auto ret = aclxxXxxGetWorkspaceSize(srcTensor, tensorList, ..., outTensor, ..., &workspaceSize, &executor);
 ret = aclxxXxx(...);

@@ -46,9 +46,9 @@ aclTensor *tensor2 = aclCreateTensor(shape.data(), shape.size(), aclDataType::AC
 nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
 aclTensor *tensor3 = aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT,
 nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
-aclTensor *tensor4= aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT,
+aclTensor *tensor4 = aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT,
 nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
-aclTensor *output= aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT,
+aclTensor *output = aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT,
 nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
 aclTensor *list[] = {tensor3, tensor4};
 auto tensorList = aclCreateTensorList(list, 2);
@@ -59,12 +59,13 @@ aclOpExecutor *executor;
 aclnnAddCustomGetWorkspaceSize(tensor1, tensor2, output, tensorList, &workspaceSize, &executor);
 // Set the executor to be reusable.
 aclSetAclOpExecutorRepeatable(executor); 
-void *addr;
+// The example reuses one variable as a placeholder. In actual use, pass each tensor's own device memory address (32-byte aligned).
+void *addr = nullptr;
 aclSetOutputTensorAddr(executor, 0, output, addr);  // Update the device address of the output aclTensor.
-aclSetOutputTensorAddr(executor, 1, output, addr);  // Update the device address of the first aclTensor in the output tensor list.
-aclSetOutputTensorAddr(executor, 2, output, addr);  // Update the device address of the second aclTensor in the output tensor list.
+aclSetOutputTensorAddr(executor, 1, tensor3, addr);  // Update the device address of the first aclTensor in the output tensor list.
+aclSetOutputTensorAddr(executor, 2, tensor4, addr);  // Update the device address of the second aclTensor in the output tensor list.
 ...
-// Call the second-phase API.
+// Call the second-phase API. workspace must be allocated according to workspaceSize, and stream is provided by the caller.
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
 // Destroy the executor.
 aclDestroyAclOpExecutor(executor);  

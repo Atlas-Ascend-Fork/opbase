@@ -38,10 +38,10 @@ The following code examples are for reference only and are not intended for dire
 
 ```cpp
 // 1. Create an xTensor.
-int64_t xViewDims = {2, 4};       
-int64_t xStridesValue = {4, 1};  // The stride of the first dimension is 4, and that of the second dimension is 1. 
-int64_t xStorageDims = {2, 4};    
-xTensor = aclCreateTensor(xViewDims, 2, ACL_FLOAT16, xStridesValue, 0, ACL_FORMAT_ND, xStorageDims, 2, nullptr);
+int64_t xViewDims[] = {2, 4};       
+int64_t xStridesValue[] = {4, 1};  // The stride of the first dimension is 4, and that of the second dimension is 1. 
+int64_t xStorageDims[] = {2, 4};    
+aclTensor *xTensor = aclCreateTensor(xViewDims, 2, ACL_FLOAT16, xStridesValue, 0, ACL_FORMAT_ND, xStorageDims, 2, nullptr);
 
 // 2. Obtain the attribute values of xTensor.
 // Obtain the logical shape of xTensor. viewDims is {2, 4}, and viewDimsNum is 2.
@@ -65,13 +65,15 @@ ret = aclGetFormat(xTensor, &format);
 int64_t *storageDims = nullptr;
 uint64_t storageDimsNum = 0;
 ret = aclGetStorageShape(xTensor, &storageDims, &storageDimsNum);
-// Device address
-void *deviceAddr;
+// Device-side address. Replace it with a valid device memory address (32-byte aligned).
+void *deviceAddr = nullptr;
 
 // 3. Create a tensor based on the xTensor attributes.
 aclTensor *yTensor = aclCreateTensor(viewDims, viewDimsNum, dataType, stridesValue, offset, format, storageDims, storageDimsNum, deviceAddr);
 
-// 4. Manually free memory.
+// 4. Destroy the aclTensor objects and free the memory manually.
+ret = aclDestroyTensor(yTensor);
+ret = aclDestroyTensor(xTensor);
 delete[] viewDims;
 delete[] stridesValue;
 delete[] storageDims;

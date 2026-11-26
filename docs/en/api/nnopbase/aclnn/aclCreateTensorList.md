@@ -47,6 +47,7 @@ nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
 // Create an aclTensorList.
 std::vector<aclTensor *> tmp{input1, input2};
 aclTensorList* tensorList = aclCreateTensorList(tmp.data(), tmp.size());
+// Check whether the return value is nullptr in actual use and stop the subsequent steps if it is nullptr.
 // Use the aclTensorList as the input parameter for single-operator API execution.
 auto ret = aclxxXxxGetWorkspaceSize(srcTensor, tensorList, ..., outTensor, ..., &workspaceSize, &executor);
 ret = aclxxXxx(...);

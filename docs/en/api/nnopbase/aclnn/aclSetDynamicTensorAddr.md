@@ -60,15 +60,17 @@ aclOpExecutor *executor;
 // The AddCustom operator has two inputs (aclTensorList and aclTensor) and one output (aclTensorList).
 // Call the first-phase API.
 aclnnAddCustomGetWorkspaceSize(tensorList, tensor3, output, &workspaceSize, &executor);
+// Check the return value in actual use and stop the subsequent steps on failure.
 // Set the executor to be reusable.
 aclSetAclOpExecutorRepeatable(executor);  
-void *addr;
+// The example reuses one variable as a placeholder. In actual use, pass each tensor's own device memory address (32-byte aligned).
+void *addr = nullptr;
 aclSetDynamicTensorAddr(executor, 0, 0, tensorList, addr); // Update the device address of the first aclTensor in the input tensor list.
 aclSetDynamicTensorAddr(executor, 0, 1, tensorList, addr); // Update the device address of the second aclTensor in the input tensor list.
 aclSetDynamicTensorAddr(executor, 2, 0, output, addr); // After the two input parameters, update the device address of the first aclTensor in the output.
 aclSetDynamicTensorAddr(executor, 2, 1, output, addr); // Update the device address of the second aclTensor in the output.
 ...
-// Call the second-phase API.
+// Call the second-phase API. workspace must be allocated according to workspaceSize, and stream is provided by the caller.
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
 // Destroy the executor.
 aclDestroyAclOpExecutor(executor);  

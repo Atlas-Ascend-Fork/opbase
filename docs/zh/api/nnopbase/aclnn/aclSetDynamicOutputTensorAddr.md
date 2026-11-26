@@ -56,22 +56,21 @@ aclTensor *tensor3 = aclCreateTensor(shape.data(), shape.size(), aclDataType::AC
 nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
 aclTensor *tensor4 = aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT,
 nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
-aclTensor *output = aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT,
-nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
 aclTensor *list[] = {tensor3, tensor4};
 auto tensorList = aclCreateTensorList(list, 2);
 uint64_t workspaceSize = 0;
 aclOpExecutor *executor;
 // AddCustom算子有两个输入（aclTensor），一个输出（aclTensorList）
 // 调用第1段接口
-aclnnAddCustomGetWorkspaceSize(tensor1, tensor2, tensorList , &workspaceSize, &executor);
+aclnnAddCustomGetWorkspaceSize(tensor1, tensor2, tensorList, &workspaceSize, &executor);
 // 设置executor为可复用
 aclSetAclOpExecutorRepeatable(executor);
-void *addr;
+// 示例中复用同一变量占位，实际使用需为每个tensor分别传入其Device内存地址（32字节对齐）
+void *addr = nullptr;
 aclSetDynamicOutputTensorAddr(executor, 0, 0, tensorList, addr); // 刷新输出tensorlist中第1个aclTensor的device地址
 aclSetDynamicOutputTensorAddr(executor, 0, 1, tensorList, addr); // 刷新输出tensorlist中第2个aclTensor的device地址
 ...
- // 调用第2段接口
+ // 调用第2段接口（workspace需按workspaceSize申请Device内存，stream由调用方提供）
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
  // 清理executor
 aclDestroyAclOpExecutor(executor);

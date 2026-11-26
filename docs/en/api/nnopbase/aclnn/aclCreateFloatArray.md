@@ -35,7 +35,7 @@ The following code examples are for reference only and are not intended for dire
 ```cpp
 // Create an aclFloatArray.
 std::vector<float> scalesData = {1.0, 1.0, 2.0, 2.0};
-aclFloatArray *scales = aclCreateFloatArray(scalesData.data(),scalesData.size());
+aclFloatArray *scales = aclCreateFloatArray(scalesData.data(), scalesData.size());
 ...
 // Use the aclFloatArray as the input parameter for single-operator API execution.
 auto ret = aclxxXxxGetWorkspaceSize(srcTensor, scales, ..., outTensor, ..., &workspaceSize, &executor);

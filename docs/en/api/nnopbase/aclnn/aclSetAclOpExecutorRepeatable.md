@@ -61,11 +61,12 @@ aclOpExecutor *executor;
 aclnnAddCustomGetWorkspaceSize(tensorList, tensor3, output, &workspaceSize, &executor);
 // Set the executor to be reusable.
 aclSetAclOpExecutorRepeatable(executor);  
-void *addr;
+// The example reuses one variable as a placeholder. In actual use, pass each tensor's own device memory address (32-byte aligned).
+void *addr = nullptr;
 aclSetDynamicInputTensorAddr(executor, 0, 0, tensorList, addr);   // Update the device address of the first aclTensor in the input tensor list.
 aclSetDynamicInputTensorAddr(executor, 0, 1, tensorList, addr);  // Update the device address of the second aclTensor in the input tensor list.
 ...
-// Call the second-phase API.
+// Call the second-phase API. workspace must be allocated according to workspaceSize, and stream is provided by the caller.
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
 // Destroy the executor.
 aclDestroyAclOpExecutor(executor);  

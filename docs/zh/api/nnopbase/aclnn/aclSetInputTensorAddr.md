@@ -64,12 +64,13 @@ aclOpExecutor *executor;
 aclnnAddCustomGetWorkspaceSize(tensorList, tensor3, output, &workspaceSize, &executor);
 // 设置executor为可复用
 aclSetAclOpExecutorRepeatable(executor);
-void *addr;
+// 示例中复用同一变量占位，实际使用需为每个tensor分别传入其Device内存地址（32字节对齐）
+void *addr = nullptr;
 aclSetInputTensorAddr(executor, 0, tensor1, addr);   // 刷新输入tensorlist中第1个aclTensor的device地址
 aclSetInputTensorAddr(executor, 1, tensor2, addr);  // 刷新输入tensorlist中第2个aclTensor的device地址
 aclSetInputTensorAddr(executor, 2, tensor3, addr);  // 刷新输入aclTensor的device地址
 ...
-// 调用第2段接口
+// 调用第2段接口（workspace需按workspaceSize申请Device内存，stream由调用方提供）
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
 // 清理executor
 aclDestroyAclOpExecutor(executor);

@@ -52,8 +52,8 @@ void *addr2;
 ret = aclSetRawTensorAddr(inputTensor, addr1); // 刷新输入张量inputTensor的device地址
 ret = aclSetRawTensorAddr(outputTensor, addr2); // 刷新输出张量outputTensor的device地址
 ...
-// 复用inputTensor，outputTensor后，调用Yyy算子aclnn一、二阶段接口
-auto ret = aclnnYyyGetWorkspaceSize(inputTensor, outputTensor, &workspaceSize, &executor);
+// 复用inputTensor，outputTensor后，调用Yyy算子一、二阶段接口
+ret = aclnnYyyGetWorkspaceSize(inputTensor, outputTensor, &workspaceSize, &executor);
 ret = aclnnYyy(workspace, workspaceSize, executor, stream);
 ...
 ```

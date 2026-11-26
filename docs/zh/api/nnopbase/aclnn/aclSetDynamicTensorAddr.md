@@ -67,15 +67,17 @@ aclOpExecutor *executor;
 // AddCustom算子有两个输入（aclTensorList和aclTensor），一个输出（aclTensorList）
 // 调用第1段接口
 aclnnAddCustomGetWorkspaceSize(tensorList, tensor3, output, &workspaceSize, &executor);
+// 实际使用时需校验返回值，失败时停止后续流程
 // 设置executor为可复用
 aclSetAclOpExecutorRepeatable(executor);
-void *addr;
+// 示例中复用同一变量占位，实际使用需为每个tensor分别传入其Device内存地址（32字节对齐）
+void *addr = nullptr;
 aclSetDynamicTensorAddr(executor, 0, 0, tensorList, addr); // 刷新输入tensorlist中第1个aclTensor的device地址
 aclSetDynamicTensorAddr(executor, 0, 1, tensorList, addr); // 刷新输入tensorlist中第2个aclTensor的device地址
 aclSetDynamicTensorAddr(executor, 2, 0, output, addr); // 两个输入参数之后，刷新输出output中第1个aclTensor的device地址
 aclSetDynamicTensorAddr(executor, 2, 1, output, addr); // 刷新输出output中第2个aclTensor的device地址
 ...
-// 调用第2段接口
+// 调用第2段接口（workspace需按workspaceSize申请Device内存，stream由调用方提供）
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
 // 清理executor
 aclDestroyAclOpExecutor(executor);

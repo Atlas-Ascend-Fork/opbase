@@ -35,7 +35,7 @@ aclFloatArray *aclCreateFloatArray(const float *value, uint64_t size)
 ```cpp
 // 创建aclFloatArray
 std::vector<float> scalesData = {1.0, 1.0, 2.0, 2.0};
-aclFloatArray *scales = aclCreateFloatArray(scalesData.data(),scalesData.size());
+aclFloatArray *scales = aclCreateFloatArray(scalesData.data(), scalesData.size());
 ...
 // aclFloatArray作为单算子API执行接口的入参
 auto ret = aclxxXxxGetWorkspaceSize(srcTensor, scales, ..., outTensor, ..., &workspaceSize, &executor);

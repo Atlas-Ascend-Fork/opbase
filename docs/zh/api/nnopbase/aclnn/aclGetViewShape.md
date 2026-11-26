@@ -57,7 +57,7 @@ ret = aclGetDataType(xTensor, &dataType);
 int64_t *stridesValue = nullptr;
 uint64_t stridesNum = 0;
 ret = aclGetViewStrides(xTensor, &stridesValue, &stridesNum);
-// 获取xTensor的首元素对于storage的偏移值，offset为0
+// 获取xTensor的首元素相对于storage的偏移值，offset为0
 int64_t offset = 0;
 ret = aclGetViewOffset(xTensor, &offset);
 // 获取xTensor的数据排布格式为ACL_FORMAT_ND
@@ -67,13 +67,15 @@ ret = aclGetFormat(xTensor, &format);
 int64_t *storageDims = nullptr;
 uint64_t storageDimsNum = 0;
 ret = aclGetStorageShape(xTensor, &storageDims, &storageDimsNum);
-// device侧地址
-void *deviceAddr;
+// Device侧地址，需替换为实际有效的Device内存地址（32字节对齐）
+void *deviceAddr = nullptr;
 
 // 3.根据xTensor的属性创建新的tensor
 aclTensor *yTensor = aclCreateTensor(viewDims, viewDimsNum, dataType, stridesValue, offset, format, storageDims, storageDimsNum, deviceAddr);
 
-// 4.手动释放内存
+// 4.销毁aclTensor并手动释放内存
+ret = aclDestroyTensor(yTensor);
+ret = aclDestroyTensor(xTensor);
 delete[] viewDims;
 delete[] stridesValue;
 delete[] storageDims;

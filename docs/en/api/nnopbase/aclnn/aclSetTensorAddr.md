@@ -57,7 +57,8 @@ aclOpExecutor *executor;
 aclnnAddCustomGetWorkspaceSize(tensorList, tensor3, output, &workspaceSize, &executor);
 // Set the executor to be reusable.
 aclSetAclOpExecutorRepeatable(executor);  
-void *addr;
+// addr is the updated Device storage address provided by the caller as needed (for example, a newly allocated device memory address).
+void *addr = nullptr;
 aclSetTensorAddr(executor, 0, tensor1, addr); // Update the device address of the first aclTensor in the input tensor list.
 aclSetTensorAddr(executor, 1, tensor2, addr); // Update the device address of the second aclTensor in the input tensor list.
 aclSetTensorAddr(executor, 2, tensor3, addr); // Update the device address of the input aclTensor.

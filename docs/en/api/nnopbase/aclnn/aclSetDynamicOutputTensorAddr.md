@@ -49,22 +49,21 @@ aclTensor *tensor3 = aclCreateTensor(shape.data(), shape.size(), aclDataType::AC
 nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
 aclTensor *tensor4 = aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT,
 nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
-aclTensor *output = aclCreateTensor(shape.data(), shape.size(), aclDataType::ACL_FLOAT,
-nullptr, 0, aclFormat::ACL_FORMAT_ND, shape.data(), shape.size(), nullptr);
 aclTensor *list[] = {tensor3, tensor4};
 auto tensorList = aclCreateTensorList(list, 2);
 uint64_t workspaceSize = 0;
 aclOpExecutor *executor;
 // The AddCustom operator has two inputs (aclTensor) and one output (aclTensorList).
 // Call the first-phase API.
-aclnnAddCustomGetWorkspaceSize(tensor1, tensor2, tensorList , &workspaceSize, &executor);
+aclnnAddCustomGetWorkspaceSize(tensor1, tensor2, tensorList, &workspaceSize, &executor);
 // Set the executor to be reusable.
 aclSetAclOpExecutorRepeatable(executor);  
-void *addr;
+// The example reuses one variable as a placeholder. In actual use, pass each tensor's own device memory address (32-byte aligned).
+void *addr = nullptr;
 aclSetDynamicOutputTensorAddr(executor, 0, 0, tensorList, addr); // Update the device address of the first aclTensor in the output tensor list.
 aclSetDynamicOutputTensorAddr(executor, 0, 1, tensorList, addr); // Update the device address of the second aclTensor in the output tensor list.
 ...
- // Call the second-phase API.
+ // Call the second-phase API. workspace must be allocated according to workspaceSize, and stream is provided by the caller.
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
  // Destroy the executor.
 aclDestroyAclOpExecutor(executor); 

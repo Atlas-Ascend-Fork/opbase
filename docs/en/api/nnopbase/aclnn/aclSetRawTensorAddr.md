@@ -53,7 +53,7 @@ ret = aclSetRawTensorAddr(inputTensor, addr1); // Update the device address of i
 ret = aclSetRawTensorAddr(outputTensor, addr2); // Update the device address of outputTensor.
 ...
 // After inputTensor and outputTensor are reused, call the first- and second-phase APIs of the Yyy operator in aclnn.
-auto ret = aclnnYyyGetWorkspaceSize(inputTensor, outputTensor, &workspaceSize, &executor);
+ret = aclnnYyyGetWorkspaceSize(inputTensor, outputTensor, &workspaceSize, &executor);
 ret = aclnnYyy(workspace, workspaceSize, executor, stream);
 ...
 ```

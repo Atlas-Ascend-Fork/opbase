@@ -35,7 +35,7 @@ The following code examples are for reference only and are not intended for dire
 ```cpp
 // Create an aclIntArray.
 std::vector<int64_t> sizeData = {1, 1, 2, 3};
-aclIntArray *size = aclCreateIntArray(sizeData.data(),sizeData.size());
+aclIntArray *size = aclCreateIntArray(sizeData.data(), sizeData.size());
 ...
 // Use the aclIntArray as the input parameter for single-operator API execution.
 auto ret = aclxxXxxGetWorkspaceSize(srcTensor, size, ..., outTensor, ..., &workspaceSize, &executor);

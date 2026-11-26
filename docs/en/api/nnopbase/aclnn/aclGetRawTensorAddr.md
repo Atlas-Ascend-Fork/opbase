@@ -48,7 +48,7 @@ void *getAddr2 = nullptr;
 // Obtain the device memory address recorded in the inputTensor. The memory address to which the obtained pointer getAddr1 points is the same as addr1.
 auto ret = aclGetRawTensorAddr(inputTensor, &getAddr1);
 // Obtain the device memory address recorded in the outputTensor. The memory address to which the obtained pointer getAddr2 points is the same as addr2.
-auto ret = aclGetRawTensorAddr(outputTensor, &getAddr2);
+ret = aclGetRawTensorAddr(outputTensor, &getAddr2);
 
 // Call the first- and second-phase APIs of the Xxx operator.
 ret = aclxxXxxGetWorkspaceSize(inputTensor, outputTensor, &workspaceSize, &executor);

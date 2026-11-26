@@ -35,7 +35,7 @@ aclIntArray *aclCreateIntArray(const int64_t *value, uint64_t size)
 ```cpp
 // 创建aclIntArray
 std::vector<int64_t> sizeData = {1, 1, 2, 3};
-aclIntArray *size = aclCreateIntArray(sizeData.data(),sizeData.size());
+aclIntArray *size = aclCreateIntArray(sizeData.data(), sizeData.size());
 ...
 // aclIntArray作为单算子API执行接口的入参
 auto ret = aclxxXxxGetWorkspaceSize(srcTensor, size, ..., outTensor, ..., &workspaceSize, &executor);
