@@ -9,12 +9,16 @@
  */
 
 #include <algorithm>
+#include <atomic>
 #include <array>
 #include <exception>
+#include <list>
 #include <memory>
+#include <unordered_map>
 
 #include "opdev/aicpu/aicpu_task.h"
 #include "aicpu_engine_struct.h"
+#include "aicpu_lru_cache.h"
 #include "aclnn/aclnn_base.h"
 #include "opdev/fast_vector.h"
 #include "mmpa/mmpa_api.h"
@@ -56,6 +60,7 @@ AicpuTask* SavePendingOverflowTask(std::unique_ptr<AicpuTask> task)
     gPendingOverflowTask = std::move(task);
     return gPendingOverflowTask.get();
 }
+
 } // namespace
 AicpuTimeStamp gAicpuTimeStamp = {};
 std::set<AicpuTaskSpace*> gAicpuTaskSpaceSet;
@@ -87,6 +92,7 @@ void aclnnAicpuFinalize()
     for (auto space : gAicpuTaskSpaceSet) {
         if (space != nullptr) {
             space->Clear();
+            ClearSpaceCacheData(space);
         }
     }
     gAicpuTaskSpaceSet.clear();
@@ -287,7 +293,20 @@ bool AicpuTaskSpace::IsRef(const size_t index, const bool isInput) const
     }
 }
 
-void AicpuTask::SetVisit(bool visit) { isVisit_ = visit; }
+void AicpuTask::SetVisit(bool visit)
+{
+    if (visit) {
+        isVisit_ = visit;
+        return;
+    }
+    auto* space = static_cast<AicpuTaskSpace*>(space_);
+    if (space == nullptr) {
+        isVisit_ = false;
+        return;
+    }
+    const std::lock_guard<std::mutex> lk(space->mutex_);
+    isVisit_ = false;
+}
 
 uint64_t RoundUp(const uint64_t originValue, const uint64_t multipleOf)
 {
@@ -357,36 +376,156 @@ AicpuTask* AicpuTaskSpace::FindTask(aclOpExecutor* executor, op::OpArgContext* a
     size_t keyLen = 0;
     auto seed = GenTaskKey(inputKey, keyLen, args, inputs);
     const auto& iter = hashMap_.find(seed);
+    AicpuTask* task = nullptr;
     if (iter != hashMap_.end()) {
-        for (auto& task : iter->second) {
-            if (task->isVisit_) {
-                continue;
-            }
-            if (task->keyLen_ != keyLen) {
+        for (auto& cached : iter->second) {
+            if (cached->isVisit_ || cached->keyLen_ != keyLen) {
                 continue;
             }
             size_t i = 0U;
             for (; i < keyLen; ++i) {
-                if (task->inputKey_[i] != inputKey[i]) {
+                if (cached->inputKey_[i] != inputKey[i]) {
                     break;
                 }
             }
             if (i == keyLen) {
-                uint64_t deviceCacheSize = CalcDeviceCacheSize(inputs, task);
+                const uint64_t deviceCacheSize = CalcDeviceCacheSize(inputs, cached);
                 if (deviceCacheSize > executor->workspaceDeviceAicpuMem_) {
                     executor->workspaceDeviceAicpuMem_ = deviceCacheSize;
                 }
-                RecordAicpuTime(kFindTaskEnd);
-                task->isVisit_ = true;
-                OP_LOGI("Find %s task success, no need create, cache_size=%lu.", opType_.c_str(),
-                        executor->workspaceDeviceAicpuMem_);
-                return task.get();
+                cached->isVisit_ = true;
+                ActivateCachedTask(cached.get(), this);
+                task = cached.get();
+                break;
             }
         }
     }
-    OP_LOGI("Do not find %s task, need to create task.", opType_.c_str());
     RecordAicpuTime(kFindTaskEnd);
+    if (task == nullptr) {
+        OP_LOGI("Do not find %s task, need to create task.", opType_.c_str());
+        return nullptr;
+    }
+    OP_LOGI("Find %s task success, no need create, cache_size=%lu.", opType_.c_str(),
+            executor->workspaceDeviceAicpuMem_);
+    return task;
+}
+
+bool AicpuCreateTaskUnlocked(const TaskSpaceCtx& taskCache, aclOpExecutor* executor,
+                             const FVector<std::string>& attrNames, op::OpArgContext* args,
+                             const FVector<const aclTensor*>& inputs, std::unique_ptr<AicpuTask>& task)
+{
+    if (taskCache.isTf) {
+        task = std::make_unique<AicpuTfTask>(taskCache.opType, taskCache.unknownType);
+    } else {
+        task = std::make_unique<AicpuCCTask>(taskCache.opType, taskCache.unknownType);
+    }
+    if (task == nullptr) {
+        OP_LOGE(ACLNN_ERR_INNER, "Make aicpu task failed!.");
+        return false;
+    }
+    task->SetSpace(taskCache.space);
+    AicpuAttrs attrs;
+    CreateAicpuAttrs(*args->GetOpArg(op::OP_ATTR_ARG), attrNames, attrs);
+    FVector<aclTensor*> outputs;
+    CreateTensorList(executor, *args->GetOpArg(op::OP_OUTPUT_ARG), outputs);
+    if (task->Init(inputs, outputs, attrs) != OK) {
+        OP_LOGE(ACLNN_ERR_INNER, "Aicpu task init failed!.");
+        return false;
+    }
+    task->SetVisit(true);
+    const uint64_t deviceCacheSize = taskCache.space->CalcDeviceCacheSize(inputs, task);
+    if (deviceCacheSize > executor->workspaceDeviceAicpuMem_) {
+        executor->workspaceDeviceAicpuMem_ = deviceCacheSize;
+    }
+    return true;
+}
+
+std::unique_ptr<AicpuTask> AicpuEvictOneTask(const TaskSpaceCtx& taskCache)
+{
+    AicpuTask* evicted = nullptr;
+    size_t evictedSeed = 0;
+    {
+        const std::lock_guard<std::mutex> lk(gSpaceCacheMutex);
+        auto& map = SpaceCacheDataMap();
+        const auto spaceIt = map.find(taskCache.space);
+        if (spaceIt != map.end()) {
+            auto& data = spaceIt->second;
+            for (auto rit = data.idleLru.rbegin(); rit != data.idleLru.rend(); ++rit) {
+                const auto it = data.taskInfo.find(*rit);
+                if (it == data.taskInfo.end()) {
+                    continue;
+                }
+                if (!taskCache.isIdle(*rit)) {
+                    continue;
+                }
+                evicted = *rit;
+                evictedSeed = it->second.seed;
+                data.idleLru.erase(it->second.idleIt);
+                (void)data.taskInfo.erase(it);
+                --data.cachedTaskNum;
+                break;
+            }
+        }
+    }
+    if (evicted == nullptr) {
+        return nullptr;
+    }
+    const auto bucketIt = taskCache.hashMap.find(evictedSeed);
+    if (bucketIt == taskCache.hashMap.end()) {
+        OP_LOGE(ACLNN_ERR_INNER, "Evicted aicpu task not found in hash bucket, skip insert.");
+        return nullptr;
+    }
+    auto& bucket = bucketIt->second;
+    for (auto bIt = bucket.begin(); bIt != bucket.end(); ++bIt) {
+        if (bIt->get() == evicted) {
+            std::unique_ptr<AicpuTask> owner = std::move(*bIt);
+            bucket.erase(bIt);
+            if (bucket.empty()) {
+                taskCache.hashMap.erase(bucketIt);
+            }
+            OP_LOGI("Evict %s idle task (LRU tail) for new key, cache=%zu.", taskCache.opType.c_str(),
+                    kAicpuCacheLimit);
+            return owner;
+        }
+    }
+    OP_LOGE(ACLNN_ERR_INNER, "Evicted aicpu task not found in hash bucket, skip insert.");
     return nullptr;
+}
+
+AicpuTask* AicpuCommitTask(const TaskSpaceCtx& taskCache, std::unique_ptr<AicpuTask>& task, const size_t seed,
+                           aclOpExecutor* executor, const FVector<const aclTensor*>& inputs, bool& needRegister,
+                           std::unique_ptr<AicpuTask>& evictedOwner)
+{
+    const std::lock_guard<std::mutex> lk(taskCache.mutex);
+    if (!taskCache.hasInit) {
+        taskCache.hasInit = true;
+        needRegister = true;
+    }
+    size_t cachedTaskNum = GetCachedTaskNum(taskCache.space);
+    bool slotAvailable = (cachedTaskNum < kAicpuCacheLimit);
+    if (!slotAvailable) {
+        evictedOwner = AicpuEvictOneTask(taskCache);
+        slotAvailable = (evictedOwner != nullptr);
+        if (slotAvailable) {
+            cachedTaskNum = kAicpuCacheLimit - 1U;
+        }
+    }
+    if (slotAvailable) {
+        taskCache.hashMap[seed].emplace_back(std::move(task));
+        IncCachedTaskNum(taskCache.space);
+        RegisterCachedTask(taskCache.space, taskCache.hashMap[seed].back().get(), seed);
+        OP_LOGI("Create %s task success, total=%zu, cache_size=%lu.", taskCache.opType.c_str(), cachedTaskNum + 1U,
+                executor->workspaceDeviceAicpuMem_);
+        return taskCache.hashMap[seed].back().get();
+    }
+    AicpuTask* const overflow = SavePendingOverflowTask(std::move(task));
+    if (overflow == nullptr) {
+        OP_LOGE(ACLNN_ERR_INNER, "Create %s overflow task failed.", taskCache.opType.c_str());
+        return nullptr;
+    }
+    OP_LOGI("Create %s task success without cache, cache full: total=%zu, max=%zu, cache_size=%lu.",
+            taskCache.opType.c_str(), cachedTaskNum, kAicpuCacheLimit, executor->workspaceDeviceAicpuMem_);
+    return overflow;
 }
 
 AicpuTask* AicpuTaskSpace::GetOrCreateTask(aclOpExecutor* executor, const FVector<std::string>& attrNames,
@@ -394,72 +533,33 @@ AicpuTask* AicpuTaskSpace::GetOrCreateTask(aclOpExecutor* executor, const FVecto
 {
     gAicpuTimeStamp.isEnable = EnableAicpuTimeStamp();
     FVector<const aclTensor*> inputs;
-    FVector<aclTensor*> outputs;
     CreateTensorList(executor, *args->GetOpArg(op::OP_INPUT_ARG), inputs);
-    auto cacheTaskNum = [this]() {
-        size_t taskNum = 0U;
-        for (const auto& item : hashMap_) {
-            taskNum += item.second.size();
-        }
-        return taskNum;
-    };
     auto task = FindTask(executor, args, inputs);
     if (task != nullptr) {
         return task;
     }
-    // 将task设置到全局的space中，需要加锁
-    const std::lock_guard<std::mutex> lk(mutex_);
     OP_LOGI("Start to create %s task!", opType_.c_str());
-    std::unique_ptr<AicpuTask> uniqueTask;
-    if (isTf_) {
-        // todo ge::MakeUnique
-        uniqueTask = std::make_unique<AicpuTfTask>(opType_, unknownType_);
-    } else {
-        uniqueTask = std::make_unique<AicpuCCTask>(opType_, unknownType_);
-    }
-    if (uniqueTask == nullptr) {
-        OP_LOGE(ACLNN_ERR_INNER, "Make aicpu task failed!.");
-        return nullptr;
-    }
-    uniqueTask->SetSpace(this);
-    AicpuAttrs attrs;
-    CreateAicpuAttrs(*args->GetOpArg(op::OP_ATTR_ARG), attrNames, attrs);
-    CreateTensorList(executor, *args->GetOpArg(op::OP_OUTPUT_ARG), outputs);
-    if (uniqueTask->Init(inputs, outputs, attrs) != OK) {
-        OP_LOGE(ACLNN_ERR_INNER, "Aicpu task init failed!.");
-        return nullptr;
-    }
-    SaveAicpuTaskSpace(uniqueTask->space_);
     uint8_t inputKey[kAicpuKeyBufLen];
     size_t keyLen = 0;
-    auto seed = GenTaskKey(inputKey, keyLen, args, inputs);
-    uniqueTask->keyLen_ = keyLen;
-    for (size_t i = 0U; i < keyLen; ++i) {
-        uniqueTask->inputKey_[i] = inputKey[i];
-    }
-    uniqueTask->isVisit_ = true;
-    uint64_t deviceCacheSize = CalcDeviceCacheSize(inputs, uniqueTask);
-    if (deviceCacheSize > executor->workspaceDeviceAicpuMem_) {
-        executor->workspaceDeviceAicpuMem_ = deviceCacheSize;
-    }
-    hasInit_ = true;
-    const size_t cachedTaskNum = cacheTaskNum();
-    if (cachedTaskNum < kAicpuCacheLimit) {
-        hashMap_[seed].emplace_back(std::move(uniqueTask));
-        task = hashMap_[seed].back().get();
-        OP_LOGI("Create %s task success, total=%zu, cache_size=%lu.", opType_.c_str(), cachedTaskNum + 1U,
-                executor->workspaceDeviceAicpuMem_);
-        return task;
-    }
-
-    task = SavePendingOverflowTask(std::move(uniqueTask));
-    if (task == nullptr) {
-        OP_LOGE(ACLNN_ERR_INNER, "Create %s overflow task failed.", opType_.c_str());
+    size_t seed = 0;
+    std::unique_ptr<AicpuTask> newTask;
+    TaskSpaceCtx taskCache{this,  hashMap_,     mutex_,  hasInit_,
+                           isTf_, unknownType_, opType_, [](const AicpuTask* t) { return !t->isVisit_; }};
+    seed = GenTaskKey(inputKey, keyLen, args, inputs);
+    if (!AicpuCreateTaskUnlocked(taskCache, executor, attrNames, args, inputs, newTask)) {
         return nullptr;
     }
-    OP_LOGI("Create %s task success without cache, cache full: total=%zu, max=%zu, cache_size=%lu.", opType_.c_str(),
-            cachedTaskNum, kAicpuCacheLimit, executor->workspaceDeviceAicpuMem_);
-    return task;
+    newTask->keyLen_ = keyLen;
+    for (size_t i = 0U; i < keyLen; ++i) {
+        newTask->inputKey_[i] = inputKey[i];
+    }
+    bool needRegister = false;
+    std::unique_ptr<AicpuTask> evictedOwner;
+    AicpuTask* committedTask = AicpuCommitTask(taskCache, newTask, seed, executor, inputs, needRegister, evictedOwner);
+    if (needRegister) {
+        SaveAicpuTaskSpace(this);
+    }
+    return committedTask;
 }
 
 aclnnStatus AicpuTask::SetIoTensors(aclOpExecutor* executor, op::OpArgContext* args)
