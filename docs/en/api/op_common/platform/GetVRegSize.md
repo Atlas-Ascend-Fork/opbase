@@ -20,6 +20,7 @@ uint32_t GetVRegSize(const T *context)
 ## Returns
 
 `uint32_t`: size of the vector register on the current platform, in bytes.
+
 - The DAV\_5162 architecture returns 32 bytes, and other architectures return 256 bytes.
 - If the context is null or the platform information fails to be obtained, **0** is returned.
 

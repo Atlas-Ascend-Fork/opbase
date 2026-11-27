@@ -1,5 +1,7 @@
 # IsIntegralType
 
+> **Note:** This API is deprecated. It is recommended that you use [IsIntegralType](../data_type_utils/IsIntegralType.md) instead.
+
 ## Function
 
 Checks whether the input data is of integer type, including Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, and Uint64.

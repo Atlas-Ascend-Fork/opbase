@@ -1,5 +1,7 @@
 # IsComplexType
 
+> **Note:** This API is deprecated. It is recommended that you use [IsComplexType](../data_type_utils/IsComplexType.md) instead.
+
 ## Function
 
 Checks if the input data type is a complex type, including Complex128, Complex64, and Complex32.

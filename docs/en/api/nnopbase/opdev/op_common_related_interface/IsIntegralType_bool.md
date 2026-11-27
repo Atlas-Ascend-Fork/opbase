@@ -1,5 +1,7 @@
 # IsIntegralType (Including Bool)
 
+> **Note:** This API is deprecated. It is recommended that you use [IsIntegralType (Including Bool)](../data_type_utils/IsIntegralType_bool.md) instead.
+
 ## Function
 
 Checks if the input data type is `integer`, including `Int8`, `Int16`, `Int32`, `Int64`, `Uint8`, `Uint16`, `Uint32`, and `Uint64`.

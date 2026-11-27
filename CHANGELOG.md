@@ -1,5 +1,5 @@
 # CHANGELOG
-   
+
 > 本文档记录各版本的重要变更，版本按时间倒序排列。
 
 ## v8.5.0-beta.1
@@ -52,4 +52,4 @@ opbase 首个 Beta 版本 v8.5.0-beta.1 现已发布。
 ### 🐛 问题修复
 
 - 现场机器离线状态下进行opbase编译报错。([Issue6](https://gitcode.com/cann/opbase/issues/6))
-- obpase包编译报错 non-constant-expression cannot be narrowed。([Issue22](https://gitcode.com/cann/opbase/issues/22))
+- opbase包编译报错 non-constant-expression cannot be narrowed。([Issue22](https://gitcode.com/cann/opbase/issues/22))

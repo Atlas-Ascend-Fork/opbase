@@ -1,5 +1,7 @@
 # IsFloatingType
 
+> **Note:** This API is deprecated. It is recommended that you use [IsFloatingType](../data_type_utils/IsFloatingType.md) instead.
+
 ## Function
 
 Checks if the input data type is `floating-point`, including `Float64` (`Double`), `Float32` (`Float`), `BFloat16`, and `Float16`.

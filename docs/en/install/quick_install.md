@@ -138,6 +138,7 @@ You can use a project script to automate the installation of these dependencies.
     ```bash
     bash install_deps.sh
     ```
+
 ## Environment Verification
 
 After installing the CANN package, verify that the environment and driver are normal.

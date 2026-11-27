@@ -52,4 +52,4 @@ The version directory structure is as follows:
 ### 🐛 Bug Fixes
 
 - An error is reported when opbase is compiled on an on-site machine in the offline state. ([Issue6](https://gitcode.com/cann/opbase/issues/6))
-- The error "non-constant-expression cannot be narrowed" is reported during obpase package compilation. ([Issue22](https://gitcode.com/cann/opbase/issues/22))
+- The error "non-constant-expression cannot be narrowed" is reported during opbase package compilation. ([Issue22](https://gitcode.com/cann/opbase/issues/22))

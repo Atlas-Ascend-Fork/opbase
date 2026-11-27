@@ -1,5 +1,7 @@
 # CanCast
 
+> **Note:** This API is deprecated. It is recommended that you use [CanCast](../data_type_utils/CanCast.md) instead.
+
 ## Function
 
 Checks whether a source type can be cast to a destination type.

@@ -1,5 +1,7 @@
 # PromoteType
 
+> **Note:** This API is deprecated. It is recommended that you use [PromoteType](../data_type_utils/PromoteType.md) instead.
+
 ## Function
 
 Determines the target data type that parameters should be promoted to when performing operations with different data types. For example, when performing an operation between `float16` and `float32`, the `float16` value should first be promoted to `float32`.
