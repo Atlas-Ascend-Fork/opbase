@@ -49,13 +49,15 @@ Specifically, the shape of the input tensor x passed in by the user is transpose
 | --- | --- | --- |
 | x | Input/Output| Original input tensor. The input tensor x must be stored in contiguous memory. The supported data types are FLOAT16, FLOAT, INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, BOOL, and BFLOAT16. The supported data format is ND. |
 | y | Output| Output tensor after transposition. Its data type and data format are the same as those of x. |
-| perm | Input| Integer array, representing the dimensions of the input tensor x. The supported types are aclIntArray*and aclTensor*. A transpose of up to 8 dimensions is supported, and the value must be in the range [0, number of dimensions of x - 1]. The supported data types are INT32 and INT64. The supported data format is ND. |
+| perm | Input| Integer array, representing the dimensions of the input tensor x. The supported types are aclIntArray\* and aclTensor*. A transpose of up to 8 dimensions is supported, and the value must be in the range [0, number of dimensions of x - 1]. The supported data types are INT32 and INT64. The supported data format is ND. |
 | executor | Input| Operator executor, which contains the operator execution flow. |
 
+<!-- npu="A3,910b" id7 -->
 > **NOTE**: BFLOAT16 is only supported on the following products:
 >
 > - Atlas A2 products
 > - Atlas A3 products
+<!-- end id7 -->
 
 ## Returns
 

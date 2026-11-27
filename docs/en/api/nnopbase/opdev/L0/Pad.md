@@ -39,10 +39,12 @@ const aclTensor* Pad(const aclTensor* self, const aclTensor* paddings, aclOpExec
 | paddings | Input| Padding size of each dimension of the input tensor. The shape is [self.dim, 2]. The supported data types are INT32 and INT64. The supported data format is ND. |
 | executor | Input| Operator executor, which contains the operator execution flow. |
 
+<!-- npu="A3,910b" id7 -->
 > **NOTE**: BFLOAT16 and INT8 are only supported on the following products:
 >
 > - Atlas A2 products
 > - Atlas A3 products
+<!-- end id7 -->
 
 ## Returns
 

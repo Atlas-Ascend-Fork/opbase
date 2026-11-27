@@ -29,7 +29,7 @@ The APIs described in this section are reserved and may be changed or deprecated
 | AicpuArgsHandler() | Indicates the auxiliary class used by the AI CPU framework to construct AI CPU opTask.|
 | UpdateDeviceExtInfoAddr(void *deviceExtInfoAddr) | Updates the address for storing extended parameters on the device.|
 | SetLaunchArgs(const size_t argSize) | Sets the sizes of parameters in args.|
-| GetDeviceCacheAddr(void *&deviceAddr, aclOpExecutor*executor, const uint64_t deviceCacheOffset) | Obtains the address of reserved memory on the device.|
+| GetDeviceCacheAddr(void *&deviceAddr, aclOpExecutor \*executor, const uint64_t deviceCacheOffset) | Obtains the address of reserved memory on the device.|
 | AicpuCCArgsHandler(const std::string &opType, const std::string &nodeName, const uint32_t ioNum, const bool needDeviceExt) | Indicates the class for managing AI CPU CANN framework parameters.|
 | GenCCArgs(const FVector<const aclTensor *> &inputs, const FVector<aclTensor*> &outputs, const AicpuAttrs &attrs, std::string &taskInfo) | Generates the AicpuParamHead, I/O address, and nodedef information in args of the CANN operator.|
 | BuildCCArgs(const std::string &argData, const std::string &kernelName, const std::string &soName, const size_t extInfoSize) | Encapsulates parameters in args of the CANN operator.|

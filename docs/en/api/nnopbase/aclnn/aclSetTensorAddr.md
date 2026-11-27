@@ -28,10 +28,16 @@ Possible causes:
 - If error code 561103 is returned, `executor` or `tensor` is a null pointer.
 - If error code 161002 is returned, the index value is out of range.
 - If error code 161002 is returned, the aclTensor input is `nullptr` when the first-phase API (aclxxXxxGetWorkspaceSize) is called for the first time. The address cannot be updated.
+<!-- npu="950" id1 -->
+- For Ascend 950PR&950DT products: If PCIe through is enabled, when the new Device storage address and the original Device storage address belong to different address spaces (a PCIe address and a non-PCIe address are updated interchangeably), the update is intercepted and error code 161002 is returned.
+<!-- end id1 -->
 
 ## Restrictions
 
-None
+<!-- npu="950" id2 -->
+- For Ascend 950PR&950DT products: If PCIe through is enabled, the new Device storage address and the original Device storage address must belong to the same address space. A PCIe address can be updated only to a PCIe address, and a non-PCIe address can be updated only to a non-PCIe address. If addresses in the two address spaces are updated interchangeably, the API intercepts the operation and returns error code 161002.
+- PCIe through is a hardware capability of Ascend NPU that allows Device-side operators to directly access Host memory over the PCIe bus, eliminating data copy between Host and Device. This feature is supported only by Ascend 950PR&950DT products.
+<!-- end id2 -->
 
 ## Examples
 
@@ -56,7 +62,7 @@ aclOpExecutor *executor;
 // Call the first-phase API.
 aclnnAddCustomGetWorkspaceSize(tensorList, tensor3, output, &workspaceSize, &executor);
 // Set the executor to be reusable.
-aclSetAclOpExecutorRepeatable(executor);  
+aclSetAclOpExecutorRepeatable(executor);
 // addr is the updated Device storage address provided by the caller as needed (for example, a newly allocated device memory address).
 void *addr = nullptr;
 aclSetTensorAddr(executor, 0, tensor1, addr); // Update the device address of the first aclTensor in the input tensor list.
@@ -67,5 +73,5 @@ aclSetTensorAddr(executor, 3, output, addr); // Update the device address of the
 // Call the second-phase API.
 aclnnAddCustom(workspace, workspaceSize, executor, stream);
 // Destroy the executor.
-aclDestroyAclOpExecutor(executor);  
+aclDestroyAclOpExecutor(executor);
 ```

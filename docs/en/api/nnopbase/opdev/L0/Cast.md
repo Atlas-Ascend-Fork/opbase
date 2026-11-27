@@ -39,10 +39,12 @@ const aclTensor *Cast(const aclTensor *self, op::DataType dstDtype, aclOpExecuto
 | dstDtype | Input| Target data type after conversion. The supported data types are FLOAT16, FLOAT, DOUBLE, BFLOAT16, INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64, BOOL, COMPLEX64, and COMPLEX128. |
 | executor | Input| Operator executor, which contains the operator execution flow. |
 
+<!-- npu="A3,910b" id7 -->
 > **NOTE**: BFLOAT16 is only supported on the following products:
 >
 > - Atlas A2 products
 > - Atlas A3 products
+<!-- end id7 -->
 
 ## Returns
 

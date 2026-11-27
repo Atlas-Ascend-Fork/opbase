@@ -29,10 +29,16 @@ Possible causes:
 - If error code 561103 is returned, `executor` or `tensors` is a null pointer.
 - If error code 161002 is returned, the value of `relativeIndex` is greater than or equal to the number of tensors in `tensors`.
 - If error code 161002 is returned, the value of `irIndex` is greater than or equal to the number of output parameters of the operator prototype.
+<!-- npu="950" id1 -->
+- For Ascend 950PR&950DT products: If PCIe through is enabled, when the new Device storage address and the original Device storage address belong to different address spaces (a PCIe address and a non-PCIe address are updated interchangeably), the update is intercepted and error code 161002 is returned.
+<!-- end id1 -->
 
 ## Restrictions
 
-None
+<!-- npu="950" id2 -->
+- For Ascend 950PR&950DT products: If PCIe through is enabled, the new Device storage address and the original Device storage address must belong to the same address space. A PCIe address can be updated only to a PCIe address, and a non-PCIe address can be updated only to a non-PCIe address. If addresses in the two address spaces are updated interchangeably, the API intercepts the operation and returns error code 161002.
+- PCIe through is a hardware capability of Ascend NPU that allows Device-side operators to directly access Host memory over the PCIe bus, eliminating data copy between Host and Device. This feature is supported only by Ascend 950PR&950DT products.
+<!-- end id2 -->
 
 ## Examples
 
