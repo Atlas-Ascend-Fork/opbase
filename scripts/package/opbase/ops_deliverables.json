@@ -90,17 +90,24 @@
             ]
         },
         {
+            "name": "opkernel-config",
+            "type": "json",
+            "description": "算子的二进制配置文件路径",
+            "paths": [
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/kernel/config/{socversion}/ops_cv",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/kernel/config/{socversion}/ops_math",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/kernel/config/{socversion}/ops_nn",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/kernel/config/{socversion}/ops_oam",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/kernel/config/{socversion}/ops_transformer",
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/kernel/config/{socversion}/ops_legacy"
+            ]
+        },
+        {
             "name": "opsrc",
             "type": "src_file",
             "description": "算子的编译文件路径",
             "paths": [
-                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-cv/dynamic",
-                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-math/dynamic",
-                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-nn/dynamic",
-                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-oam/dynamic",
-                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-transformer/dynamic",
-                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-legacy/dynamic",
-                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl/ops-legacy"
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe"
             ]
         },
         {
@@ -115,6 +122,22 @@
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-ras.json",
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-transformer.json",
                 "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/config/{socversion}/aic-{socversion}-ops-info-legacy.json"
+            ]
+        },
+        {
+            "name": "op-impl-mode",
+            "type": "file_path",
+            "description": "算子精度配置文件路径",
+            "paths": [
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/impl_mode"
+            ]
+        },
+        {
+            "name": "tiling-device",
+            "type": "shared_library",
+            "description": "Tiling下沉的so",
+            "paths": [
+                "{ASCEND_OPP_PATH}/built-in/op_impl/ai_core/tbe/op_tiling_device/lib/libtiling_device_transformer.so"
             ]
         }
     ]
