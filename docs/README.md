@@ -6,11 +6,19 @@ Docs目录结构说明如下：
 
 ```text
 ├── zh
-  ├── api                                # API类文档
-  ├── appendix                           # 附录类文档，如基本概念、目录结构等
-  ├── figures                            # 图片目录
-  ├── ...
-  ├── install                            # 安装部署类文档
+│   ├── api                              # API类文档
+│   ├── appendix                         # 附录类文档，如基本概念、目录结构等
+│   ├── error_code                       # 错误码文档，如 Nnopbase-Errors、Operator-Errors
+│   ├── figures                          # 图片目录
+│   ├── install                          # 安装部署类文档
+│   └── ops_precision_standard           # 算子精度标准
+├── en
+│   ├── api                              # API类文档（英文）
+│   ├── appendix                         # 附录类文档，如基本概念、目录结构等（英文）
+│   ├── error_code                       # 错误码文档（英文）
+│   ├── figures                          # 图片目录（英文）
+│   ├── install                          # 安装部署类文档（英文）
+│   └── ops_precision_standard           # 算子精度标准（英文）
 ├── CONTRIBUTING_DOCS.md                 # 文档贡献说明
 ├── QUICKSTART.md                        # 快速入门
 └── README.md
