@@ -35,7 +35,7 @@ opbase库里的API是所有算子库依赖的框架API，其提供各类算子�
 | 分类 | 说明 | 头文件 |
 | ------------- |-------|-------|
 | [aclnn公共接口](zh/api/nnopbase/aclnn/0_aclnn_meta_api.md) |调用aclnn API时，依赖框架基础API、结构体等Meta API，例如aclTensor/aclScalar等对象的创建/释放、各类属性信息的获取和设置等。|`${INSTALL_DIR}/include/aclnn/acl_meta.h`|
-| [nnopbase接口](zh/api/nnopbase/opdev/0_opdev_api_list.md) |开发aclnn API时，依赖框架公共调度类和管理类接口，例如aclnn缓存、workspace复用等场景。|`${INSTALL_DIR}/include/aclnn/opdev/*.h`|
+| [nnopbase接口](zh/api/nnopbase/opdev/0_opdev_api_list.md)（[English](en/api/nnopbase/opdev/0_opdev_api_list.md)） |开发aclnn API时，依赖框架公共调度类和管理类接口，例如aclnn缓存、workspace复用等场景。|`${INSTALL_DIR}/include/aclnn/opdev/*.h`|
 | [op_common接口](zh/api/op_common/0_op_common_list.md) |调用或开发算子时，提供op_common框架公共日志等能力，如Metadef、Log日志等。|`${INSTALL_DIR}/include/op_common/*.h`|
 
 调用opbase API时，需include依赖的头文件，引用路径如上表。其中`${INSTALL_DIR}`请替换为CANN软件安装后存储路径，以root用户为例，安装后默认路径为`/usr/local/Ascend/cann`。
