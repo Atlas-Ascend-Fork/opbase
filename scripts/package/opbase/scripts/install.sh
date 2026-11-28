@@ -1574,9 +1574,9 @@ if [ "${is_uninstall}" = "y" ];then
         logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST};ERR_DES:The file\
     (${_UNINSTALL_SHELL_FILE}) not exists. Please make sure that the opbase module\
     installed in (${target_dir}) and then set the correct install path."
-	uninstall_path=$(ls "${_TARGET_INSTALL_PATH}" 2> /dev/null)
+	uninstall_path=$(ls -A "${_TARGET_INSTALL_PATH}" 2> /dev/null)
         if [ "${uninstall_path}" = "" ]; then
-            rm -rf "${_TARGET_INSTALL_PATH}"
+            rmdir "${_TARGET_INSTALL_PATH}" >> /dev/null 2>&1
         fi
             logoperationretstatus "uninstall" "${install_type}" "1" "${in_cmd_list}"
         exit 0
@@ -1584,10 +1584,11 @@ if [ "${is_uninstall}" = "y" ];then
     # call opp_uninstall.sh
 #    aicpuinfofile "remove"
     sh "${_UNINSTALL_SHELL_FILE}" "${_TARGET_INSTALL_PATH}" "uninstall" "${is_quiet}" $in_feature "${is_docker_install}" "${docker_root}" "$pkg_version_dir"
+    uninstall_ret="$?"
     # remove precheck info in ${target_dir}/bin/prereq_check.bash
     logandprint "[INFO]: Remove precheck info."
 
-    logoperationretstatus "uninstall" "${install_type}" "$?" "${in_cmd_list}"
+    logoperationretstatus "uninstall" "${install_type}" "${uninstall_ret}" "${in_cmd_list}"
 fi
 
 if [ "${is_precheck}" = "y" ];then

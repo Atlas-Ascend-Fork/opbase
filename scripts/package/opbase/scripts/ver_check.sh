@@ -30,22 +30,19 @@ check_path_pre (){
         logandprint "[WARNING]: please input correct path"
         exit 1
     fi
-    arr=$(echo ${in_checkpath_1}|awk '{split($0,arr," ");for(i in arr) print arr[i]}')
-    index=0
-    for i in $arr;do id=$((${id:=-1}+1)); eval arr_$id=$i;index=$(expr $index + 1);done
-    len="${index}"
-    b=0
-    for i in $(seq 0 ${len}); do
-        select_last_dir_component "$(eval echo '$'arr_$i)"
-        ret=$last_component
-        if [ "${ret}" != "" ] ;then
-            eval checked_path_temp_$b=$(eval echo '$'arr_$i)
-            b=$(expr $b + 1)
+    local -a arr_items=()
+    local -a checked_items=()
+    local item
+    read -r -a arr_items <<< "${in_checkpath_1}"
+    for item in "${arr_items[@]}"; do
+        select_last_dir_component "${item}"
+        if [ "${last_component}" != "" ] ;then
+            checked_items+=("${item}")
         fi
     done
-    check_all_path=""
-    for i in $(seq 0 ${len}); do
-        check_all_path="$(eval echo '$'checked_path_temp_$i) $check_all_path"
+    local check_all_path=""
+    for item in "${checked_items[@]}"; do
+        check_all_path="${item} ${check_all_path}"
     done
     checked_path="${check_all_path}"
     return
@@ -79,7 +76,7 @@ check_version_file () {
     run_pkg_path="${run_pkg_path_temp}""/${component_ret}"
     version_file="${run_pkg_path}""/version.info"
     if [ -f "${version_file}" ];then
-        echo "${version_file}" >> /dev/null 2
+        echo "${version_file}" > /dev/null 2>&1
     else
         logandprint "[ERROR]: ERR_NO:${FILE_NOT_EXIST}; The [${component_ret}] version.info in path [${pkg_path}] not exists."
         exit 1

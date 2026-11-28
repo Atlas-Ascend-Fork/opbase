@@ -155,6 +155,32 @@ getrunpkginfo() {
     fi
 }
 
+# update the key in install info file with exact key match
+updateinifile() {
+    local _file="$1"
+    local _key="$2"
+    local _value="$3"
+    local _tmp_file="${_file}.tmp.$$"
+    if ! _key="${_key}" _value="${_value}" awk -F= '
+        BEGIN { key = ENVIRON["_key"]; value = ENVIRON["_value"]; found = 0 }
+        $1 == key {
+            if (!found) {
+                print key "=" value
+                found = 1
+            }
+            next
+        }
+        { print }
+        END { if (!found) print key "=" value }
+    ' "${_file}" > "${_tmp_file}"; then
+        rm -f "${_tmp_file}"
+        return 1
+    fi
+    cat "${_tmp_file}" > "${_file}"
+    rm -f "${_tmp_file}"
+    return 0
+}
+
 updateinstallinfo() {
     _key_val="$1"
     _val="$2"
@@ -166,7 +192,7 @@ updateinstallinfo() {
         if [ "${_old_val}"x = ""x ] || [ "${_is_new_gen}" = "true" ]; then
             echo "${_key_val}=${_val}" >> "${_target_install_info}"
         else
-            sed -i "/${_key_val}/c ${_key_val}=${_val}" "${_target_install_info}"
+            updateinifile "${_target_install_info}" "${_key_val}" "${_val}"
         fi
     else
         echo "${_key_val}=${_val}" > "${_target_install_info}"
@@ -186,12 +212,7 @@ updatefeatureandchipinfo() {
         if [ "${_is_new_gen}" = "true" ]; then
             echo "${_key_val}=${_val}" >> "${_target_install_info}"
         else
-            grep_res=$(cat ${_target_install_info} | grep "$_key_val")
-            if [ "${grep_res}x" = "x" ]; then
-                echo "${_key_val}=${_val}" >> "${_target_install_info}"
-            else
-                sed -i "/${_key_val}/c ${_key_val}=${_val}" "${_target_install_info}"
-            fi
+            updateinifile "${_target_install_info}" "${_key_val}" "${_val}"
         fi
     else
         echo "${_key_val}=${_val}" > "${_target_install_info}"

@@ -67,18 +67,18 @@ to a right permission."
     exit 1
 fi
 
-installed_path="$(cd "${_CURR_PATH}/../../../.."; pwd)"
-parent_installed_path="$(cd "${installed_path}/../"; pwd)"
-cd ~
+installed_path="$(cd "${_CURR_PATH}/../../../.." && pwd)" || exit 1
+parent_installed_path="$(cd "${installed_path}/../" && pwd)" || exit 1
+cd ~ || exit 1
 sh "${install_shell}" "--aa" "--aa" "--uninstall" "--install-path=${installed_path}" "${quiet_parameter}"
 ret_status="$?"
 if [ "${ret_status}" != "0" ]; then
     exit 1
 fi
 if [ -d "${parent_installed_path}" ];then
-    subdirs_param_install=$(ls "${parent_installed_path}" 2> /dev/null)
+    subdirs_param_install=$(ls -A "${parent_installed_path}" 2> /dev/null)
     if [ "${subdirs_param_install}" = "" ]; then
-        rm -rf "${parent_installed_path}"
+        rmdir "${parent_installed_path}" >> /dev/null 2>&1
     fi
 fi
 exit 0

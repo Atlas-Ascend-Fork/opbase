@@ -14,6 +14,7 @@ PARAM_INVALID_DES="Invalid input parameter."
 FILE_READ_FAILED="0x0082"
 FILE_READ_FAILED_DES="File read failed."
 OPERATE_FAILED="0x0001"
+UNAME_NOT_EXIST="0x0091"
 
 _CURR_PATH=$(dirname $(readlink -f $0))
 _COMMON_INC_FILE="${_CURR_PATH}/common_func.inc"
@@ -84,7 +85,7 @@ checkinstalledtype() {
     [ "${_type}" != "full" ] &&
     [ "${_type}" != "devel" ]; then
         logandprint "[ERROR]: ERR_NO:${UNAME_NOT_EXIST};ERR_DES:Install type \
-[${_ugroup}] of opbase module is not right!"
+[${_type}] of opbase module is not right!"
         return 1
     else
         return 0
@@ -143,7 +144,7 @@ _VERSION_INFO_SUFFIX="${ops_base_platform_dir}/version.info"
 # avoid relative path casued errors by delete floders
 _ABS_INSTALL_PATH=$(cd ${_TARGET_INSTALL_PATH}; pwd)
 getinstallpath
-relative_path_info=${relative_path}
+relative_path_info=${relative_path_val}
 # init log file path
 _INSTALL_INFO_FILE="${_ABS_INSTALL_PATH}/${_INSTALL_INFO_SUFFIX}"
 if [ ! -f "${_INSTALL_INFO_FILE}" ]; then
@@ -283,9 +284,9 @@ deleteopp(){
 }
 
 # delete the empty opbase folder it'self
-res_val=$(ls "${ops_base_sub_dir}" 2> /dev/null)
+res_val=$(ls -A "${ops_base_sub_dir}" 2> /dev/null)
 if [ "${res_val}" = "" ]; then
-    rm -rf -d "${ops_base_sub_dir}" >> /dev/null 2>&1
+    rmdir "${ops_base_sub_dir}" >> /dev/null 2>&1
 fi
 
 # change installed folder's permission except aicpu
@@ -317,15 +318,15 @@ if [ -f ${scene_dir} ]; then
 fi
 
 # delete the upper folder when it is empty
-dir_existed=$(ls "${_ABS_INSTALL_PATH}" 2> /dev/null)
+dir_existed=$(ls -A "${_ABS_INSTALL_PATH}" 2> /dev/null)
 if [ "${dir_existed}" = "" ] && [ "${uninstall_mode}" != "upgrade" ]; then
     # rm -rf -d "${_ABS_INSTALL_PATH}" >> /dev/null 2>&1
     rmdir -p "${_ABS_INSTALL_PATH}" >> /dev/null 2>&1
 fi
 
-subdirs_param_install=$(ls "${installed_path}" 2> /dev/null)
+subdirs_param_install=$(ls -A "${installed_path}" 2> /dev/null)
 if [ "${subdirs_param_install}" = "" ]; then
-    [ -n "${installed_path}" ] && rm -rf "${installed_path}"
+    [ -n "${installed_path}" ] && rmdir "${installed_path}" >> /dev/null 2>&1
 fi
 
 logandprint "[INFO]: Ops_base package uninstalled successfully! Uninstallation takes effect immediately."
