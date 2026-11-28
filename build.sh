@@ -96,6 +96,7 @@ parse_cmake_extra_args() {
 
 # parse and set options
 checkopts() {
+    local compile_only="off"
     VERBOSE=""
     THREAD_NUM=8
     ENABLE_UT="off"
@@ -169,7 +170,7 @@ checkopts() {
         shift 2
         ;;
         --noexec)
-        EXEC_TEST="off"
+        compile_only="on"
         shift
         ;;
         --cann_3rd_lib_path)
@@ -206,6 +207,10 @@ checkopts() {
         ;;
     esac
     done
+
+    if [[ "${compile_only}" == "on" ]]; then
+        EXEC_TEST="off"
+    fi
 
     if [[ "$PACKAGE_TYPE_SET" == "TRUE" && "$ENABLE_PKG" != "on" ]]; then
         echo "[ERROR] --pkg-type can only be used with --pkg"
