@@ -35,7 +35,7 @@ None
 ```cpp
 // Check whether dtype is float16 or float32. If not, return in advance.
 void Func(const ge::DataType dtype) {
-    if (!CheckType(dtype, {DT_FLOAT16, DT_FLOAT})) {
+    if (!op::CheckType(dtype, {ge::DataType::DT_FLOAT16, ge::DataType::DT_FLOAT})) {
         return;
     }
     // Perform the operator computation logic.
@@ -43,8 +43,9 @@ void Func(const ge::DataType dtype) {
 
 // Use a compile-time fixed data type list (std::array) for checking.
 void FuncArray(const ge::DataType dtype) {
-    static constexpr std::array<ge::DataType, 2> validTypes = {DT_FLOAT16, DT_FLOAT};
-    if (!CheckType(dtype, validTypes)) {
+    static constexpr std::array<ge::DataType, 2> validTypes = {
+        ge::DataType::DT_FLOAT16, ge::DataType::DT_FLOAT};
+    if (!op::CheckType(dtype, validTypes)) {
         return;
     }
     // Perform the operator computation logic.

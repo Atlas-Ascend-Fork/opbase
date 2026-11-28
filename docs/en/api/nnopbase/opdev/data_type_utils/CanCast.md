@@ -30,7 +30,7 @@ None
 ```cpp
 // Check whether dtype can be cast to int8. If not, return in advance.
 void Func(const ge::DataType dtype) {
-    if (!CanCast(dtype, DT_INT8)) {
+    if (!op::CanCast(dtype, ge::DataType::DT_INT8)) {
         return;
     }
     // Perform the operator computation logic.

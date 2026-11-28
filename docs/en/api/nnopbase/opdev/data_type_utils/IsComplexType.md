@@ -29,7 +29,7 @@ None
 ```cpp
 // Check whether dtype is a complex type. If not, return in advance.
 void Func(const ge::DataType dtype) {
-    if (!IsComplexType(dtype)) {
+    if (!op::IsComplexType(dtype)) {
         return;
     }
     // Perform the operator computation logic.
