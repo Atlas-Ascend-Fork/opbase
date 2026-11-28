@@ -45,7 +45,7 @@ The parameters are described in the following table:
 | --build-type        | Optional    | Enables the debug mode. The options are Release/Debug, with the default value Release.                                                    |
 | --cov               | Optional    | Runs UT and generates a code coverage report. This parameter depends on lcov. For details, see [QUICKSTART](../../QUICKSTART.md#执行ut).                    |
 | --noexec            | Optional    | Compiles only the unit test binary files and does not automatically execute the compiled UT executables.                             |
-| --make_clean    | Optional    | Performs a full cleanup (deletes all build-related files). After the execution, the script exits.                              |
+| --make_clean    | Optional    | Removes `build/` and `third_party/` from the repository root, then reconfigures and continues the build. For offline builds, store dependencies outside these directories and pass their path with `--cann_3rd_lib_path`.                              |
 | --cann_3rd_lib_path | Optional    | Specifies the directory storing third-party libraries in the offline build scenario.                            |
 | --pkg               | Optional    | Generates installation packages.                           |
 | --pkg-type=`<TYPE>` | Optional    | Specifies the installation package type. The options are run/rpm/deb/all, with the default value run. |

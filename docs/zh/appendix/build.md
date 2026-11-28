@@ -45,7 +45,7 @@ bash build.sh --help
 | --build-type        | 可选    | 启用调试模式。可选类型：Release/Debug，默认为Release。                                                    |
 | --cov               | 可选    | 执行UT并生成代码覆盖率报告，依赖lcov工具，使用方法参见[QUICKSTART](../../QUICKSTART.md#执行ut)。                    |
 | --noexec            | 可选    | 仅编译单元测试二进制文件，不自动执行编译后的UT可执行文件。                             |
-| --make_clean    | 可选    | 执行完全清理操作（删除所有编译相关文件），执行后脚本退出。                              |
+| --make_clean    | 可选    | 删除仓库根目录下的 `build/` 和 `third_party/`，然后重新配置并继续构建。离线构建时，请将依赖保存在这两个目录之外，并通过 `--cann_3rd_lib_path` 指定其路径。                              |
 | --cann_3rd_lib_path | 可选    | 离线编译场景下第三方库存放的目录。                            |
 | --pkg               | 可选    | 生成安装包。                           |
 | --pkg-type=`<TYPE>` | 可选    | 指定安装包类型。可选类型：run/rpm/deb/all，默认为run。 |
