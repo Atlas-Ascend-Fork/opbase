@@ -52,6 +52,24 @@ check_pkg_type() {
     fi
 }
 
+check_build_type() {
+    local build_type="$1"
+    case "$build_type" in
+        Release|Debug) ;;
+        *)
+            echo "[ERROR] --build-type only supports Release/Debug, got: $build_type"
+            exit 1
+            ;;
+    esac
+}
+
+require_non_empty_value() {
+    if [[ -z "$2" ]]; then
+        echo "[ERROR] $1 requires a non-empty value"
+        exit 1
+    fi
+}
+
 parse_cmake_extra_args() {
     local args_str="$1"
     local arg permitted_args_str
@@ -116,7 +134,11 @@ checkopts() {
         exit 0
         ;;
         -j)
-        THREAD_NUM="$2"
+        if [[ ! "$2" =~ ^[0-9]+$ ]] || [[ ${#2} -gt 10 ]] || (( 10#$2 < 1 || 10#$2 > 2147483647 )); then
+            echo "[ERROR] -j requires a positive integer, got: $2"
+            exit 1
+        fi
+        THREAD_NUM=$((10#$2))
         shift 2
         ;;
         -v | --verbose)
@@ -142,6 +164,7 @@ checkopts() {
         shift
         ;;
         --build-type)
+        check_build_type "$2"
         BUILD_TYPE=$2
         shift 2
         ;;
@@ -150,7 +173,8 @@ checkopts() {
         shift
         ;;
         --cann_3rd_lib_path)
-        CANN_3RD_LIB_PATH="$(realpath $2)"
+        require_non_empty_value "$1" "$2"
+        CANN_3RD_LIB_PATH="$(realpath -m -- "$2")"
         shift 2
         ;;
         --extra-cmake-args)
