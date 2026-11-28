@@ -235,6 +235,7 @@
                 "BatchMatMulV2ReshapeFusionPass": "5121",
                 "BatchMatMulV2ReduceFusionPass": "5122",
                 "AntiQuantMatMulFusionPass": "5123",
+                "MatmulToWeightQuantBatchMatmulFusion": "5123",
                 "WeightQuantBatchMatmulFusionPass": "5124",
                 "BatchMatmulFixpipeFusionPass": "5125",
                 "MatmulQuantToFixpipeFusionPass": "5126",
