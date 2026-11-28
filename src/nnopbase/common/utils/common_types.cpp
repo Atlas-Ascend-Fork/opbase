@@ -523,6 +523,11 @@ void aclTensor::InitTensor(const int64_t* viewDims, uint64_t viewDimsNum, aclDat
 {
     if (viewDims && viewDimsNum) {
         op::ToShape(viewDims, viewDimsNum, viewShape_);
+    } else {
+        OP_LOGW("The input viewDims is %s, viewDimsNum is %llu. "
+                "aclInitTensor does not support reusing an existing tensor as an empty-shape tensor. "
+                "Use aclCreateTensor instead.",
+                viewDims == nullptr ? "nullptr" : "non-null", static_cast<unsigned long long>(viewDimsNum));
     }
     viewFormat_ = static_cast<op::Format>(format);
     if (stride != nullptr) {
@@ -547,6 +552,11 @@ void aclTensor::InitTensor(const int64_t* viewDims, uint64_t viewDimsNum, aclDat
             op::ToShape(storageDims, storageDimsNum, shape);
             tensor_->MutableStorageShape() = shape;
             tensor_->MutableOriginShape() = shape;
+        } else {
+            OP_LOGW("The input storageDims is %s, storageDimsNum is %llu. "
+                    "aclInitTensor does not support reusing an existing tensor as an empty-shape tensor. "
+                    "Use aclCreateTensor instead.",
+                    storageDims == nullptr ? "nullptr" : "non-null", static_cast<unsigned long long>(storageDimsNum));
         }
 
         op::Format opFormat = op::ToOpFormat(format);

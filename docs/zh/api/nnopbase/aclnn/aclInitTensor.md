@@ -25,14 +25,14 @@ aclnnStatus aclInitTensor(aclTensor *tensor, const int64_t *viewDims, uint64_t v
 | 参数名 | 输入/输出 | 说明 |
 | --- | --- | --- |
 | tensor | 输入 | 待初始化参数的aclTensor。 |
-| viewDims | 输入 | tensor的ViewShape维度值，为非负整数。 |
-| viewDimsNum | 输入 | tensor的ViewShape维度数。 |
+| viewDims | 输入 | tensor的ViewShape维度值，为非负整数；入参指针不能为空。 |
+| viewDimsNum | 输入 | tensor的ViewShape维度数，不能为0。 |
 | dataType | 输入 | tensor的数据类型。 |
 | stride | 输入 | tensor各维度元素的访问步长，为非负整数。 |
 | offset | 输入 | tensor首元素相对于storage的偏移，为非负整数。 |
 | format | 输入 | tensor的数据排布格式。 |
-| storageDims | 输入 | tensor的StorageShape维度值，为非负整数。 |
-| storageDimsNum | 输入 | tensor的StorageShape维度数。 |
+| storageDims | 输入 | tensor的StorageShape维度值，为非负整数；入参指针不能为空。 |
+| storageDimsNum | 输入 | tensor的StorageShape维度数，不能为0。 |
 | tensorDataAddr | 输入 | tensor在Device侧的存储地址，该地址必须32字节对齐，否则可能会出现未定义错误。 |
 
 ## 返回值说明
@@ -41,6 +41,7 @@ aclnnStatus aclInitTensor(aclTensor *tensor, const int64_t *viewDims, uint64_t v
 
 ## 约束说明
 
+- `viewDims`和`storageDims`不能为空，`viewDimsNum`和`storageDimsNum`不能为0。本接口不支持将已创建的tensor复用为空shape（0维标量）tensor，传入上述参数时tensor的形状不会被更新；如需创建空shape的tensor，请使用[aclCreateTensor](aclCreateTensor.md)接口。
 - 必须在一阶段接口aclxxXxxGetWorkspaceSize之前或者二阶段接口aclxxXxx之后使用，不支持在一阶段与二阶段接口之间使用。
 
 ## 调用示例

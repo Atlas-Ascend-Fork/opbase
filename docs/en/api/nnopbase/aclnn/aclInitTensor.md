@@ -25,14 +25,14 @@ aclnnStatus aclInitTensor(aclTensor *tensor, const int64_t *viewDims, uint64_t v
 | Parameter| Input/Output| Description|
 | --- | --- | --- |
 | tensor | Input| aclTensor whose parameters are to be initialized.|
-| viewDims | Input| ViewShape dimension value of a tensor, which is a non-negative integer.|
-| viewDimsNum | Input| ViewShape dimension number of a tensor.|
+| viewDims | Input| ViewShape dimension value of a tensor, which is a non-negative integer. The input pointer cannot be null.|
+| viewDimsNum | Input| ViewShape dimension number of a tensor. The value cannot be 0.|
 | dataType | Input| Data type of a tensor.|
 | stride | Input| Access stride of elements in each dimension of the tensor, which is a non-negative integer.|
 | offset | Input| Offset of the first element of the tensor relative to storage, which is a non-negative integer.|
 | format | Input| Tensor format.|
-| storageDims | Input| StorageShape dimension value of the tensor, which is a non-negative integer.|
-| storageDimsNum | Input| StorageShape dimension number of a tensor.|
+| storageDims | Input| StorageShape dimension value of the tensor, which is a non-negative integer. The input pointer cannot be null.|
+| storageDimsNum | Input| StorageShape dimension number of a tensor. The value cannot be 0.|
 | tensorDataAddr | Input| Storage address of the tensor on the device. The address must be 32-byte aligned. Otherwise, an undefined error may occur.|
 
 ## Returns
@@ -41,7 +41,8 @@ aclnnStatus aclInitTensor(aclTensor *tensor, const int64_t *viewDims, uint64_t v
 
 ## Restrictions
 
-None
+- `viewDims` and `storageDims` cannot be null, and `viewDimsNum` and `storageDimsNum` cannot be 0. This API does not support reusing an existing tensor as an empty-shape (0-dim scalar) tensor; the tensor shape is not updated if these parameters are passed. To create an empty-shape tensor, use [aclCreateTensor](aclCreateTensor.md).
+- This API must be called before the first-phase API aclxxXxxGetWorkspaceSize or after the second-phase API aclxxXxx. It cannot be called between the two phases.
 
 ## Examples
 
